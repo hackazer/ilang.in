@@ -17,9 +17,9 @@ This living ExecPlan coordinates the PHP modernization, security and performance
 - [x] Exclude production uploads, logs, caches, secrets, and generated analysis data from Git.
 - [x] Approve the modular gateway and dedicated ledger architecture.
 - [x] Write and self-review the design specification.
-- [ ] Create and push the clean `main` baseline.
-- [ ] Create `dev` from `main`.
-- [ ] Execute PHP compatibility plan.
+- [x] Create and push the clean `main` baseline.
+- [x] Create `dev` from `main`.
+- [x] Execute PHP compatibility plan.
 - [ ] Execute security and performance plan.
 - [ ] Execute NOWPayments plan.
 - [ ] Run final verification and review.
