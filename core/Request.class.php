@@ -451,26 +451,157 @@ final class Request {
 	 * @version 6.2.1
 	 */
 	public function ip(){
+		$remoteAddress = $this->normalizeIp($_SERVER['REMOTE_ADDR'] ?? null);
 
-		if(isset($_SERVER['HTTP_CF_CONNECTING_IP'])) $ipaddress =  $_SERVER['HTTP_CF_CONNECTING_IP'];
-		elseif (isset($_SERVER['HTTP_X_REAL_IP'])) 	 	$ipaddress = $_SERVER['HTTP_X_REAL_IP'];
-		elseif (isset($_SERVER['HTTP_CLIENT_IP']))	 		$ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-		elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']))		$ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-		elseif (isset($_SERVER['HTTP_X_FORWARDED']))		$ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-		elseif (isset($_SERVER['HTTP_FORWARDED_FOR'])) $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-		elseif (isset($_SERVER['HTTP_FORWARDED']))	$ipaddress = $_SERVER['HTTP_FORWARDED'];
-		elseif (isset($_SERVER['REMOTE_ADDR']))	$ipaddress = $_SERVER['REMOTE_ADDR'];
+		if($remoteAddress === null) return '';
 
-		$ipaddress = Helper::clean($ipaddress, 3, true);
+		if($this->trustsCloudflare() && $this->ipMatchesAnyCidr($remoteAddress, self::cloudflareCidrs())){
+			if(!isset($_SERVER['HTTP_CF_CONNECTING_IP'])) return $remoteAddress;
 
-		if(substr($ipaddress, 0, 7) == "::ffff:"){
-		    $ipaddress = str_replace("::ffff:", "", $ipaddress);
+			return $this->normalizeIp($_SERVER['HTTP_CF_CONNECTING_IP']) ?? $remoteAddress;
 		}
-		
-		$ip = explode(",", $ipaddress);
-		if(is_array($ip) && count($ip) > 1) return $ip[0];
 
-		return $ipaddress;
+		$trustedProxyCidrs = $this->trustedProxyCidrs();
+
+		if(!$trustedProxyCidrs || !$this->ipMatchesAnyCidr($remoteAddress, $trustedProxyCidrs)) return $remoteAddress;
+		if(!isset($_SERVER['HTTP_X_FORWARDED_FOR']) || !is_string($_SERVER['HTTP_X_FORWARDED_FOR'])) return $remoteAddress;
+
+		$forwardedAddresses = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+		$validatedAddresses = [];
+
+		foreach($forwardedAddresses as $forwardedAddress){
+			$validatedAddress = $this->normalizeIp($forwardedAddress);
+
+			if($validatedAddress === null) return $remoteAddress;
+
+			$validatedAddresses[] = $validatedAddress;
+		}
+
+		$currentAddress = $remoteAddress;
+
+		for($index = count($validatedAddresses) - 1; $index >= 0; $index--){
+			if(!$this->ipMatchesAnyCidr($currentAddress, $trustedProxyCidrs)) return $currentAddress;
+
+			$currentAddress = $validatedAddresses[$index];
+		}
+
+		return $currentAddress;
+	}
+
+	/**
+	 * Return explicitly configured trusted proxy networks.
+	 */
+	private function trustedProxyCidrs(): array {
+		$configuredCidrs = getenv('TRUSTED_PROXY_CIDRS');
+
+		if(!is_string($configuredCidrs) || trim($configuredCidrs) === '') return [];
+
+		return preg_split('/[\s,]+/', trim($configuredCidrs), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+	}
+
+	/**
+	 * Cloudflare proxy trust is disabled unless explicitly enabled.
+	 */
+	private function trustsCloudflare(): bool {
+		$value = getenv('TRUST_CLOUDFLARE');
+
+		if(!is_string($value)) return false;
+
+		return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+	}
+
+	/**
+	 * Official Cloudflare edge ranges from https://www.cloudflare.com/ips/.
+	 */
+	private static function cloudflareCidrs(): array {
+		return [
+			'173.245.48.0/20',
+			'103.21.244.0/22',
+			'103.22.200.0/22',
+			'103.31.4.0/22',
+			'141.101.64.0/18',
+			'108.162.192.0/18',
+			'190.93.240.0/20',
+			'188.114.96.0/20',
+			'197.234.240.0/22',
+			'198.41.128.0/17',
+			'162.158.0.0/15',
+			'104.16.0.0/13',
+			'104.24.0.0/14',
+			'172.64.0.0/13',
+			'131.0.72.0/22',
+			'2400:cb00::/32',
+			'2606:4700::/32',
+			'2803:f800::/32',
+			'2405:b500::/32',
+			'2405:8100::/32',
+			'2a06:98c0::/29',
+			'2c0f:f248::/32',
+		];
+	}
+
+	/**
+	 * Normalize and validate an IPv4 or IPv6 address.
+	 */
+	private function normalizeIp(mixed $address): ?string {
+		if(!is_string($address)) return null;
+
+		$address = trim($address);
+
+		if(strncasecmp($address, '::ffff:', 7) === 0){
+			$mappedAddress = substr($address, 7);
+
+			if(filter_var($mappedAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) return $mappedAddress;
+		}
+
+		if(filter_var($address, FILTER_VALIDATE_IP) === false) return null;
+
+		$packedAddress = inet_pton($address);
+
+		return $packedAddress === false ? null : inet_ntop($packedAddress);
+	}
+
+	/**
+	 * Check whether an address belongs to any valid configured CIDR.
+	 */
+	private function ipMatchesAnyCidr(string $address, array $cidrs): bool {
+		foreach($cidrs as $cidr){
+			if($this->ipMatchesCidr($address, $cidr)) return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Compare IPv4 and IPv6 addresses using their packed binary form.
+	 */
+	private function ipMatchesCidr(string $address, mixed $cidr): bool {
+		if(!is_string($cidr)) return false;
+
+		$parts = explode('/', trim($cidr), 2);
+		$network = $this->normalizeIp($parts[0]);
+
+		if($network === null) return false;
+
+		$packedAddress = inet_pton($address);
+		$packedNetwork = inet_pton($network);
+
+		if($packedAddress === false || $packedNetwork === false || strlen($packedAddress) !== strlen($packedNetwork)) return false;
+
+		$totalBits = strlen($packedAddress) * 8;
+		$prefixLength = count($parts) === 2 && ctype_digit($parts[1]) ? (int) $parts[1] : $totalBits;
+
+		if($prefixLength < 0 || $prefixLength > $totalBits) return false;
+
+		$fullBytes = intdiv($prefixLength, 8);
+		$remainingBits = $prefixLength % 8;
+
+		if($fullBytes > 0 && substr($packedAddress, 0, $fullBytes) !== substr($packedNetwork, 0, $fullBytes)) return false;
+		if($remainingBits === 0) return true;
+
+		$mask = (0xff << (8 - $remainingBits)) & 0xff;
+
+		return (ord($packedAddress[$fullBytes]) & $mask) === (ord($packedNetwork[$fullBytes]) & $mask);
 	}
 	/**
 	 * Current User Agent
