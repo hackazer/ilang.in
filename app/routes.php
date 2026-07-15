@@ -497,6 +497,7 @@ Gem::group('/crons', function(){
     Gem::get('/data/{id}', 'Cron@data')->name('crons.data');
     Gem::get('/urls/{id}', 'Cron@urls')->name('crons.urls');
     Gem::get('/remind/{days}/{id}', 'Cron@remind')->name('crons.remind');
+    Gem::get('/nowpayments/{id}', 'Cron@nowpayments')->name('crons.nowpayments');
 });
 
 Gem::get('/q', 'Link@quick')->name('quick');

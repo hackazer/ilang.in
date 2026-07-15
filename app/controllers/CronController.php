@@ -23,9 +23,34 @@ use Core\Response;
 use Core\DB;
 use Models\User;
 use Helpers\Emails;
+use Helpers\Payments\Nowpayments\Client as NowPaymentsClient;
+use Helpers\Payments\Nowpayments\Credentials as NowPaymentsCredentials;
+use Helpers\Payments\Nowpayments\CurlTransport as NowPaymentsTransport;
+use Helpers\Payments\Nowpayments\Reconciler as NowPaymentsReconciler;
 
 class Cron {
     use Traits\Links;
+
+    public function nowpayments(string $token){
+        if(!hash_equals(md5('nowpayments'.AuthToken), $token)) return null;
+
+        $stored = config('nowpayments');
+        if(!$stored || empty($stored->enabled) || empty($stored->reconciliation_enabled)) return null;
+
+        try {
+            $settings = NowPaymentsCredentials::runtime($stored, static fn(string $secret): string => Helper::decrypt($secret));
+            $client = new NowPaymentsClient(
+                new NowPaymentsTransport(),
+                (string) ($settings['api_key'] ?? ''),
+                ($settings['environment'] ?? 'sandbox') === 'production' ? NowPaymentsClient::PRODUCTION_URL : NowPaymentsClient::SANDBOX_URL
+            );
+            $result = (new NowPaymentsReconciler($client, $settings))->run(50);
+            GemError::channel('Cron.nowpayments');
+            GemError::toChannel('Cron.nowpayments', json_encode($result));
+        } catch(\Throwable $exception) {
+            GemError::log('NOWPayments reconciliation failed: '.$exception::class);
+        }
+    }
 
     /**
      * Check User Cron Jobs
@@ -177,4 +202,3 @@ class Cron {
         GemError::toChannel('Cron.reminded', $i > 0 ? "{$i} users were reminded.": "Nothing to report.");
     }
 }
-

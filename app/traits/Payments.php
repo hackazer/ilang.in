@@ -125,7 +125,7 @@ trait Payments {
 				'createplan' => null,
 				'updateplan' => null,
 				'syncplan' => null,
-				'cancel' => null,
+				'cancel' => [NowPayments::class, 'cancel'],
 				'createcoupon' => null,
 				'createtax' => null
 			]

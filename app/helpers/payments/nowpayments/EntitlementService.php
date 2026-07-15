@@ -42,7 +42,7 @@ final class EntitlementService
         }
 
         $expiry = self::expiry((string) $transaction->term, $user->expiration ? (string) $user->expiration : null);
-        $providerId = (string) $transaction->provider_payment_id;
+        $providerId = (string) ($transaction->provider_payment_id ?: $transaction->provider_subscription_id);
 
         $payment = DB::payment()->where('tid', $providerId)->first();
 

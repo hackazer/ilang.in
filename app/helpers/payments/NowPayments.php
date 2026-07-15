@@ -20,6 +20,7 @@ use Helpers\Payments\Nowpayments\Pricing;
 use Helpers\Payments\Nowpayments\Readiness;
 use Helpers\Payments\Nowpayments\EntitlementService;
 use Helpers\Payments\Nowpayments\WebhookService;
+use Helpers\Payments\Nowpayments\SubscriptionService;
 
 final class NowPayments
 {
@@ -309,7 +310,82 @@ final class NowPayments
 
     private static function createRecurring(Request $request, int $id, string $type, string $mode, array $settings): mixed
     {
-        return Helper::redirect()->back()->with('warning', e('This recurring crypto mode is not ready for enrollment yet. No payment was created.'));
+        if ($type === 'lifetime') {
+            return Helper::redirect()->back()->with('warning', e('Lifetime plans use prepaid crypto because they do not renew.'));
+        }
+
+        if (trim((string) ($settings['dashboard_email'] ?? '')) === '' || trim((string) ($settings['dashboard_password'] ?? '')) === '') {
+            return Helper::redirect()->back()->with('danger', e('Recurring NOWPayments credentials are incomplete. No enrollment was created.'));
+        }
+
+        if ($mode === 'custodial') {
+            $settings['callback_url'] = route('webhook.nowpayments');
+
+            if (!self::checked($settings['custodial_enabled'] ?? '0') || !Readiness::custodial($settings)->ready()) {
+                return Helper::redirect()->back()->with('danger', e('Custodial automatic renewal is not ready. No enrollment was created.'));
+            }
+        }
+
+        if (!$plan = DB::plans()->where('id', $id)->where('status', 1)->first()) {
+            return Helper::redirect()->back()->with('danger', e('The selected plan is unavailable.'));
+        }
+
+        try {
+            $pricing = Pricing::forPlan($plan, $type, self::coupon($request), self::tax($request));
+            $attemptId = preg_match('/^[a-f0-9]{32}$/', (string) $request->nowpayments_attempt)
+                ? (string) $request->nowpayments_attempt
+                : bin2hex(random_bytes(16));
+            $client = new Client(
+                new CurlTransport(),
+                (string) $settings['api_key'],
+                ($settings['environment'] ?? 'sandbox') === 'production' ? Client::PRODUCTION_URL : Client::SANDBOX_URL
+            );
+            (new SubscriptionService($client))->enroll(Auth::user(), $plan, $type, $mode, $pricing, $settings, $attemptId);
+
+            $message = $mode === 'email'
+                ? e('Crypto renewal enrollment created. Check your email for the NOWPayments payment link.')
+                : e('Custodial automatic renewal enrollment created. Fund the linked custody balance before the due date.');
+
+            return Helper::redirect()->to(route('dashboard'))->with('success', $message);
+        } catch (\Throwable $exception) {
+            \GemError::log('NOWPayments recurring enrollment failed: '.$exception::class);
+
+            return Helper::redirect()->back()->with('danger', e('The recurring crypto enrollment could not be created.'));
+        }
+    }
+
+    public static function cancel(object $user, object $subscription): bool
+    {
+        $data = json_decode((string) $subscription->data);
+
+        if (!isset($data->paymentmethod) || $data->paymentmethod !== 'nowpayments' || empty($data->provider_subscription_id)) {
+            return false;
+        }
+
+        $settings = self::runtimeSettings();
+
+        try {
+            $client = new Client(new CurlTransport(), (string) $settings['api_key'], ($settings['environment'] ?? 'sandbox') === 'production' ? Client::PRODUCTION_URL : Client::SANDBOX_URL);
+            $auth = $client->authenticate((string) $settings['dashboard_email'], (string) $settings['dashboard_password']);
+            $jwt = (string) ($auth['token'] ?? $auth['result']['token'] ?? '');
+
+            if ($jwt === '') return false;
+
+            $client->cancelSubscription((string) $data->provider_subscription_id, $jwt);
+            $subscription->status = 'Canceled';
+            $subscription->save();
+            DB::table('nowpayments_transactions')->where('provider_subscription_id', (string) $data->provider_subscription_id)->update([
+                'status' => 'canceled',
+                'provider_status' => 'canceled',
+                'next_retry_at' => null,
+                'updated_at' => Helper::dtime(),
+            ]);
+
+            return true;
+        } catch (\Throwable $exception) {
+            \GemError::log('NOWPayments cancellation failed: '.$exception::class);
+            return false;
+        }
     }
 
     private static function coupon(Request $request): ?object

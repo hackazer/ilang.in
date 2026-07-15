@@ -19,11 +19,23 @@ final class WebhookService
             return new WebhookResult(401, 'invalid_signature');
         }
 
+        return $this->process($payload);
+    }
+
+    public function handleTrusted(array $payload): WebhookResult
+    {
+        return $this->process($payload);
+    }
+
+    private function process(array $payload): WebhookResult
+    {
+
         $providerId = trim((string) ($payload['payment_id'] ?? ''));
+        $subscriptionId = trim((string) ($payload['subscription_id'] ?? ''));
         $orderId = trim((string) ($payload['order_id'] ?? ''));
         $providerStatus = trim((string) ($payload['payment_status'] ?? $payload['status'] ?? ''));
 
-        if (($providerId === '' && $orderId === '') || $providerStatus === '') {
+        if (($providerId === '' && $subscriptionId === '' && $orderId === '') || $providerStatus === '') {
             return new WebhookResult(422, 'invalid_payload');
         }
 
@@ -36,7 +48,7 @@ final class WebhookService
         $pdo->beginTransaction();
 
         try {
-            $transactionId = $this->lockTransaction($pdo, $providerId, $orderId);
+            $transactionId = $this->lockTransaction($pdo, $providerId, $subscriptionId, $orderId);
 
             if ($event = DB::table('nowpayments_events')->where('payload_hash', $hash)->first()) {
                 $pdo->commit();
@@ -104,13 +116,23 @@ final class WebhookService
         }
     }
 
-    private function lockTransaction(\PDO $pdo, string $providerId, string $orderId): ?int
+    private function lockTransaction(\PDO $pdo, string $providerId, string $subscriptionId, string $orderId): ?int
     {
         $table = DBprefix.'nowpayments_transactions';
 
         if ($providerId !== '') {
             $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_payment_id` = ? FOR UPDATE");
             $statement->execute([$providerId]);
+            $id = $statement->fetchColumn();
+
+            if ($id !== false) {
+                return (int) $id;
+            }
+        }
+
+        if ($subscriptionId !== '') {
+            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_subscription_id` = ? FOR UPDATE");
+            $statement->execute([$subscriptionId]);
             $id = $statement->fetchColumn();
 
             if ($id !== false) {
@@ -136,6 +158,10 @@ final class WebhookService
         }
 
         if (isset($payload['payment_id']) && (string) $payload['payment_id'] !== (string) $transaction->provider_payment_id) {
+            return false;
+        }
+
+        if (isset($payload['subscription_id']) && (string) $payload['subscription_id'] !== (string) $transaction->provider_subscription_id) {
             return false;
         }
 
@@ -172,7 +198,7 @@ final class WebhookService
     private static function sanitizedPayload(array $payload): array
     {
         return array_intersect_key($payload, array_flip([
-            'payment_id', 'payment_status', 'status', 'order_id', 'price_amount', 'price_currency',
+            'payment_id', 'subscription_id', 'payment_status', 'status', 'order_id', 'price_amount', 'price_currency',
             'pay_amount', 'pay_currency', 'actually_paid', 'amount_received', 'outcome_amount',
             'outcome_currency', 'purchase_id', 'parent_payment_id', 'updated_at', 'created_at',
         ]));
