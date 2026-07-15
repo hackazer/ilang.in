@@ -1,0 +1,45 @@
+name: PHP quality
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.5']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, fileinfo, gd, intl, mbstring, mysqli, pdo_mysql
+          coverage: none
+          tools: composer:2.10.2
+
+      - name: Validate Composer metadata
+        run: composer validate --strict --no-interaction
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit dependencies
+        run: composer audit --abandoned=fail --no-interaction
+
+      - name: Run tests
+        run: composer test
+
+      - name: Lint first-party PHP
+        run: composer lint
