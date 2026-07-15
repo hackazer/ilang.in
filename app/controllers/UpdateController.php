@@ -20,6 +20,7 @@ use Core\Request;
 use Core\View;
 use Core\Helper;
 use Core\DB;
+use Helpers\Payments\Nowpayments\Migrations as NowPaymentsMigrations;
 
 class Update {
     /**
@@ -148,6 +149,8 @@ class Update {
             $this->update64();
 
             $this->update65();
+
+            $this->updateNowPayments();
             
             $this->updateversion();
             
@@ -161,6 +164,12 @@ class Update {
         }
 
         return \Core\Helper::redirect()->to(route('home'))->with('success', 'Updated was successfully completed.');
+    }
+
+    private function updateNowPayments(): void
+    {
+        NowPaymentsMigrations::up();
+        NowPaymentsMigrations::ensureSettings();
     }
     /**
      * Update to 6.5

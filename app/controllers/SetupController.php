@@ -19,6 +19,7 @@
 use Core\Request;
 use Core\DB;
 use Core\Helper;
+use Helpers\Payments\Nowpayments\Migrations as NowPaymentsMigrations;
 
 class Setup {
 
@@ -772,6 +773,8 @@ class Setup {
             $table->text('var');
         });
 
+        NowPaymentsMigrations::up();
+
         DB::schema('taxrates', function($table){            
             $table->charset("utf8mb4");
             $table->increment('id');
@@ -784,6 +787,8 @@ class Setup {
         }); 
 
         $settings = ['url' => '','title' => '','description' => '','api' => '1','user' => '1','sharing' => '1','geotarget' => '1','adult' => '1','maintenance' => '0','keywords' => '','theme' => 'default','apikey' => '','ads' => '1','captcha' => '0','ad728' => '','ad468' => '','ad300' => '','frame' => '0','facebook' => '','twitter' => '','email' => '','fb_connect' => '0','analytic' => '','private' => '0','facebook_app_id' => '','facebook_secret' => '','twitter_key' => '','twitter_secret' => '','safe_browsing' => '','captcha_public' => '','captcha_private' => '','tw_connect' => '0','multiple_domains' => '0','domain_names' => '','tracking' => '1','update_notification' => '1','default_lang' => '','user_activate' => '0','domain_blacklist' => '','keyword_blacklist' => '','user_history' => '0','pro_yearly' => '','show_media' => '0','pro_monthly' => '','paypal_email' => '','logo' => '','timer' => '','smtp' => '','style' => '','font' => '','currency' => 'USD','news' => '<strong>Installation successful</strong> Please go to the admin panel to configure important settings including this message!','gl_connect' => '0','require_registration' => '0','phish_api' => '','phish_username' => '','aliases' => '','pro' => '0','google_cid' => '','google_cs' => '','public_dir' => '0','devicetarget' => '1','homepage_stats' => '1','home_redir' => '','detectadblock' => '0','timezone' => '','freeurls' => '10','allowdelete' => '1','serverip' => '','favicon' => '','advanced' => '0','purchasecode' => '','alias_length' => '5','theme_config' => '{"homeheader":"","homedescription":"","homestyle":"dark"}','schemes' => 'https,ftp,http','email.activated' => '<p><b>Hello</b></p><p>Your account has been successfully activated at {site.title}.</p>','email.activation' => '<p><b>Hello!</b></p><p>You have been successfully registered at {site.title}. To login you will have to activate your account by clicking the URL below.</p><p><a href="{user.activation}" target="_blank">{user.activation}</a></p>','email.registration' => '<p><b>Hello!</b></p><p>You have been successfully registered at {site.title}. You can now login to our site at <a href="{site.link}" target="_blank">{site.link}</a>.</p>','email.reset' => '<p><b>A request to reset your password was made.</b> If you <b>didn\'t</b> make this request, please ignore and delete this email otherwise click the link below to reset your password.</p>\r\n		      <b><div style="text-align: center;"><b><a href="{user.activation}" class="link">Click here to reset your password.</a></b></div></b></p><p>\r\n		      <p>If you cannot click on the link above, simply copy &amp; paste the following link into your browser.</p>\r\n		      <p><a href="{user.activation}" target="_blank">{user.activation}</a></p>\r\n		      <p><b>Note: This link is only valid for one day. If it expires, you can request another one.</b></p>','email.invitation' => '<p><b>Hello!</b></p><p>You have been invited to join our team at {site.title}. To accept the invitation, please click the link below.</p><p><a href="{user.invite}" target="_blank">{user.invite}</a></p>','blog' => '1','root_domain' => '1','slackclientid' => '','slacksecretid' => '','slackcommand' => '','slacksigningsecret' => '','contact' => '1','report' => '1','customheader' => '','customfooter' => '','saleszapier' => '','pppublic' => '','ppprivate' => '','manualapproval' => '0','version' => $this->version,'faqcategories' => '{}','invoice' => '{"header":"","footer":""}','virustotal' => '{"key":"","limit":"2"}','affiliate' => '{"enabled":"0","rate":"30","payout":"10","terms":"terms of affiliate"}','paypal' => '{"enabled":"0","email":""}','testimonials' => '[]', 'cookieconsent' => '{"enabled":"0","message":"", "link":""}', 'plugins' => '{}', 'sociallinks' => '{"instagram":"","linkedin":""}', 'deepl' => ['enabled' => 0, 'key' => '', 'limit' => '']];
+
+        $settings['nowpayments'] = json_encode(NowPaymentsMigrations::defaultSettings(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
         foreach($settings as $config => $var){
             $query = DB::settings()->create();
