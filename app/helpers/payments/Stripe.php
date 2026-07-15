@@ -451,49 +451,62 @@ class Stripe{
 	 * @return void
 	 */
 	public static function webhook($request){
+		if(!$request || !method_exists($request, 'isPost') || !$request->isPost()){
+			if(!headers_sent()) header('Allow: POST');
+			http_response_code(405);
+			return null;
+		}
 
 		if(!config('stripe') || !config('stripe')->enabled || !config('stripe')->public || !config('stripe')->secret) {
             
             \GemError::log('Payment system "Stripe" not enabled or configured.');
 
+			http_response_code(503);
             return null;
         }
 
-		$stripe = new \Stripe\StripeClient(config('stripe')->secret);
+		$stripeConfig = config('stripe');
 
-		$payload = @file_get_contents("php://input");
+		if(empty($stripeConfig->sig)){
+			\GemError::log('Stripe Webhook: signing secret is not configured.');
+			http_response_code(503);
+			return null;
+		}
+
+		$payload = method_exists($request, 'getBody') ? $request->getBody() : file_get_contents("php://input");
 
 		if(!$payload || empty($payload)) {
 			http_response_code(400);
-			exit;
+			return null;
 		}
 
-		if(!empty(config('stripe')->sig)){
-			$sig_header = $_SERVER["HTTP_STRIPE_SIGNATURE"];
-			$event = null;			
-			try {
-			  $event = \Stripe\Webhook::constructEvent(
-			    $payload, $sig_header, config('stripe')->sig
-			  );
-			} catch(\UnexpectedValueException $e) {
-			  // Invalid payload
-				\GemError::log('Stripe Webhook: '.$e->getMessage());
-				http_response_code(400);
-				exit();
-			} catch(\Stripe\Error\SignatureVerification $e) {
-			  // Invalid signature				
-				\GemError::log('Stripe Webhook: '.$e->getMessage());
-				http_response_code(400);
-				exit();
-			}			
+		$signature = method_exists($request, 'serverString')
+			? $request->serverString('HTTP_STRIPE_SIGNATURE')
+			: (string) ($_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '');
+
+		try {
+			$e = self::verifiedWebhookEvent($payload, $signature, (string) $stripeConfig->sig);
+			$identity = self::webhookIdentity($e);
+		} catch(\Stripe\Exception\SignatureVerificationException $exception) {
+			\GemError::log('Stripe Webhook: signature verification failed.');
+			http_response_code(400);
+			return null;
+		} catch(\UnexpectedValueException $exception) {
+			\GemError::log('Stripe Webhook: invalid payload.');
+			http_response_code(400);
+			return null;
 		}
-		
-		$e = json_decode($payload);
+
 		$ey = $e->data->object;
 
 		$ey->paymentmethod = "Stripe";
 
-		if($ey->object == "charge"){	
+		if($ey->object == "charge"){
+
+			if(self::webhookAlreadyProcessed($identity['event_id'], $identity['object_id'])){
+				http_response_code(200);
+				return null;
+			}
 
 			if(!$user = DB::user()->where("customerid", $ey->customer)->first()) return print("User does not exist");
 
@@ -516,8 +529,8 @@ class Stripe{
 
 				$payment = DB::payment()->create();
 	    		$payment->date = Helper::dtime('now');
-	    		$payment->cid = $ey->id;
-	    		$payment->tid = Helper::rand(16);
+				$payment->cid = $identity['object_id'];
+				$payment->tid = $identity['event_id'];
 	    		$payment->amount =  $ey->amount / 100;
 	    		$payment->userid =  $user->id;
 	    		$payment->status = "Completed";
@@ -544,8 +557,8 @@ class Stripe{
 			}elseif ($ey->status == "failed") {
 				$payment = DB::payment()->create();
 				$payment->date = Helper::dtime('now');
-				$payment->cid = $ey->id;
-				$payment->tid = Helper::rand(16);
+				$payment->cid = $identity['object_id'];
+				$payment->tid = $identity['event_id'];
 				$payment->amount =  $ey->amount / 100;
 				$payment->userid =  $user->id;
 				$payment->status = "Failed";
@@ -592,6 +605,51 @@ class Stripe{
 			}
 		}
 		http_response_code(200);
+	}
+
+	/**
+	 * Verify and parse a Stripe webhook event.
+	 *
+	 * @throws \UnexpectedValueException
+	 * @throws \Stripe\Exception\SignatureVerificationException
+	 */
+	public static function verifiedWebhookEvent(string $payload, string $signature, string $signingSecret): \Stripe\Event{
+		if(trim($signingSecret) === ''){
+			throw new \UnexpectedValueException('Stripe webhook signing secret is not configured.');
+		}
+
+		if(trim($payload) === ''){
+			throw new \UnexpectedValueException('Stripe webhook payload is empty.');
+		}
+
+		return \Stripe\Webhook::constructEvent($payload, $signature, $signingSecret);
+	}
+
+	/**
+	 * Return the provider identifiers used to deduplicate a webhook.
+	 *
+	 * @return array{event_id:string, object_id:string}
+	 */
+	public static function webhookIdentity(\Stripe\Event $event): array{
+		$eventId = trim((string) ($event->id ?? ''));
+		$objectId = trim((string) ($event->data->object->id ?? ''));
+
+		if($eventId === '' || $objectId === ''){
+			throw new \UnexpectedValueException('Stripe webhook provider identifiers are missing.');
+		}
+
+		return ['event_id' => $eventId, 'object_id' => $objectId];
+	}
+
+	/**
+	 * Check both the Stripe event and contained object before applying entitlement.
+	 */
+	public static function webhookAlreadyProcessed(string $eventId, string $objectId, ?callable $lookup = null): bool{
+		$lookup ??= static function(string $column, string $value): bool{
+			return (bool) DB::payment()->where($column, $value)->first();
+		};
+
+		return $lookup('tid', $eventId) || $lookup('cid', $objectId);
 	}
 	/**
 	 * Create Plan
