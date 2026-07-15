@@ -19,7 +19,7 @@ This living ExecPlan coordinates the PHP modernization, security and performance
 - [x] Write and self-review the design specification.
 - [x] Create and push the clean `main` baseline.
 - [x] Create `dev` from `main`.
-- [x] Execute PHP compatibility plan.
+- [ ] Execute PHP compatibility plan.
 - [ ] Execute security and performance plan.
 - [ ] Execute NOWPayments plan.
 - [ ] Run final verification and review.
