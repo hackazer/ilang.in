@@ -696,9 +696,64 @@ trait Links {
 
     }
     /**
+     * Build a cache key that cannot leak a previous calendar month's count.
+     */
+    public static function monthlyClickQuotaKey(int|string $userId, ?\DateTimeInterface $now = null): string {
+        $now ??= new \DateTimeImmutable('now');
+
+        return 'monthlyclicks.'.$userId.'.'.$now->format('Ym');
+    }
+
+    /**
+     * Run an accepted-click mutation only when the monthly quota allows it.
+     */
+    public static function applyMonthlyClickQuota(
+        int|string $userId,
+        int $limit,
+        callable $countLoader,
+        callable $accept,
+        ?callable $cacheReader = null,
+        ?callable $cacheWriter = null,
+        ?callable $cacheInvalidator = null,
+        ?\DateTimeInterface $now = null
+    ): bool {
+        if($limit <= 0){
+            $accept();
+
+            return true;
+        }
+
+        $key = self::monthlyClickQuotaKey($userId, $now);
+        $cacheReader ??= static fn(string $cacheKey): mixed => Helper::cacheGet($cacheKey);
+        $cacheWriter ??= static fn(string $cacheKey, int $count, int $ttl): mixed => Helper::cacheSet($cacheKey, $count, $ttl);
+        $cacheInvalidator ??= static function(string $cacheKey): void {
+            if(defined('CACHE') && CACHE === true){
+                Helper::cacheDelete($cacheKey);
+            }
+        };
+
+        $count = $cacheReader($key);
+
+        if($count === null){
+            $count = (int) $countLoader();
+            $cacheWriter($key, $count, 60 * 60 * 24);
+        }
+
+        if((int) $count >= $limit) return false;
+
+        try {
+            $accept();
+        } finally {
+            $cacheInvalidator($key);
+        }
+
+        return true;
+    }
+
+    /**
      * Update Statistics
      *
-     * @author GemPixel <https://gempixel.com> 
+     * @author GemPixel <https://gempixel.com>
      * @version 6.4
      * @param \Core\Request $request
      * @param object $url
@@ -708,32 +763,44 @@ trait Links {
     private function updateStats($request, $url, $user){
 
 		// Prevents Bots
-		if(\Helpers\App::bot()) return false;    
+		if(\Helpers\App::bot()) return false;
 
         if(\Core\Auth::logged() && ($url->userid == \Core\Auth::id() || \Core\Auth::user()->admin)) return false;
 
         // @group Plugin
         if(\Core\Plugin::dispatch('link.update.stats', $url) === false) return false;
 
-        $url->click++;
-        $url->save();
-        
 		// Check user visited recently
 		if($request->cookie("short_{$url->id}")) return false;
 
-		// Check Limit	
+		// Check Limit before changing URL totals or analytics rows.
 		if($url->userid && $user){
-            
-            $count = Helper::cacheGet('monthlyclicks'.$user->id);
-
-			if($count === null){
-                $count = DB::stats()->whereRaw("MONTH(date) = MONTH(NOW()) AND YEAR(date) = YEAR(NOW()) AND urluserid = ?", $url->userid)->count();
-                Helper::cacheSet('monthlyclicks'.$user->id, $count, 60*60*24);
-            }
-
 			$plan = DB::plans()->where('id', $user->planid)->first();
-			if($plan && $plan->numclicks > 0 && $count >= $plan->numclicks) return false;
+            $limit = $plan ? (int) $plan->numclicks : 0;
+            $now = new \DateTimeImmutable('now');
+
+            if(!self::applyMonthlyClickQuota(
+                $user->id,
+                $limit,
+                static fn(): int => DB::stats()
+                    ->whereRaw("MONTH(date) = MONTH(NOW()) AND YEAR(date) = YEAR(NOW()) AND urluserid = ?", $url->userid)
+                    ->count(),
+                fn(): mixed => $this->recordAcceptedClick($request, $url, $user),
+                now: $now
+            )) return false;
+
+            return;
 		}
+
+        $this->recordAcceptedClick($request, $url, $user);
+    }
+
+    /**
+     * Persist an accepted click without changing redirect behavior.
+     */
+    private function recordAcceptedClick($request, $url, $user){
+        $url->click++;
+        $url->save();
 
 		// Update clicks
         $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
@@ -742,7 +809,7 @@ trait Links {
 		if(!DB::stats()->where("urlid", $url->id)->where("ip", $request->ip())->first()){
             $url->uniqueclick++;
             $url->save();
-		}		
+		}
 
         if(config("tracking") != "1" && $url->userid == "0") return false;
 
@@ -753,13 +820,13 @@ trait Links {
                 $domain = $domain["scheme"]."://".$domain["host"];
             }else{
                 $domain = "";
-            }            
-            $referer = $request->referer();            
+            }
+            $referer = $request->referer();
         }else{
             $referer = "direct";
             $domain = "";
         }
-        
+
         $stats = DB::stats()->create();
 
         $stats->short = $url->alias.$url->custom;
@@ -768,7 +835,7 @@ trait Links {
         $stats->date = Helper::dtime();
 
         $location = $request->country();
-        
+
         $stats->country = $location['country'];
         $stats->city = $location['city'];
 
@@ -777,7 +844,7 @@ trait Links {
         $stats->ip = $request->ip();
         $stats->os = $request->device();
         $stats->browser = $request->browser();
-        $stats->language = substr($request->server('http_accept_language'), 0, 2);
+        $stats->language = substr($request->server('http_accept_language') ?? '', 0, 2);
         $stats->save();
 
         if($user && !empty($user->zapview) && Helper::isURL($user->zapview)){
@@ -790,7 +857,7 @@ trait Links {
                             "city"      => $stats->city,
                             "referer" 	=> $stats->referer,
                             "os" 		=> $stats->os,
-                            "browser" 	=> $stats->browser,							
+                            "browser" 	=> $stats->browser,
                             "date" 		=> Helper::dtime()
                         ])->post();
         }
