@@ -23,6 +23,7 @@ namespace Core;
 
 use Core\Helper;
 use GemError;
+use Helpers\OutboundUrl;
 
 final class Http {
 	/**
@@ -42,12 +43,15 @@ final class Http {
 	private $_HTTPCURLPARAMS = [];
 
 	/**
-	 * CURL SSL
-	 *
-	 * @author GemPixel <https://gempixel.com> 
-	 * @version 6.0
+	 * Permit private network destinations for framework-owned internal calls.
+	 * User-controlled URLs must never enable this option.
+	 * @var bool
 	 */
-	private $_HTTPCURLSSL = true;
+	private $_HTTPAllowPrivateNetwork = false;
+	/** @var string */
+	private $_HTTPResponseBody = '';
+	/** @var bool */
+	private $_HTTPResponseLimitExceeded = false;
 	/**
 	 * Build Http Request
 	 * @author GemPixel <https://gempixel.com>
@@ -78,6 +82,13 @@ final class Http {
 	 */
 	public static function url(?string $url = null){
 		return new self($url);
+	}
+	/**
+	 * Explicitly permit a framework-owned request to reach a private network.
+	 */
+	public function allowPrivateNetwork(bool $allow = true){
+		$this->_HTTPAllowPrivateNetwork = $allow;
+		return $this;
 	}
 	/**
 	 * Get Request Body
@@ -169,20 +180,18 @@ final class Http {
 	 */
 	public function get($options = []){
 
-			if(isset($this->_HTTPCURLPARAMS["body"]) && !empty($this->_HTTPCURLPARAMS["body"])){
+		if(isset($this->_HTTPCURLPARAMS["body"]) && !empty($this->_HTTPCURLPARAMS["body"])){
 				
-				$this->_HTTPURL .= strpos($this->_HTTPURL, "?") ? "&" : "?";
+			$this->_HTTPURL .= strpos($this->_HTTPURL, "?") ? "&" : "?";
 
-				if(is_array($this->_HTTPCURLPARAMS["body"])){
-					$this->_HTTPURL .= http_build_query($this->_HTTPCURLPARAMS["body"]);
-				} else{
-					$this->_HTTPURL .= $this->_HTTPCURLPARAMS["body"];
-				}
+			if(is_array($this->_HTTPCURLPARAMS["body"])){
+				$this->_HTTPURL .= http_build_query($this->_HTTPCURLPARAMS["body"]);
+			} else{
+				$this->_HTTPURL .= $this->_HTTPCURLPARAMS["body"];
 			}
+		}
 
-			$curl = curl_init($this->_HTTPURL);
-
-			if(defined('DEBUG') && DEBUG || $this->_HTTPCURLSSL == false) curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		$curl = $this->prepareRequest($options);
 
 			if(isset($this->_HTTPCURLPARAMS["headers"])){
 				$headers = [];
@@ -196,26 +205,10 @@ final class Http {
 				curl_setopt($curl, CURLOPT_USERPWD, $this->_HTTPCURLPARAMS["auth"]);  
 			}
 
-			if(isset($options['timeout'])){
-				curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); 
-				curl_setopt($curl, CURLOPT_TIMEOUT, $options['timeout']);
-			}
-			
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-			
-			$response = curl_exec($curl);
-
-			$this->_HTTPCURLRESPONSE = curl_getinfo($curl);
-			$this->_HTTPCURLRESPONSE["curlbody"] = $response;
-
-			if($error = curl_error($curl)){
-				GemError::log($error);
-			}
-
-				unset($curl);
-			return $this;
+		$this->executeRequest($curl);
+		return $this;
 	}
-		/**
+	/**
 	 * Send a POST request
 	 * @author GemPixel <https://gempixel.com>
 	 * @version 1.0
@@ -223,9 +216,7 @@ final class Http {
 	 * @return  [type]          [description]
 	 */
 	public function post($options = []){    	
-			$curl = curl_init($this->_HTTPURL);
-
-			if(defined('DEBUG') && DEBUG || $this->_HTTPCURLSSL == false) curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		$curl = $this->prepareRequest($options);
 
 			if(isset($options["method"]) && in_array($options["method"], ["put", "patch", "delete"])){
 				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($options["method"]));
@@ -243,12 +234,7 @@ final class Http {
 				curl_setopt($curl, CURLOPT_USERPWD, $this->_HTTPCURLPARAMS["auth"]);  
 			}
 
-			if(isset($options['timeout'])){
-				curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); 
-				curl_setopt($curl, CURLOPT_TIMEOUT, $options['timeout']);
-			}
-				
-			curl_setopt($curl, CURLOPT_POST, 1);
+		curl_setopt($curl, CURLOPT_POST, 1);
 
 			if(isset($this->_HTTPCURLPARAMS["body"]) && !empty($this->_HTTPCURLPARAMS["body"])){  		
 				if(is_array($this->_HTTPCURLPARAMS["body"])){
@@ -258,20 +244,56 @@ final class Http {
 				}
 			}
 
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-			
-			$response = curl_exec($curl);
+		$this->executeRequest($curl);
+		return $this;
+	}
+	/**
+	 * Build a bounded cURL request after validating and pinning its destination.
+	 */
+	private function prepareRequest(array $options){
+		if(!class_exists(OutboundUrl::class)){
+			require_once dirname(__DIR__).'/app/helpers/OutboundUrl.php';
+		}
 
-			$this->_HTTPCURLRESPONSE = curl_getinfo($curl);
-			$this->_HTTPCURLRESPONSE["curlbody"] = $response;
+		$target = OutboundUrl::assertSafe((string) $this->_HTTPURL, $this->_HTTPAllowPrivateNetwork);
+		$timeout = isset($options['timeout']) ? (int) $options['timeout'] : OutboundUrl::DEFAULT_TOTAL_TIMEOUT;
+		$connectTimeout = isset($options['connect_timeout'])
+			? (int) $options['connect_timeout']
+			: (isset($options['timeout']) ? (int) $options['timeout'] : OutboundUrl::DEFAULT_CONNECT_TIMEOUT);
+		$curl = curl_init($this->_HTTPURL);
 
-			if($error = curl_error($curl)){
-				GemError::log($error);
-			}
+		if($curl === false) throw new \RuntimeException('Unable to initialize outbound HTTP request.');
 
-				unset($curl);
-			return $this;
-	}  
+		$this->_HTTPResponseBody = '';
+		$this->_HTTPResponseLimitExceeded = false;
+		$curlOptions = OutboundUrl::curlOptions($target, $connectTimeout, $timeout);
+		$curlOptions[CURLOPT_WRITEFUNCTION] = OutboundUrl::responseWriter(
+			$this->_HTTPResponseBody,
+			$this->_HTTPResponseLimitExceeded
+		);
+		curl_setopt_array($curl, $curlOptions);
+
+		return $curl;
+	}
+	/**
+	 * Execute a prepared request and retain the legacy response shape.
+	 */
+	private function executeRequest($curl){
+		$result = curl_exec($curl);
+		$this->_HTTPCURLRESPONSE = curl_getinfo($curl);
+		$this->_HTTPCURLRESPONSE["curlbody"] = $result === false ? false : $this->_HTTPResponseBody;
+
+		if($result === false){
+			$error = $this->_HTTPResponseLimitExceeded || curl_errno($curl) === CURLE_FILESIZE_EXCEEDED
+				? 'Outbound HTTP response exceeded the configured size limit.'
+				: curl_error($curl);
+			$this->_HTTPCURLRESPONSE['curl_error'] = $error;
+
+			if($error && class_exists(GemError::class)) GemError::log($error);
+		}
+
+		unset($curl);
+	}
 	/**
 	 * Delete Request
 	 * @author GemPixel <https://gempixel.com>
