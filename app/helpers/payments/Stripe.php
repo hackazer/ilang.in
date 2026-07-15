@@ -497,20 +497,41 @@ class Stripe{
 			return null;
 		}
 
+		if(!self::isSupportedWebhookEventType((string) ($e->type ?? ''))){
+			http_response_code(200);
+			return null;
+		}
+
 		$ey = $e->data->object;
 
 		$ey->paymentmethod = "Stripe";
 
 		if($ey->object == "charge"){
+			$pdo = DB::get_db();
+			$lockName = self::webhookLockName($identity['event_id'], $identity['object_id']);
+			self::acquireWebhookLock($pdo, $lockName);
+			$successfulPayment = null;
+
+			try {
+			$pdo->beginTransaction();
 
 			if(self::webhookAlreadyProcessed($identity['event_id'], $identity['object_id'])){
+				$pdo->commit();
 				http_response_code(200);
 				return null;
 			}
 
-			if(!$user = DB::user()->where("customerid", $ey->customer)->first()) return print("User does not exist");
+			if(!$user = DB::user()->where("customerid", $ey->customer)->first()){
+				$pdo->commit();
+				http_response_code(202);
+				return print("User does not exist");
+			}
 
 			$subscription = DB::subscription()->where('userid', $user->id)->orderByDesc('date')->first();
+
+			if(!$subscription){
+				throw new \RuntimeException('Stripe subscription context does not exist.');
+			}
 
 			if($ey->paid == true && $ey->status == "succeeded"){
 
@@ -551,7 +572,7 @@ class Stripe{
 				$user->planid = $subscription->planid;
 				$user->save();
 
-				\Core\Plugin::dispatch('payment.success', [$user, $subscription->planid, $payment->id]);
+				$successfulPayment = [$user, $subscription->planid, $payment->id()];
 	   			    		
 
 			}elseif ($ey->status == "failed") {
@@ -562,7 +583,8 @@ class Stripe{
 				$payment->amount =  $ey->amount / 100;
 				$payment->userid =  $user->id;
 				$payment->status = "Failed";
-				$payment->data =  json_encode($ey);			
+				$payment->data =  json_encode($ey);
+				$payment->save();
 				
 				if(config('smtp')->user){
 					$mailer = Email::factory('smtp', [
@@ -603,6 +625,17 @@ class Stripe{
 							}
 						]);	
 			}
+			$pdo->commit();
+			} catch (\Throwable $exception) {
+				if($pdo->inTransaction()) $pdo->rollBack();
+				throw $exception;
+			} finally {
+				self::releaseWebhookLock($pdo, $lockName);
+			}
+
+			if($successfulPayment !== null){
+				\Core\Plugin::dispatch('payment.success', $successfulPayment);
+			}
 		}
 		http_response_code(200);
 	}
@@ -639,6 +672,34 @@ class Stripe{
 		}
 
 		return ['event_id' => $eventId, 'object_id' => $objectId];
+	}
+
+	/**
+	 * Only events whose contained charge state is authoritative may mutate billing.
+	 */
+	public static function isSupportedWebhookEventType(string $eventType): bool{
+		return in_array($eventType, ['charge.succeeded', 'charge.failed'], true);
+	}
+
+	/**
+	 * MySQL advisory lock names are limited to 64 characters.
+	 */
+	public static function webhookLockName(string $eventId, string $objectId): string{
+		return 'stripe-webhook:'.substr(hash('sha256', $eventId."\0".$objectId), 0, 48);
+	}
+
+	private static function acquireWebhookLock(\PDO $pdo, string $lockName): void{
+		$statement = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+		$statement->execute(['lock_name' => $lockName]);
+
+		if((int) $statement->fetchColumn() !== 1){
+			throw new \RuntimeException('Unable to acquire Stripe webhook lock.');
+		}
+	}
+
+	private static function releaseWebhookLock(\PDO $pdo, string $lockName): void{
+		$statement = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+		$statement->execute(['lock_name' => $lockName]);
 	}
 
 	/**

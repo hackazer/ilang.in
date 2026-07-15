@@ -85,6 +85,23 @@ final class StripeWebhookTest extends TestCase
         ], $lookups);
     }
 
+    public function testOnlyChargeOutcomeEventsCanChangeBillingState(): void
+    {
+        self::assertTrue(Stripe::isSupportedWebhookEventType('charge.succeeded'));
+        self::assertTrue(Stripe::isSupportedWebhookEventType('charge.failed'));
+        self::assertFalse(Stripe::isSupportedWebhookEventType('charge.refunded'));
+        self::assertFalse(Stripe::isSupportedWebhookEventType('customer.updated'));
+    }
+
+    public function testWebhookLockNamesAreStableAndProviderScoped(): void
+    {
+        $first = Stripe::webhookLockName('evt_security_1', 'ch_security_1');
+
+        self::assertSame($first, Stripe::webhookLockName('evt_security_1', 'ch_security_1'));
+        self::assertNotSame($first, Stripe::webhookLockName('evt_security_2', 'ch_security_1'));
+        self::assertLessThanOrEqual(64, strlen($first));
+    }
+
     private function payload(): string
     {
         return json_encode([
