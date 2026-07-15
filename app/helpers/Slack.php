@@ -202,7 +202,7 @@ class Slack {
 			error_log($error);
 		}
 
-		curl_close($curl);        
+		unset($curl);
 		return json_decode($response);
   	}	
 

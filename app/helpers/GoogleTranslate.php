@@ -92,7 +92,7 @@ class GoogleTranslate
         // Execute post
         $result = curl_exec($ch);
         // Close connection
-        curl_close($ch);
+        unset($ch);
         return $result;
     }
     /**

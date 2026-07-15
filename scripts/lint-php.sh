@@ -38,4 +38,11 @@ while IFS= read -r file; do
     fi
 done < "$file_list"
 
+deprecated_curl_calls=$(grep -R -n --include='*.php' 'curl_close[[:space:]]*(' app core || true)
+
+if [ -n "$deprecated_curl_calls" ]; then
+    printf '%s\n' "$deprecated_curl_calls" >&2
+    status=1
+fi
+
 exit "$status"

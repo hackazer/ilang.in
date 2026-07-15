@@ -24,6 +24,7 @@ use Core\View;
 use Core\Plugin;
 use Core\Auth;
 use Helpers\Gate;
+use Helpers\LinkTargeting;
 use Models\User;
 
 class Link {
@@ -224,12 +225,7 @@ class Link {
 
 
 		if(!empty($url->options)){
-			$browser_language = substr($request->serverString('http_accept_language'), 0, 2);
-			if(strpos($browser_language, ' ') !== false){
-				$language = strtolower(implode(' ', explode(' ',$browser_language, -1)));
-			} else {
-				$language = strtolower($browser_language);
-			}
+			$language = LinkTargeting::browserLanguage($request);
 			
 			$options = json_decode($url->options, true);
 			if(isset($options['languages'][$language]) && $language) {
@@ -288,8 +284,8 @@ class Link {
 		}
 		
 		// Check if overlay
-		$type = is_scalar($url->type ?? null) ? (string) $url->type : '';
-		if(preg_match("~overlay-(.*)~", $type) && $overlay = DB::overlay()->where("id",  str_replace("overlay-", "", $type))->where("userid", $user->id)->first()){
+		$overlayId = LinkTargeting::overlayId($url->type ?? null);
+		if($overlayId !== null && $overlay = DB::overlay()->where("id", $overlayId)->where("userid", $user->id)->first()){
 			return Gate::overlay($url, $overlay);	
 		}	
 

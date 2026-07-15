@@ -232,7 +232,7 @@ class AutoUpdate {
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 		$response = curl_exec($curl);
-		curl_close($curl);
+		unset($curl);
 
 		return $response;
 	}  	

@@ -21,3 +21,9 @@ $facebookOAuth = $root.'/app/helpers/FacebookOAuth.php';
 if (is_file($facebookOAuth)) {
     require_once $facebookOAuth;
 }
+
+$linkTargeting = $root.'/app/helpers/LinkTargeting.php';
+
+if (is_file($linkTargeting)) {
+    require_once $linkTargeting;
+}

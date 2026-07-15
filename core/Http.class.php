@@ -212,7 +212,7 @@ final class Http {
 				GemError::log($error);
 			}
 
-			curl_close($curl);
+				unset($curl);
 			return $this;
 	}
 		/**
@@ -269,7 +269,7 @@ final class Http {
 				GemError::log($error);
 			}
 
-			curl_close($curl);
+				unset($curl);
 			return $this;
 	}  
 	/**
@@ -312,4 +312,4 @@ final class Http {
 		if(!is_null($name)) return isset($this->_HTTPCURLRESPONSE[$name]) ? $this->_HTTPCURLRESPONSE[$name] : null;
 		return $this->_HTTPCURLRESPONSE;
 	}
-}  
+}
