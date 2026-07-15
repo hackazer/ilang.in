@@ -16,7 +16,6 @@
         "phpfastcache/phpfastcache": "^8.0",
         "phpmailer/phpmailer": "^6.1",
         "setasign/fpdf": "^1.8",
-        "sonata-project/google-authenticator": "^2.3",
         "stripe/stripe-php": "^7.26"
     },
     "require-dev": {

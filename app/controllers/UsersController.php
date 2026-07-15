@@ -204,7 +204,7 @@ class Users {
 
         if(strlen($request->secret) != 6) return back()->with("danger", e("Invalid token. Please try again."));
 
-        $gAuth = new \Sonata\GoogleAuthenticator\GoogleAuthenticator();
+        $gAuth = new \Helpers\GoogleAuthenticator();
 
         if(!$gAuth->checkCode($user->secret2fa, $request->secret)) return back()->with("danger", e("Invalid token. Please try again."));
 				

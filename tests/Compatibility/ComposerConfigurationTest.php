@@ -28,6 +28,11 @@ final class ComposerConfigurationTest extends TestCase
         self::assertArrayNotHasKey('facebook/graph-sdk', $this->composer['require']);
     }
 
+    public function testAbandonedGoogleAuthenticatorIsNotRequired(): void
+    {
+        self::assertArrayNotHasKey('sonata-project/google-authenticator', $this->composer['require']);
+    }
+
     public function testPhpunitAndVerificationScriptsAreConfigured(): void
     {
         self::assertSame('^11.5', $this->composer['require-dev']['phpunit/phpunit'] ?? null);

@@ -27,3 +27,9 @@ $linkTargeting = $root.'/app/helpers/LinkTargeting.php';
 if (is_file($linkTargeting)) {
     require_once $linkTargeting;
 }
+
+$googleAuthenticator = $root.'/app/helpers/GoogleAuthenticator.php';
+
+if (is_file($googleAuthenticator)) {
+    require_once $googleAuthenticator;
+}
