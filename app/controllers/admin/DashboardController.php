@@ -24,6 +24,7 @@ use Core\Request;
 use Core\Response;
 use Core\Helper;
 use Core\Email;
+use Helpers\SafeBackup;
 use Models\User;
 
 class Dashboard {
@@ -760,21 +761,17 @@ class Dashboard {
             return back()->with('danger', e('Incorrect format or empty file. Please upload .gem file.'));
         }
 
-        if($file->ext != 'gem'){
+        if(strtolower((string) $file->ext) !== 'gem'){
             return back()->with('danger', e('Incorrect format or empty file. Please upload .gem file.'));
         }
 
-        $content = unserialize(file_get_contents($file->location));
-
-        foreach($content as $table => $data){
-
-            DB::truncate($table);
-        
-            foreach($data as $rows){
-                $record = DB::table($table)->create($rows);                
-                $record->save();
-            }
+        try {
+            $content = SafeBackup::read((string) $file->location, isset($file->size) ? (int) $file->size : null);
+            SafeBackup::restore(DB::get_db(), $content, defined('DBprefix') ? DBprefix : '');
+        } catch (\InvalidArgumentException | \RuntimeException $exception) {
+            return back()->with('danger', e('The backup file is invalid or could not be restored safely. No data was changed.'));
         }
+
         return back()->with('success', e('Data has been successfully restored.'));
     }
 
