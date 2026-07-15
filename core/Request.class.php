@@ -616,8 +616,24 @@ final class Request {
 			return FALSE;
 		}
 		}
-		setcookie($name, $value, time()+($time*60), "/", "", FALSE, TRUE);
+		setcookie($name, $value, self::cookieOptions(time()+($time*60), $this->isSecure()));
 	}	
+
+	public static function cookieOptions(int $expires, ?bool $secure = null): array {
+		if($secure === null){
+			$secure = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+				|| (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+		}
+
+		return [
+			'expires' => $expires,
+			'path' => '/',
+			'domain' => '',
+			'secure' => $secure,
+			'httponly' => true,
+			'samesite' => 'Lax',
+		];
+	}
   /**
    * Read/Write Session
    * @author GemPixel <https://gempixel.com>

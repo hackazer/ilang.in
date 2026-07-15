@@ -97,6 +97,9 @@ class Gem {
      */
     public static function preload(){
         // Start Session
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.use_only_cookies', '1');
+        session_set_cookie_params(Request::cookieOptions(0));
         session_start();
 
         foreach(appConfig('boot') as $boot){
