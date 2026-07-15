@@ -28,6 +28,38 @@ use Core\Email;
 use Models\User;
 
 class Stats {	
+	/**
+	 * Build a tenant-scoped cache key for a statistics data set.
+	 */
+	public static function cacheKey(string $metric, int|string $userId): string {
+		return 'stats.'.$metric.'.'.$userId;
+	}
+
+	/**
+	 * Read a tenant statistic from cache or populate it using the supplied loader.
+	 */
+	public static function rememberStat(
+		string $metric,
+		int|string $userId,
+		callable $loader,
+		int $ttl = 3600,
+		?callable $reader = null,
+		?callable $writer = null
+	): mixed {
+		$key = self::cacheKey($metric, $userId);
+		$reader ??= static fn(string $cacheKey): mixed => Helper::cacheGet($cacheKey);
+		$writer ??= static fn(string $cacheKey, mixed $value, int $expiry): mixed => Helper::cacheSet($cacheKey, $value, $expiry);
+
+		$value = $reader($key);
+
+		if($value !== null) return $value;
+
+		$value = $loader();
+		$writer($key, $value, $ttl);
+
+		return $value;
+	}
+
     /**
      * Stats page 
      *
@@ -85,12 +117,10 @@ class Stats {
             $response['data'][date('F', $timestamp)] = 0;
         }
         
-        $results = Helper::cacheGet('stats.chartlinks'.Auth::user()->rID());
-
-        if($results === null){
-            $results = DB::url()->selectExpr('COUNT(MONTH(date))', 'count')->selectExpr('DATE_FORMAT(date, "%Y-%m")', 'newdate')->where("userid", Auth::user()->rID())->whereRaw('(date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH))')->groupByExpr('newdate')->findArray();
-            Helper::cacheSet('chartlinks', $results,  60 * 60);
-        }
+        $userId = Auth::user()->rID();
+        $results = self::rememberStat('chartlinks', $userId, static function () use ($userId): array {
+            return DB::url()->selectExpr('COUNT(MONTH(date))', 'count')->selectExpr('DATE_FORMAT(date, "%Y-%m")', 'newdate')->where("userid", $userId)->whereRaw('(date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH))')->groupByExpr('newdate')->findArray();
+        });
 
         foreach($results as $data){
             $response['data'][Helper::dtime($data['newdate'], 'F')] = (int) $data['count'];
@@ -117,12 +147,10 @@ class Stats {
         }
         
         
-       $results = Helper::cacheGet('stats.chartclicks'.Auth::user()->rID());
-
-        if($results === null){
-            $results = DB::stats()->selectExpr('COUNT(MONTH(date))', 'count')->selectExpr('DATE_FORMAT(date, "%Y-%m")', 'newdate')->where("urluserid", Auth::user()->rID())->whereRaw('(date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH))')->groupByExpr('newdate')->findArray();
-            // Helper::cacheSet('chartclicks', $results,  60 * 60);
-        }
+        $userId = Auth::user()->rID();
+        $results = self::rememberStat('chartclicks', $userId, static function () use ($userId): array {
+            return DB::stats()->selectExpr('COUNT(MONTH(date))', 'count')->selectExpr('DATE_FORMAT(date, "%Y-%m")', 'newdate')->where("urluserid", $userId)->whereRaw('(date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH))')->groupByExpr('newdate')->findArray();
+        });
 
         foreach($results as $data){
             $response['data'][Helper::dtime($data['newdate'], 'F')] = (int) $data['count'];
@@ -140,12 +168,10 @@ class Stats {
      */
     public function clicksMap(){
 
-        $countries = Helper::cacheGet("stats.countrymaps".Auth::user()->rID());
-
-        if($countries == null){
-          $countries = DB::stats()->selectExpr('COUNT(country)', 'count')->selectExpr('country', 'country')->where("urluserid", Auth::user()->rID())->groupByExpr('country')->orderByDesc('count')->findArray();
-          Helper::cacheSet("countrymaps", $countries, 60*60);
-        }
+        $userId = Auth::user()->rID();
+        $countries = self::rememberStat('countrymaps', $userId, static function () use ($userId): array {
+          return DB::stats()->selectExpr('COUNT(country)', 'count')->selectExpr('country', 'country')->where("urluserid", $userId)->groupByExpr('country')->orderByDesc('count')->findArray();
+        });
 
         $i = 0;
         $topCountries = [];
