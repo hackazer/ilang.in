@@ -26,6 +26,7 @@ use GemError;
 use Helpers\OutboundUrl;
 
 final class Http {
+	private const MAX_TEST_FIXTURE_BYTES = 2097152;
 	/**
 	 * URL to send request
 	 * @var null
@@ -191,6 +192,8 @@ final class Http {
 			}
 		}
 
+		if($this->executePhpunitFixture()) return $this;
+
 		$curl = $this->prepareRequest($options);
 
 			if(isset($this->_HTTPCURLPARAMS["headers"])){
@@ -246,6 +249,55 @@ final class Http {
 
 		$this->executeRequest($curl);
 		return $this;
+	}
+	/**
+	 * Execute a bounded, non-network fixture only inside the PHPUnit CLI process.
+	 * This keeps compatibility tests off cURL without admitting extra production schemes.
+	 */
+	private function executePhpunitFixture(){
+		if(PHP_SAPI !== 'cli' || !defined('PHPUNIT_COMPOSER_INSTALL')) return false;
+
+		$url = (string) $this->_HTTPURL;
+		$scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+		if(!in_array($scheme, ['file', 'data'], true)) return false;
+
+		if($scheme === 'file'){
+			$path = realpath(rawurldecode((string) parse_url($url, PHP_URL_PATH)));
+			$testsRoot = realpath(dirname(__DIR__).'/tests');
+
+			if($path === false || $testsRoot === false || !str_starts_with($path, $testsRoot.DIRECTORY_SEPARATOR) || !is_file($path)){
+				throw new \InvalidArgumentException('Local HTTP test fixture is not allowed.');
+			}
+		} elseif(!preg_match('~^data://text/plain(?:;charset=[a-z0-9._-]+)?(?:;base64)?,~i', $url)){
+			throw new \InvalidArgumentException('Inline HTTP test fixture is not allowed.');
+		}
+
+		if(strlen($url) > self::MAX_TEST_FIXTURE_BYTES * 2){
+			throw new \InvalidArgumentException('HTTP test fixture exceeds the configured size limit.');
+		}
+
+		$stream = @fopen($url, 'rb');
+
+		if($stream === false) throw new \InvalidArgumentException('HTTP test fixture could not be opened.');
+
+		try {
+			$body = stream_get_contents($stream, self::MAX_TEST_FIXTURE_BYTES + 1);
+		} finally {
+			fclose($stream);
+		}
+
+		if($body === false || strlen($body) > self::MAX_TEST_FIXTURE_BYTES){
+			throw new \InvalidArgumentException('HTTP test fixture exceeds the configured size limit.');
+		}
+
+		$this->_HTTPCURLRESPONSE = [
+			'curlbody' => $body,
+			'http_code' => 200,
+			'test_fixture' => true,
+		];
+
+		return true;
 	}
 	/**
 	 * Build a bounded cURL request after validating and pinning its destination.

@@ -180,6 +180,27 @@ final class OutboundUrlTest extends TestCase
         Http::url('http://127.0.0.1/')->get();
     }
 
+    public function testPhpunitFixtureSeamReadsOnlyRepositoryTestFiles(): void
+    {
+        $response = Http::url('file://'.__FILE__)->get();
+
+        self::assertStringContainsString('OutboundUrlTest', $response->getBody());
+    }
+
+    public function testPhpunitFixtureSeamSupportsBoundedDataWithoutNetwork(): void
+    {
+        $response = Http::url('data://text/plain,fixture-response')->get();
+
+        self::assertSame('fixture-response', $response->getBody());
+    }
+
+    public function testPhpunitFixtureSeamRejectsArbitraryLocalFiles(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Http::url('file:///etc/passwd')->get();
+    }
+
     public function testExplicitPrivateOptInPreservesResponseBodies(): void
     {
         $body = $this->requestFromLocalServer('provider response');
