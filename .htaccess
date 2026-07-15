@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+RewriteCond %{HTTP_HOST} ^ilang\.in$ [OR]
+RewriteCond %{HTTP_HOST} ^www\.ilang\.in$
+RewriteRule ^/?$ "https\:\/\/ilang\.in\/" [R=301,L]
+RewriteCond %{HTTP_HOST} ^ilang\.masamalas\.com$
+RewriteRule ^/?$ "https\:\/\/ilang\.i\/" [R=301,L]
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# This domain inherits the “PHP” package.
+# php -- END cPanel-generated handler, do not edit

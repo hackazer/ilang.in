@@ -1,0 +1,15 @@
+{
+    "name": "Ilangin",
+    "version": "1.0",
+    "author": "KSATRIA",
+    "link": "https://ilang.in",
+    "date": "25/06/2022",
+    "settings": true,
+    "child": true,
+    "thumbnail": "",
+    "include":[
+        "class/themeSettings.php",
+        "functions.php"
+    ],
+    "assets":[]
+}

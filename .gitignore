@@ -1,0 +1,34 @@
+*.psd
+*.db
+*.log
+*.zip
+/storage/cache
+/storage/plugins
+/FILES
+/vendor
+/.vscode
+config.php
+workspace.code-workspace
+
+# Local analysis and brainstorming artifacts
+/.codegraph/
+/.superpowers/
+/.ftpquota
+
+# Runtime logs and server-generated files
+/public/error_log
+/storage/app/GeoLite2-City.mmdb
+
+# User-generated uploads. Keep directory guards in source control.
+/public/content/avatar/*
+!/public/content/avatar/index.php
+/public/content/blog/*
+!/public/content/blog/index.php
+/public/content/files/*
+!/public/content/files/index.php
+/public/content/images/*
+!/public/content/images/index.php
+/public/content/profiles/*
+!/public/content/profiles/index.php
+/public/content/qr/*
+!/public/content/qr/index.php
