@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+export LC_ALL=C
+
+file_list=$(mktemp "${TMPDIR:-/tmp}/ilang-php-lint.XXXXXX")
+trap 'rm -f "$file_list"' EXIT HUP INT TERM
+
+{
+    find app core public storage/themes -type f -name '*.php' -print
+    printf '%s\n' index.php config.sample.php
+} | sort > "$file_list"
+
+status=0
+
+while IFS= read -r file; do
+    if [ ! -f "$file" ]; then
+        printf 'Missing PHP file: %s\n' "$file" >&2
+        status=1
+        continue
+    fi
+
+    if ! output=$(php \
+        -d error_reporting=E_ALL \
+        -d display_errors=1 \
+        -d display_startup_errors=1 \
+        -d log_errors=0 \
+        -l "$file" 2>&1); then
+        printf '%s\n' "$output" >&2
+        status=1
+        continue
+    fi
+
+    printf '%s\n' "$output"
+
+    if printf '%s\n' "$output" | grep -Eq '(^|[[:space:]])(PHP )?Deprecated:'; then
+        status=1
+    fi
+done < "$file_list"
+
+exit "$status"

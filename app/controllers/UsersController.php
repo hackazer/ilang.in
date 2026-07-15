@@ -21,6 +21,7 @@ use Core\View;
 use Core\Helper;
 use Core\Auth;
 use Core\DB;
+use Helpers\FacebookOAuth;
 use Models\User;
 use Models\Plans;
 
@@ -549,45 +550,39 @@ class Users {
         
         if($request->error) return Helper::redirect()->to(route('login'))->with("danger", e("You must grant access to this application to use your facebook account."));
 
-    
-        $fb = new \Facebook\Facebook([
-            'app_id' => config("facebook_app_id"),
-            'app_secret' => config("facebook_secret"),
-            'default_graph_version' => 'v12.0',
-        ]);	
+        $oauth = new FacebookOAuth(
+            (string) config("facebook_app_id"),
+            (string) config("facebook_secret"),
+            route('login.facebook')
+        );
 
-        
-        $helper = $fb->getRedirectLoginHelper(route('login.facebook'));
+        $code = is_scalar($request->code) ? (string) $request->code : '';
+        $state = is_scalar($request->state) ? (string) $request->state : '';
+
+        if($code === '') {
+            return Helper::redirect()->to($oauth->authorizationUrl());
+        }
 
         try {
-            $accessToken = $helper->getAccessToken();
-        } catch(\Facebook\Exceptions\FacebookResponseException $e) {
-            // Graph Error
-            GemError::log('Facebook Auth: '.$e->getMessage());
-            return Helper::redirect()->to(route('login'))->with("danger", e("An error has occurred. Please try again later."));
-
-        } catch(\Facebook\Exceptions\FacebookSDKException $e) {
-            // SDK Error
+            $accessToken = $oauth->exchangeCode($code, $state);
+            $response = $oauth->user($accessToken);
+        } catch(\RuntimeException $e) {
             GemError::log('Facebook Auth: '.$e->getMessage());
             return Helper::redirect()->to(route('login'))->with("danger", e("An error has occurred. Please try again later."));
         }
 
-        if(!isset($accessToken) || empty($accessToken)) {
-            return Helper::redirect()->to($helper->getLoginUrl(route('login.facebook'), ["email"]));
-        }
-            
-        $request = $fb->get('/me?fields=id,email,name', $accessToken);
-        $response = $request->getGraphUser();
+        $email = is_scalar($response['email'] ?? null) ? (string) $response['email'] : '';
+        $facebookId = is_scalar($response['id'] ?? null) ? (string) $response['id'] : '';
 
-        if(!$response->getEmail()) return Helper::redirect()->to(route('login'))->with("danger", e("You must grant permission to this application to use your profile information."));
+        if($email === '') return Helper::redirect()->to(route('login'))->with("danger", e("You must grant permission to this application to use your profile information."));
         
         // Check if email is already taken
-        if(DB::user()->whereRaw("(auth != 'facebook' OR auth IS NULL)")->where('email', $response->getEmail())->first()){
+        if(DB::user()->whereRaw("(auth != 'facebook' OR auth IS NULL)")->where('email', $email)->first()){
             return Helper::redirect()->to(route('login'))->with("danger", e("The email linked to your account has been already used. If you have used that, please login to your existing account otherwise please contact us.")); 
         }
 
         // Let's see if the user is registered
-        if($user = DB::user()->where('auth', 'facebook')->whereAnyIs([['email' => $response->getEmail()], ['auth_id'=> $response->getId()]])->first()){
+        if($user = DB::user()->where('auth', 'facebook')->whereAnyIs([['email' => $email], ['auth_id'=> $facebookId]])->first()){
 
             // Check Auth Key: If empty generate one
             if(empty($user->auth_key)){	
@@ -596,9 +591,9 @@ class Users {
                 $user->save();
             }
             // Insert AuthID
-            if(empty($user->auth_id) && $response->getId()){	
+            if(empty($user->auth_id) && $facebookId){
                 // Update database
-                $user->auth_id = $response->getId();
+                $user->auth_id = $facebookId;
                 $user->save();
             }
 
@@ -617,12 +612,12 @@ class Users {
             
             $user = DB::user()->create();
 
-            $user->email = Helper::clean($response->getEmail(),3,TRUE);
+            $user->email = Helper::clean($email,3,TRUE);
             $user->username = "";
             $user->password = Helper::Encode(Helper::rand(12));
             $user->date = Helper::dtime();
             $user->auth = "facebook";
-            $user->auth_id = $response->getId() ?clean($response->getId()) : "";
+            $user->auth_id = $facebookId ? clean($facebookId) : "";
             $user->api = Helper::rand(16);
             $user->auth_key = $auth_key;
             $user->uniquetoken = Helper::rand(32);

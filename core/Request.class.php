@@ -112,7 +112,7 @@ final class Request {
 	public function __construct(){
 		
 		
-		$this->_HTTPmethod = Helper::clean($_SERVER['REQUEST_METHOD'], 3, TRUE);
+		$this->_HTTPmethod = Helper::clean($_SERVER['REQUEST_METHOD'] ?? 'GET', 3, TRUE);
 
 		if(!in_array($this->_HTTPmethod, ["GET", "POST", "PUT", "DELETE","PATCH"])) return false;
 
@@ -325,6 +325,16 @@ final class Request {
 		return null;
 	}
 	/**
+	 * Get server information as a string
+	 * @param string $name
+	 * @param string $default
+	 */
+	public function serverString(string $name, string $default = ''): string {
+		$value = $this->server($name);
+
+		return is_scalar($value) ? (string) $value : $default;
+	}
+	/**
 	 * Full URI
 	 * @author GemPixel <https://gempixel.com>
 	 * @version 1.0
@@ -391,7 +401,7 @@ final class Request {
 	 * @param   int    $segment [description]
 	 * @return  [type]          [description]
 	 */
-	public function segment(int $segment = null){
+	public function segment(?int $segment = null){
 
 		$uri = explode("/", $this->path());
 

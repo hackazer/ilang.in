@@ -316,7 +316,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function get(string $path, $handler, string $name = NULL){
+    public static function get(string $path, $handler, ?string $name = NULL){
 
         self::$Name = $name ?: self::$routePrefix.$path;
 
@@ -334,7 +334,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function post(string $path, $handler, string $name = NULL){
+    public static function post(string $path, $handler, ?string $name = NULL){
         
         self::$Name = $name ?: self::$routePrefix.$path;
 
@@ -354,7 +354,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function put(string $path, $handler, string $name = NULL){
+    public static function put(string $path, $handler, ?string $name = NULL){
         
         self::$Name = $name ?: self::$routePrefix.$path;
 
@@ -372,7 +372,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function delete(string $path, $handler, string $name = NULL){
+    public static function delete(string $path, $handler, ?string $name = NULL){
         
         self::$Name = $name ?: self::$routePrefix.$path;
 

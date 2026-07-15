@@ -556,8 +556,8 @@ final class Helper {
    * @return void
    */
   public static function username($user){
-    if(preg_match('/^\w{4,}$/', $user) && strlen($user)<=20 && filter_var($user,FILTER_SANITIZE_STRING)) {
-      return filter_var(trim($user),FILTER_SANITIZE_STRING);
+    if(is_string($user) && preg_match('/^\w{4,}$/', $user) && strlen($user) <= 20) {
+      return $user;
     }
     return false;    
   }
@@ -630,9 +630,9 @@ final class Helper {
    */
   public static function rand($length = 12, $api = ""){    
       $use = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
-      srand((double)microtime()*1000000); 
+      $last = strlen($use) - 1;
       for($i=0; $i<$length; $i++) { 
-        $api.= $use[rand()%strlen($use)]; 
+        $api .= $use[random_int(0, $last)];
       } 
     return $api; 
   }  

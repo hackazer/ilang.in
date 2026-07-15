@@ -224,7 +224,7 @@ class Link {
 
 
 		if(!empty($url->options)){
-			$browser_language = substr($request->server('http_accept_language'), 0, 2);
+			$browser_language = substr($request->serverString('http_accept_language'), 0, 2);
 			if(strpos($browser_language, ' ') !== false){
 				$language = strtolower(implode(' ', explode(' ',$browser_language, -1)));
 			} else {
@@ -288,7 +288,8 @@ class Link {
 		}
 		
 		// Check if overlay
-		if(preg_match("~overlay-(.*)~", $url->type) && $overlay = DB::overlay()->where("id",  str_replace("overlay-", "", $url->type))->where("userid", $user->id)->first()){
+		$type = is_scalar($url->type ?? null) ? (string) $url->type : '';
+		if(preg_match("~overlay-(.*)~", $type) && $overlay = DB::overlay()->where("id",  str_replace("overlay-", "", $type))->where("userid", $user->id)->first()){
 			return Gate::overlay($url, $overlay);	
 		}	
 
