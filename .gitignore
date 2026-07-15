@@ -12,6 +12,7 @@ workspace.code-workspace
 
 # Local analysis and brainstorming artifacts
 /.codegraph/
+/.worktrees/
 /.superpowers/
 /.ftpquota
 
