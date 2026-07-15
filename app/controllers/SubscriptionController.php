@@ -181,16 +181,6 @@ class Subscription {
             return Helper::redirect()->to(route('register'));
         }
 
-        if(\Helpers\App::isExtended()){
-            $user =  Auth::user();
-            if($subscription = DB::subscription()->where('userid', $user->id)->where('status', 'Active')->first()){
-                foreach( $this->processor() as $name => $processor){
-                    if(!config($name) || !config($name)->enabled || !$processor['cancel']) continue;
-                    call_user_func_array($processor['cancel'], [$user, $subscription]);
-                }
-            }
-        }
-
         if(!in_array($type, ['monthly', 'yearly', 'lifetime'])) $type = "monthly";
 
         Plugin::dispatch('checkout', [$id, $type]);
