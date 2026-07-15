@@ -96,6 +96,12 @@ class Gem {
      * @version 1.0
      */
     public static function preload(){
+        if(!headers_sent()){
+            foreach(self::securityHeaders() as $name => $value){
+                header($name.': '.$value);
+            }
+        }
+
         // Start Session
         ini_set('session.use_strict_mode', '1');
         ini_set('session.use_only_cookies', '1');
@@ -104,7 +110,16 @@ class Gem {
 
         foreach(appConfig('boot') as $boot){
             if( call_user_func($boot) === false) exit;
-        }       
+        }
+    }
+
+    public static function securityHeaders(): array {
+        return [
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'Permissions-Policy' => 'camera=(), microphone=(), geolocation=(self)',
+        ];
     }
     /**
      * Bootstrap Routes

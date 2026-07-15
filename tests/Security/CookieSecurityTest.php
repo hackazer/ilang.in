@@ -24,4 +24,13 @@ final class CookieSecurityTest extends TestCase
     {
         self::assertTrue(Request::cookieOptions(123, true)['secure']);
     }
+
+    public function testBaselineSecurityHeadersAreDefined(): void
+    {
+        $headers = \Gem::securityHeaders();
+
+        self::assertSame('nosniff', $headers['X-Content-Type-Options']);
+        self::assertSame('SAMEORIGIN', $headers['X-Frame-Options']);
+        self::assertSame('strict-origin-when-cross-origin', $headers['Referrer-Policy']);
+    }
 }
