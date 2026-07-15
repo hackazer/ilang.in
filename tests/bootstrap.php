@@ -33,3 +33,14 @@ $googleAuthenticator = $root.'/app/helpers/GoogleAuthenticator.php';
 if (is_file($googleAuthenticator)) {
     require_once $googleAuthenticator;
 }
+
+$paypalException = $root.'/app/helpers/payments/paypal/ApiException.php';
+$paypalClient = $root.'/app/helpers/payments/paypal/Client.php';
+
+if (is_file($paypalException)) {
+    require_once $paypalException;
+}
+
+if (is_file($paypalClient)) {
+    require_once $paypalClient;
+}
