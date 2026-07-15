@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 $root = dirname(__DIR__, 3);
 
-foreach (['Transport', 'TransportResponse', 'ApiException', 'Client'] as $classFile) {
+foreach (['Transport', 'TransportResponse', 'ApiException', 'PrepaidApi', 'Client'] as $classFile) {
     $file = $root.'/app/helpers/payments/nowpayments/'.$classFile.'.php';
 
     if (is_file($file)) {

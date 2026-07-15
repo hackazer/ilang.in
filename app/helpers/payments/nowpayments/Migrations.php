@@ -42,10 +42,10 @@ final class Migrations
         return [
             'enabled' => '0',
             'environment' => 'sandbox',
-            'api_key' => '',
-            'ipn_secret' => '',
+            'api_key_encrypted' => '',
+            'ipn_secret_encrypted' => '',
             'dashboard_email' => '',
-            'dashboard_password' => '',
+            'dashboard_password_encrypted' => '',
             'settlement_currency' => 'USD',
             'default_pay_currency' => '',
             'default_mode' => 'prepaid',
@@ -95,6 +95,7 @@ final class Migrations
             $table->string('pay_currency', 32);
             $table->string('settlement_currency', 16);
             $table->double('expected_amount', '20,8', '0');
+            $table->double('pay_amount', '20,8', '0');
             $table->double('received_amount', '20,8', '0');
             $table->double('outcome_amount', '20,8', '0');
             $table->string('status', 32, 'pending')->index();

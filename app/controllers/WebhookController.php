@@ -66,6 +66,10 @@ class Webhook {
 
 		die();
 	}
+
+	public function nowpayments(Request $request){
+		return $this->index($request, 'nowpayments');
+	}
 	/**
 	 * Slack Webhook
 	 *

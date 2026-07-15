@@ -6,7 +6,7 @@ namespace Helpers\Payments\Nowpayments;
 
 use JsonException;
 
-final class Client
+final class Client implements PrepaidApi
 {
     public const PRODUCTION_URL = 'https://api.nowpayments.io/v1';
     public const SANDBOX_URL = 'https://api-sandbox.nowpayments.io/v1';

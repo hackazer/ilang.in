@@ -47,6 +47,11 @@ final class Status
         return self::MAP[$key] ?? self::FAILED;
     }
 
+    public static function supported(?string $status): bool
+    {
+        return array_key_exists(strtolower(trim((string) $status)), self::MAP);
+    }
+
     public static function isTerminal(string $status): bool
     {
         return in_array($status, self::TERMINAL, true);

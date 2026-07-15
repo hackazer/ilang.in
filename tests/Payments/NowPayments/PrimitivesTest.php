@@ -49,6 +49,8 @@ final class PrimitivesTest extends TestCase
         self::assertSame(Status::PAID, Status::normalize('PAID'));
         self::assertSame(Status::PENDING, Status::normalize('WAITING_PAY'));
         self::assertSame(Status::FAILED, Status::normalize('unknown-provider-state'));
+        self::assertFalse(Status::supported('unknown-provider-state'));
+        self::assertTrue(Status::supported('finished'));
     }
 
     public function testTerminalStatusCannotMoveBackToPending(): void

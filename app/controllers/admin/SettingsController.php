@@ -23,6 +23,7 @@ use Core\Request;
 use Core\View;
 use Core\Helper;
 use Helpers\App;
+use Helpers\Payments\Nowpayments\Credentials as NowPaymentsCredentials;
 
 class Settings {
     
@@ -131,6 +132,14 @@ class Settings {
 
         foreach($settings as $key => $value){
             if($setting = DB::settings()->where('config', $key)->first()){
+                if($key === 'nowpayments' && is_array($value)){
+                    $value = NowPaymentsCredentials::prepareForStorage(
+                        $value,
+                        config('nowpayments') ?: [],
+                        static fn (string $secret): string => Helper::encrypt($secret)
+                    );
+                }
+
                 $setting->var = is_array($value) ? json_encode($value) : trim($value);
                 $setting->save();
             }

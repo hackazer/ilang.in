@@ -323,6 +323,39 @@ class Subscription {
 
         return call_user_func_array($process, [$request, $id, $type]);
     }
+
+    public function cryptoStatus(Request $request, string $order){
+        $transaction = DB::table('nowpayments_transactions')
+            ->where('order_id', clean($order))
+            ->where('userid', Auth::id())
+            ->first();
+
+        if(!$transaction) return stop(404);
+
+        $transaction->metadata = json_decode((string) $transaction->metadata);
+
+        View::set('title', e('Crypto Payment Status'));
+
+        return View::with('pricing.crypto-status', compact('transaction'))->extend('layouts.main');
+    }
+
+    public function cryptoStatusJson(Request $request, string $order){
+        $transaction = DB::table('nowpayments_transactions')
+            ->where('order_id', clean($order))
+            ->where('userid', Auth::id())
+            ->first();
+
+        if(!$transaction){
+            return Response::factory(['error' => 'not_found'], 404, ['Content-Type' => 'application/json'])->json();
+        }
+
+        return Response::factory([
+            'status' => (string) $transaction->status,
+            'provider_status' => (string) $transaction->provider_status,
+            'terminal' => \Helpers\Payments\Nowpayments\Status::isTerminal((string) $transaction->status),
+            'updated_at' => (string) $transaction->updated_at,
+        ], 200, ['Content-Type' => 'application/json'])->json();
+    }
     /**
      * Add coupon
      *

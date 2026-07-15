@@ -28,6 +28,8 @@ Gem::get('/checkout/{id}/{type}', 'Subscription@checkout')->name('checkout');
 Gem::post('/checkout/{id}/{type}', 'Subscription@process')->middleware('Auth')->name('checkout.process');
 Gem::get('/checkout/{id}/{type}/coupon', 'Subscription@coupon')->middleware('Auth')->name('checkout.coupon');
 Gem::get('/checkout/{id}/{type}/tax', 'Subscription@tax')->middleware('Auth')->name('checkout.tax');
+Gem::get('/checkout/crypto/{order}', 'Subscription@cryptoStatus')->middleware('Auth')->name('checkout.crypto.status');
+Gem::get('/checkout/crypto/{order}/status', 'Subscription@cryptoStatusJson')->middleware('Auth')->name('checkout.crypto.status.json');
 
 // Custom Page
 Gem::get('/page/{page}', 'Page@index')->name('page')->middleware('CheckDomain')->middleware('CheckMaintenance');
@@ -516,6 +518,7 @@ Gem::get('/server/states', '\Helpers\App@states')->middleware('CheckDomain')->na
 Gem::route(['GET', 'POST'], '/ipn', 'Webhook@ipn')->middleware('CheckDomain')->name('webhook.paypal');
 
 Gem::route(['GET', 'POST'], '/webhook[/{provider}]', 'Webhook@index')->middleware('CheckDomain')->name('webhook');
+Gem::post('/webhook/nowpayments', 'Webhook@nowpayments')->middleware('CheckDomain')->name('webhook.nowpayments');
 // Gem::route(['GET', 'POST'], '/webhook/paypal', 'Webhook@paypal')->middleware('CheckDomain')->name('webhook.paypalapi');
 // Gem::route(['GET', 'POST'], '/webhook/slack', 'Webhook@slack')->middleware('CheckDomain')->name('webhook.slack');
 

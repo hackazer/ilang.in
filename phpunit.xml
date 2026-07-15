@@ -4,6 +4,9 @@
     <testsuite name="compatibility">
       <directory>tests/Compatibility</directory>
     </testsuite>
+    <testsuite name="nowpayments">
+      <directory>tests/Payments/NowPayments</directory>
+    </testsuite>
   </testsuites>
   <source ignoreIndirectDeprecations="true">
     <include>
