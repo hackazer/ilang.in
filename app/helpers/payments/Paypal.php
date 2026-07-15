@@ -119,9 +119,9 @@ class Paypal{
             "item_name" => "{$plan->name} $type Membership (Pro)",
             "custom"  =>  json_encode(["userid" => Auth::id(), "period" => $period, "renew" => $renew, "planid" => $plan->id]),
             "amount" => $fee,
-            "return" => url('ipn'),
+            "return" => route('dashboard'),
             "notify_url" => url("ipn"),
-            "cancel_return" => url("ipn?cancel=true")
+            "cancel_return" => route('dashboard')
         ];
 
         if(DEBUG){
@@ -141,111 +141,233 @@ class Paypal{
      * @return void
      */
     public static function webhook(Request $request){
-
-        if($request->canceled || $request->cancel) return Helper::redirect()->to(route('dashboard'))->with("warning", e("Your payment has been canceled."));
-
         $listener = new IpnListener();
 
         try {
             $listener->requirePostMethod();
             $verified = $listener->processIpn();   
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            if(http_response_code() < 400) http_response_code(503);
             \GemError::log('Paypal Error: '.$e->getMessage());
-            return Helper::redirect()->to(route('dashboard'))->with("info", e("Payment complete. We will upgrade your account as soon as the payment is verified."));
+            return;
         }
-        
+
+        if(!$verified){
+            http_response_code(400);
+            return \GemError::log('Paypal Error: PayPal rejected IPN verification.');
+        }
+
         $info = [];
 
         $info['paymentmethod'] = 'paypal';
-        
-        if($verified){
 
-            if(!$request->custom) return \GemError::log('Paypal Error: Invalid Paypal request.');
-                
-            $data = json_decode($request->custom);
-            
-            if(!$plan = DB::plans()->first($data->planid)){
-                return \GemError::log('Paypal Error: Plan does exist');
-            }
-            
-            if(!$user = DB::user()->first($data->userid)){
-                return \GemError::log('Paypal Error: User does exist');
-            }
-            
-            if($data->renew === "1"){
-
-                if($data->period == "Yearly"){
-                    
-                    $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 1 year"));
-                    $info["duration"] = "1 Year";
-
-                }elseif($data->period == "Lifetime"){
-                    
-                    $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 20 years"));
-                    $info["duration"] = "20 Years";
-
-                }else{
-                    $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 1 month"));
-                    $info["duration"] = "1 Month";
-                }
-
-            } else {
-
-                if($data->period == "Yearly"){
-                    
-                    $expires = date("Y-m-d H:i:s", strtotime("+ 1 year"));
-                    $info["duration"] = "1 Year";
-
-                }elseif($data->period == "Lifetime"){
-                    
-                    $expires = date("Y-m-d H:i:s", strtotime("+ 20 years"));
-                    $info["duration"] = "20 Years";
-
-                }else{
-                    $expires = date("Y-m-d H:i:s", strtotime("+ 1 month"));
-                    $info["duration"] = "1 Month";
-                }
-
-            }
-
-            if($request->pending_reason){
-                $info["pending_reason"] = $request->pending_reason;
-            }
-            $info["payer_email"] = $request->payer_email;
-            $info["payer_id"] = $request->payer_id;
-            $info["payment_date"] = $request->payment_date;
-
-            if($request->payment_status == "refunded") return;
-
-            if($payment = DB::payment()->where('tid', $request->txn_id)->first()){
-                $payment->status =  $request->payment_status;
-                $payment->save();
-                return Helper::redirect()->to(route('dashboard'));
-            }
-
-            $payment = DB::payment()->create();
-
-            $payment->date = Helper::dtime();
-            $payment->tid = $request->txn_id;
-            $payment->amount =  $request->mc_gross;
-            $payment->status =  $request->payment_status;
-            $payment->userid =  $data->userid;
-            $payment->expiry = $expires;
-            $payment->data = json_encode($info);
-            $payment->save();
-
-            $user->last_payment = Helper::dtime();
-            $user->expiration = $expires;
-            $user->pro = 1;
-            $user->planid = $plan->id;
-            $user->save();
-            
-            http_response_code(200);
-            exit;
-            // return Helper::redirect()->to(route('dashboard'))->with("info", e("Your payment was successfully made. Thank you."));
+        if(!$request->custom){
+            http_response_code(400);
+            return \GemError::log('Paypal Error: Invalid Paypal request.');
         }
 
-        return Helper::redirect()->to(route('dashboard'))->with("warning", e("Your payment has been canceled."));
+        try {
+            $data = json_decode((string) $request->custom, false, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            http_response_code(400);
+            return \GemError::log('Paypal Error: Invalid Paypal custom data.');
+        }
+
+        if(!is_object($data) || !isset($data->planid, $data->userid, $data->period, $data->renew)){
+            http_response_code(400);
+            return \GemError::log('Paypal Error: Incomplete Paypal custom data.');
+        }
+
+        if(!$plan = DB::plans()->first((int) $data->planid)){
+            http_response_code(400);
+            return \GemError::log('Paypal Error: Plan does not exist.');
+        }
+
+        $paypalConfig = config('paypal');
+
+        try {
+            $expectedAmount = self::validateCompletedIpn(
+                $request->all(true),
+                $plan,
+                is_object($paypalConfig) ? (string) ($paypalConfig->email ?? '') : '',
+                (string) config('currency'),
+                (string) $data->period
+            );
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(400);
+            return \GemError::log('Paypal Error: '.$e->getMessage());
+        }
+
+        try {
+            self::applyProviderTransactionOnce((string) $request->txn_id, function() use ($request, $data, $plan, $expectedAmount, &$info){
+
+                if(!$user = DB::user()->first((int) $data->userid)){
+                    throw new \RuntimeException('Paypal user does not exist.');
+                }
+
+                if((string) $data->renew === "1"){
+
+                    if($data->period === "Yearly"){
+
+                        $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 1 year"));
+                        $info["duration"] = "1 Year";
+
+                    }elseif($data->period === "Lifetime"){
+
+                        $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 20 years"));
+                        $info["duration"] = "20 Years";
+
+                    }else{
+                        $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 1 month"));
+                        $info["duration"] = "1 Month";
+                    }
+
+                } else {
+
+                    if($data->period === "Yearly"){
+
+                        $expires = date("Y-m-d H:i:s", strtotime("+ 1 year"));
+                        $info["duration"] = "1 Year";
+
+                    }elseif($data->period === "Lifetime"){
+
+                        $expires = date("Y-m-d H:i:s", strtotime("+ 20 years"));
+                        $info["duration"] = "20 Years";
+
+                    }else{
+                        $expires = date("Y-m-d H:i:s", strtotime("+ 1 month"));
+                        $info["duration"] = "1 Month";
+                    }
+
+                }
+
+                $info["payer_email"] = $request->payer_email;
+                $info["payer_id"] = $request->payer_id;
+                $info["payment_date"] = $request->payment_date;
+
+                $payment = DB::payment()->create();
+
+                $payment->date = Helper::dtime();
+                $payment->tid = (string) $request->txn_id;
+                $payment->amount = $expectedAmount;
+                $payment->status = 'Completed';
+                $payment->userid = (int) $data->userid;
+                $payment->expiry = $expires;
+                $payment->data = json_encode($info);
+                $payment->save();
+
+                $user->last_payment = Helper::dtime();
+                $user->expiration = $expires;
+                $user->pro = 1;
+                $user->planid = $plan->id;
+                $user->save();
+            });
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            \GemError::log('Paypal Error: '.$e->getMessage());
+            return;
+        }
+
+        http_response_code(200);
+    }
+
+    /**
+     * Validate the PayPal fields that authorize entitlement and return the
+     * matching server-side plan amount.
+     */
+    public static function validateCompletedIpn(array $payload, object $plan, string $receiverEmail, string $currency, string $period): string {
+
+        if(($payload['payment_status'] ?? null) !== 'Completed'){
+            throw new \InvalidArgumentException('Paypal payment is not completed.');
+        }
+
+        if(trim((string) ($payload['txn_id'] ?? '')) === ''){
+            throw new \InvalidArgumentException('Paypal transaction ID is missing.');
+        }
+
+        $actualReceiver = strtolower(trim((string) ($payload['receiver_email'] ?? '')));
+        $expectedReceiver = strtolower(trim($receiverEmail));
+
+        if($expectedReceiver === '' || !hash_equals($expectedReceiver, $actualReceiver)){
+            throw new \InvalidArgumentException('Paypal receiver does not match the configured account.');
+        }
+
+        $actualCurrency = strtoupper(trim((string) ($payload['mc_currency'] ?? '')));
+        $expectedCurrency = strtoupper(trim($currency));
+
+        if($expectedCurrency === '' || $actualCurrency === '' || $actualCurrency !== $expectedCurrency){
+            throw new \InvalidArgumentException('Paypal currency does not match the configured currency.');
+        }
+
+        $expectedAmount = self::planAmount($plan, $period);
+        $expectedCanonical = self::canonicalAmount($expectedAmount);
+        $actualCanonical = self::canonicalAmount($payload['mc_gross'] ?? null);
+
+        if($expectedCanonical === null || $actualCanonical === null || !hash_equals($expectedCanonical, $actualCanonical)){
+            throw new \InvalidArgumentException('Paypal amount does not match the server-side plan price.');
+        }
+
+        return (string) $expectedAmount;
+    }
+
+    private static function planAmount(object $plan, string $period): string {
+
+        if($period === 'Yearly') return (string) ($plan->price_yearly ?? '');
+        if($period === 'Lifetime') return (string) ($plan->price_lifetime ?? '');
+        if($period === 'Monthly') return (string) ($plan->price_monthly ?? '');
+
+        throw new \InvalidArgumentException('Paypal billing period is invalid.');
+    }
+
+    private static function canonicalAmount($amount): ?string {
+
+        $amount = trim((string) $amount);
+
+        if(!preg_match('/^\d+(?:\.\d{1,8})?$/D', $amount)) return null;
+
+        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '');
+        $whole = ltrim($whole, '0');
+        $fraction = rtrim($fraction, '0');
+
+        if($whole === '') $whole = '0';
+
+        return $fraction === '' ? $whole : $whole.'.'.$fraction;
+    }
+
+    /**
+     * Serialize processing by PayPal transaction ID and commit the payment and
+     * entitlement atomically. Replayed notifications become no-ops.
+     */
+    private static function applyProviderTransactionOnce(string $transactionId, callable $callback): bool {
+
+        $pdo = DB::get_db();
+        $lockName = 'paypal-ipn:'.substr(hash('sha256', $transactionId), 0, 48);
+        $lock = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $lock->execute(['lock_name' => $lockName]);
+
+        if((int) $lock->fetchColumn() !== 1){
+            throw new \RuntimeException('Unable to acquire Paypal transaction lock.');
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            if(DB::payment()->where('tid', $transactionId)->first()){
+                $pdo->commit();
+                return false;
+            }
+
+            $callback();
+            $pdo->commit();
+
+            return true;
+        } catch (\Throwable $e) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
     }
 
 }
