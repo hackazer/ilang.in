@@ -130,6 +130,16 @@ final class WebhookService
             }
         }
 
+        if ($orderId !== '') {
+            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `order_id` = ? FOR UPDATE");
+            $statement->execute([$orderId]);
+            $id = $statement->fetchColumn();
+
+            if ($id !== false) {
+                return (int) $id;
+            }
+        }
+
         if ($subscriptionId !== '') {
             $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_subscription_id` = ? FOR UPDATE");
             $statement->execute([$subscriptionId]);
@@ -138,14 +148,6 @@ final class WebhookService
             if ($id !== false) {
                 return (int) $id;
             }
-        }
-
-        if ($orderId !== '') {
-            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `order_id` = ? FOR UPDATE");
-            $statement->execute([$orderId]);
-            $id = $statement->fetchColumn();
-
-            return $id === false ? null : (int) $id;
         }
 
         return null;

@@ -73,7 +73,6 @@ final class CustodyDepositService
         $transaction->subscriptionid = $enrollment->subscriptionId();
         $transaction->order_id = $order->id();
         $transaction->idempotency_key = $order->idempotencyKey();
-        $transaction->provider_subscription_id = $enrollment->providerResponse()['id'] ?? null;
         $transaction->mode = 'custodial_deposit';
         $transaction->term = $term;
         $transaction->price_currency = $priceCurrency;

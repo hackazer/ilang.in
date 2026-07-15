@@ -27,7 +27,7 @@ final class Migrations
     public static function uniqueKeys(): array
     {
         return [
-            'nowpayments_transactions' => ['order_id', 'idempotency_key', 'provider_payment_id'],
+            'nowpayments_transactions' => ['order_id', 'idempotency_key', 'provider_payment_id', 'provider_subscription_id'],
             'nowpayments_events' => ['payload_hash'],
             'nowpayments_plans' => ['mapping_key', 'remote_plan_id'],
             'nowpayments_customers' => ['userid', 'provider_subpartner_id', 'provider_name'],
@@ -88,7 +88,7 @@ final class Migrations
             $table->string('order_id', 191, false)->unique();
             $table->string('idempotency_key', 191, false)->unique();
             $table->string('provider_payment_id')->unique();
-            $table->string('provider_subscription_id')->index();
+            $table->string('provider_subscription_id')->unique();
             $table->string('mode', 32, false)->index();
             $table->string('term', 32, false);
             $table->string('price_currency', 16, false);
