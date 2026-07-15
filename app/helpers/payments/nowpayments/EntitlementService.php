@@ -9,6 +9,11 @@ use Core\Helper;
 
 final class EntitlementService
 {
+    public static function shouldApply(string $mode, string $status): bool
+    {
+        return $status === Status::PAID && $mode !== 'custodial_deposit';
+    }
+
     public static function expiry(string $term, ?string $currentExpiration, ?int $now = null): string
     {
         $now ??= time();

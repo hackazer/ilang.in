@@ -4,6 +4,7 @@ $provider = isset($transaction->metadata->provider) && is_object($transaction->m
     ? $transaction->metadata->provider
     : new stdClass;
 $payAmount = isset($provider->pay_amount) ? (string) $provider->pay_amount : (string) $transaction->pay_amount;
+$isDeposit = (string) $transaction->mode === 'custodial_deposit';
 ?>
 <section class="bg-section-secondary py-5">
     <div class="container" style="max-width: 880px">
@@ -58,7 +59,7 @@ $payAmount = isset($provider->pay_amount) ? (string) $provider->pay_amount : (st
             const data = await response.json();
             state.textContent = data.status;
             message.textContent = data.status === 'paid'
-                ? '<?php echo addslashes(e('Payment settled. Your access is active.')) ?>'
+                ? '<?php echo addslashes($isDeposit ? e('Custody balance funded. Automatic renewal activates only after the subscription charge is paid.') : e('Payment settled. Your access is active.')) ?>'
                 : '<?php echo addslashes(e('Payment status updated.')) ?> ' + data.status;
             if (!terminal.has(data.status)) timer = window.setTimeout(poll, 10000);
         } catch (error) {
@@ -75,4 +76,3 @@ $payAmount = isset($provider->pay_amount) ? (string) $provider->pay_amount : (st
     [data-nowpayments-status-card] * { scroll-behavior: auto !important; transition: none !important; }
 }
 </style>
-

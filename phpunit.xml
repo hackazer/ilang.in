@@ -7,6 +7,9 @@
     <testsuite name="nowpayments">
       <directory>tests/Payments/NowPayments</directory>
     </testsuite>
+    <testsuite name="security">
+      <directory>tests/Security</directory>
+    </testsuite>
   </testsuites>
   <source ignoreIndirectDeprecations="true">
     <include>

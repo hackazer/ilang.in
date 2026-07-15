@@ -88,7 +88,7 @@ final class WebhookService
 
             $applied = null;
 
-            if ($normalized === Status::PAID) {
+            if (EntitlementService::shouldApply((string) $transaction->mode, $normalized)) {
                 $applied = $this->entitlements->apply($transaction, $payload);
             }
 

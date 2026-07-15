@@ -21,6 +21,7 @@ use Helpers\Payments\Nowpayments\Readiness;
 use Helpers\Payments\Nowpayments\EntitlementService;
 use Helpers\Payments\Nowpayments\WebhookService;
 use Helpers\Payments\Nowpayments\SubscriptionService;
+use Helpers\Payments\Nowpayments\CustodyDepositService;
 
 final class NowPayments
 {
@@ -340,7 +341,15 @@ final class NowPayments
                 (string) $settings['api_key'],
                 ($settings['environment'] ?? 'sandbox') === 'production' ? Client::PRODUCTION_URL : Client::SANDBOX_URL
             );
-            (new SubscriptionService($client))->enroll(Auth::user(), $plan, $type, $mode, $pricing, $settings, $attemptId);
+            $settings['callback_url'] = route('webhook.nowpayments');
+            $enrollment = (new SubscriptionService($client))->enroll(Auth::user(), $plan, $type, $mode, $pricing, $settings, $attemptId);
+
+            if ($mode === 'custodial') {
+                $payCurrency = strtoupper(trim((string) ($request->nowpayments_pay_currency ?: $settings['default_pay_currency'] ?? '')));
+                $deposit = (new CustodyDepositService($client))->create(Auth::user(), $plan, $type, $enrollment, $pricing, $settings, $payCurrency, $attemptId);
+
+                return Helper::redirect()->to(route('checkout.crypto.status', [$deposit->orderId()]));
+            }
 
             $message = $mode === 'email'
                 ? e('Crypto renewal enrollment created. Check your email for the NOWPayments payment link.')
