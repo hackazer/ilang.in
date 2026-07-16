@@ -63,9 +63,9 @@
                             <a href="#" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Select All") ?>" data-trigger="selectall" class="fa fa-check-square btn px-3 py-2"></a>
                             <?php if(user()->teamPermission('links.edit')): ?>
                                 <?php if(\Gem::currentRoute() == 'archive'): ?>
-                                    <a href="<?php echo route('links.unarchive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Unarchive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></a>
+                                    <button type="submit" formaction="<?php echo route('links.unarchive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Unarchive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></button>
                                 <?php else: ?>
-                                    <a href="<?php echo route('links.archive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Archive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></a>
+                                    <button type="submit" formaction="<?php echo route('links.archive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Archive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></button>
                                 <?php endif ?>
                             <?php endif ?>
                             <?php if(user()->teamPermission('links.edit')): ?>

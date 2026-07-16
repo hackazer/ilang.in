@@ -498,7 +498,7 @@ class Link {
 	public function archiveSelected(Request $request){
 
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -506,7 +506,7 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['archived' => 1]);
@@ -514,7 +514,7 @@ class Link {
 		}
 		
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been archived.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been archived.'), 'token' => csrf_token()])->json();
 	}
 	/**
 	 * UnArchive Selected
@@ -527,7 +527,7 @@ class Link {
 	public function unarchiveSelected(Request $request){
 		
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -535,14 +535,14 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['archived' => 0]);
 			}
 		}
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been removed from archive.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been removed from archive.'), 'token' => csrf_token()])->json();
 	}
 	/**
 	 * Public Selected
@@ -554,7 +554,7 @@ class Link {
 	public function publicSelected(Request $request){
 
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -562,7 +562,7 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['public' => 1]);
@@ -570,7 +570,7 @@ class Link {
 		}
 		
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been set to public.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been set to public.'), 'token' => csrf_token()])->json();
 	}
 	/**
 	 * Private Selected
@@ -583,7 +583,7 @@ class Link {
 	public function privateSelected(Request $request){
 		
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -591,14 +591,14 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['public' => 0]);
 			}
 		}
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been set to private.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been set to private.'), 'token' => csrf_token()])->json();
 	}
 	 /**
      * Edit Link

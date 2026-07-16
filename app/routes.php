@@ -99,10 +99,10 @@ Gem::group('/user', function(){
     Gem::get('/links/refresh/archive', 'User\Dashboard@refreshArchive')->name('links.refresh.archive');
     Gem::get('/links/{id}/delete/{token}', 'Link@delete')->name('links.delete');
     Gem::post('/links/deleteselected', 'Link@deleteMany')->name('links.deleteall');
-    Gem::get('/links/archiveselected', 'Link@archiveSelected')->name('links.archive');
-    Gem::get('/links/unarchiveselected', 'Link@unarchiveSelected')->name('links.unarchive');
-    Gem::get('/links/publicselected', 'Link@publicSelected')->name('links.public');
-    Gem::get('/links/privateselected', 'Link@privateSelected')->name('links.private');    
+    Gem::post('/links/archiveselected', 'Link@archiveSelected')->name('links.archive');
+    Gem::post('/links/unarchiveselected', 'Link@unarchiveSelected')->name('links.unarchive');
+    Gem::post('/links/publicselected', 'Link@publicSelected')->name('links.public');
+    Gem::post('/links/privateselected', 'Link@privateSelected')->name('links.private');
     Gem::post('/links/addtocampaign', 'Link@addtocampaign')->name('links.addtocampaign');    
     Gem::get('/links/{id}/edit', 'Link@edit')->name('links.edit');
     Gem::post('/links/{id}/update', 'Link@update')->name('links.update');
@@ -141,8 +141,8 @@ Gem::group('/user', function(){
     Gem::post('/splash/save', 'User\Splash@save')->name('splash.save');
     Gem::get('/splash/{id}/edit', 'User\Splash@edit')->name('splash.edit');
     Gem::post('/splash/{id}/update', 'User\Splash@update')->name('splash.update');
-    Gem::get('/splash/{id}/toggle', 'User\Splash@toggle')->name('splash.toggle');
-    Gem::get('/splash/{id}/delete/{nonce}', 'User\Splash@delete')->name('splash.delete');
+    Gem::post('/splash/{id}/toggle', 'User\Splash@toggle')->name('splash.toggle');
+    Gem::post('/splash/{id}/delete', 'User\Splash@delete')->name('splash.delete');
 
     Gem::get('/overlay/', 'User\Overlay@index')->name('overlay');
     Gem::get('/overlay/create[/{action}]', 'User\Overlay@create')->name('overlay.create');
@@ -179,7 +179,7 @@ Gem::group('/user', function(){
     Gem::get('/qr/{id}/edit', 'User\QR@edit')->name('qr.edit');
     Gem::post('/qr/{id}/update', 'User\QR@update')->name('qr.update');
     Gem::get('/qr/{id}/delete/{nonce}', 'User\QR@delete')->name('qr.delete');
-    Gem::get('/qr/{id}/duplicate', 'User\QR@duplicate')->name('qr.duplicate');
+    Gem::post('/qr/{id}/duplicate', 'User\QR@duplicate')->name('qr.duplicate');
 
     Gem::get('/bio/', 'User\Bio@index')->name('bio');
     Gem::get('/bio/create', 'User\Bio@create')->name('bio.create');
@@ -188,8 +188,8 @@ Gem::group('/user', function(){
     Gem::get('/bio/{id}/edit', 'User\Bio@edit')->name('bio.edit');
     Gem::post('/bio/{id}/update', 'User\Bio@update')->name('bio.update');
     Gem::get('/bio/{id}/delete/{nonce}', 'User\Bio@delete')->name('bio.delete');
-    Gem::get('/bio/{id}/default', 'User\Bio@default')->name('bio.default');
-    Gem::get('/bio/{id}/duplicate', 'User\Bio@duplicate')->name('bio.duplicate');
+    Gem::post('/bio/{id}/default', 'User\Bio@default')->name('bio.default');
+    Gem::post('/bio/{id}/duplicate', 'User\Bio@duplicate')->name('bio.duplicate');
     
     Gem::get('/statistics', 'User\Stats@index')->name('user.stats');
     Gem::get('/statistics/alllinks', 'User\Stats@statsLinks')->name('user.stats.links');
@@ -203,7 +203,7 @@ Gem::group('/user', function(){
     Gem::post('/channel/{id}/update', 'User\Channels@update')->name('channel.update');
     Gem::get('/channel/{id}/delete/{token}', 'User\Channels@delete')->name('channel.delete');
     Gem::post('/channel/add/{type}', 'User\Channels@addto')->name('channel.addto');
-    Gem::get('/channel/{id}/remove/{type}/{item}', 'User\Channels@removefrom')->name('channel.removefrom');
+    Gem::post('/channel/{id}/remove/{type}/{item}', 'User\Channels@removefrom')->name('channel.removefrom');
 
     Gem::get('/affiliate', 'User\Dashboard@affiliate')->name('user.affiliate');   
 

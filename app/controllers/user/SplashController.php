@@ -281,7 +281,7 @@ class Splash {
             return back()->with('danger', e('You do not have this permission. Please contact your team administrator.'));
         }
 
-        if(!$splash = DB::splash()->where('id', $id)->first()){
+        if(!$splash = DB::splash()->where('id', $id)->where('userid', Auth::user()->rID())->first()){
             return back()->with('danger', e('Custom splash page does not exist.'));
         }
 
@@ -295,7 +295,7 @@ class Splash {
             unlink( appConfig('app.storage')['uploads']['path'].'/'.$data->banner);
         }
 
-        DB::url()->where("type", $splash->id)->update(['type' => '']);
+        DB::url()->where("type", $splash->id)->where('userid', Auth::user()->rID())->update(['type' => '']);
 
         $splash->delete();
         

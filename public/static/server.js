@@ -1,3 +1,9 @@
+function updateCsrfToken(response){
+    if(response && response.token){
+        $('input[name=_token]').val(response.token);
+    }
+}
+
 $(document).ready(function(){
     'use strict';
 
@@ -182,15 +188,23 @@ $(document).ready(function(){
 
     $(document).on('click', '[data-trigger=archiveselected]', function(e){
         e.preventDefault();
+        let trigger = $(this);
+        let form = trigger.closest('form');
         let ids = [];
 		$('[data-dynamic]').each(function(){
 			if($(this).prop('checked')) ids.push($(this).val());
 		});
 
+        form.find('input[name=selected]').val(JSON.stringify(ids));
+
         $.ajax({
-            type: "GET",
-            url: $(this).attr('href'),
-            data: "selected="+JSON.stringify(ids),
+            type: "POST",
+            url: trigger.attr('formaction') || form.attr('action'),
+            data: {
+                _token: form.find('input[name=_token]').val(),
+                link: form.find('input[name=link]').val(),
+                selected: form.find('input[name=selected]').val()
+            },
             beforeSend: function() {
               $("#return-ajax").html('<div class="preloader"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>');
             },
@@ -198,12 +212,18 @@ $(document).ready(function(){
               $('.preloader').fadeOut("fast", function(){$(this).remove()});
             },          
             success: function (response) { 
+                updateCsrfToken(response);
                 if(response.error){
                     return $.notify({message: response.message},{type: 'danger',placement: {from: "bottom",align: "right"}});
                 }
                 $.notify({message: response.message},{type: 'success',placement: {from: "bottom",align: "right"}});
                 refreshlinks(ids);
                 feather.replace();
+            },
+            error: function(xhr) {
+                updateCsrfToken(xhr.responseJSON || {});
+                let message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'An unexpected error occurred. Please try again.';
+                $.notify({message: message},{type: 'danger',placement: {from: "bottom",align: "right"}});
             }
         });   
     });

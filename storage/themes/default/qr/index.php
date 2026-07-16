@@ -34,7 +34,7 @@
                                         <?php if(user()->teamPermission('qr.edit')): ?>
                                             <li><a class="dropdown-item" href="#" data-id="<?php echo $qr->id ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#channelModal" data-toggle="addtochannel"><i data-feather="package"></i> <?php ee('Add to Channel') ?></a></li>
                                             <li><a class="dropdown-item" href="<?php echo route('links.reset', [$qr->urlid, \Core\Helper::nonce('link.reset')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#resetModal"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></a></li>
-                                            <li><a class="dropdown-item" href="<?php echo route('qr.duplicate', [$qr->id]) ?>"><i data-feather="copy"></i> <?php ee('Duplicate') ?></a></li>
+                                            <li><form action="<?php echo route('qr.duplicate', [$qr->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="copy"></i> <?php ee('Duplicate') ?></button></form></li>
                                         <?php endif ?>
                                         <?php if(user()->teamPermission('qr.delete')): ?>
                                             <li class="dropdown-divier"></li>
@@ -45,7 +45,7 @@
                                 <strong><?php echo $qr->name ?: 'n\a' ?></strong> <small class="badge bg-primary"><?php echo $qr->data->type ?></small>
                                 <?php if($channels = $qr->channels): ?>
                                     <?php foreach($channels as $channel): ?>
-                                        <small class="badge text-xs ms-2" style="background-color: <?php echo $channel->color ?>"><?php echo $channel->name ?> <a href="<?php echo route('channel.removefrom', [$channel->id, 'qr', $qr->id]) ?>" class="ms-2 text-light" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><span data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Remove from channel') ?>">X</a></a></small>
+                                        <form action="<?php echo route('channel.removefrom', [$channel->id, 'qr', $qr->id]) ?>" method="post" class="d-inline-block"><?php echo csrf() ?><span class="badge text-xs ms-2" style="background-color: <?php echo $channel->color ?>"><?php echo $channel->name ?> <button type="submit" class="btn btn-link border-0 p-0 ms-2 text-light" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Remove from channel') ?>" aria-label="<?php ee('Remove from channel') ?>">X</button></span></form>
                                     <?php endforeach ?>
                                 <?php endif ?>
                                 <br>

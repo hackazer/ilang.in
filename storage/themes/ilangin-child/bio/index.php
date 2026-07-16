@@ -26,12 +26,12 @@
 
                                         <li><a class="dropdown-item" href="<?php echo $bio->url ?>"><i data-feather="eye"></i> <?php ee('View Bio') ?></a></li>
                                         <?php if(user()->defaultbio != $bio->id): ?>
-                                        <li><a class="dropdown-item" href="<?php echo route('bio.default', [$bio->id]) ?>"><i data-feather="check-circle"></i> <?php ee('Set as Default') ?></a></li>
+                                        <li><form action="<?php echo route('bio.default', [$bio->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Set as Default') ?></button></form></li>
                                         <?php endif ?>
                                         <?php if(user()->teamPermission('bio.edit')): ?>
                                             <li><a class="dropdown-item" href="#" data-id="<?php echo $bio->id ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#channelModal" data-toggle="addtochannel"><i data-feather="package"></i> <?php ee('Add to Channel') ?></a></li>                                            
                                             <li><a class="dropdown-item" href="<?php echo route('links.reset', [$bio->urlid, \Core\Helper::nonce('link.reset')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#resetModal"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></a></li>
-                                            <li><a class="dropdown-item" href="<?php echo route('bio.duplicate', [$bio->id]) ?>"><i data-feather="copy"></i> <?php ee('Duplicate') ?></a></li>
+                                            <li><form action="<?php echo route('bio.duplicate', [$bio->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="copy"></i> <?php ee('Duplicate') ?></button></form></li>
                                         <?php endif ?>
                                         <?php if(user()->teamPermission('bio.delete')): ?>
                                         <li class="dropdown-divider"></li>
@@ -49,7 +49,7 @@
                                 <?php if($channels = $bio->channels): ?>
                                     <div class="mb-2">
                                     <?php foreach($channels as $channel): ?>
-                                        <small class="badge text-xs me-2" style="background-color: <?php echo $channel->color ?>"><?php echo $channel->name ?> <a href="<?php echo route('channel.removefrom', [$channel->id, 'bio', $bio->id]) ?>" class="ms-2 text-light" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal">X</a></small>
+                                        <form action="<?php echo route('channel.removefrom', [$channel->id, 'bio', $bio->id]) ?>" method="post" class="d-inline-block"><?php echo csrf() ?><span class="badge text-xs me-2" style="background-color: <?php echo $channel->color ?>"><?php echo $channel->name ?> <button type="submit" class="btn btn-link border-0 p-0 ms-2 text-light" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Remove from channel') ?>" aria-label="<?php ee('Remove from channel') ?>">X</button></span></form>
                                     <?php endforeach ?>
                                     </div>
                                 <?php endif ?>                                
