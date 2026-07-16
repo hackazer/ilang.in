@@ -39,6 +39,10 @@ final class SafeBackup
         'taxrates',
         'url',
         'user',
+        'nowpayments_plans',
+        'nowpayments_customers',
+        'nowpayments_transactions',
+        'nowpayments_events',
     ];
 
     public static function read(string $path, ?int $reportedSize = null): array
@@ -142,7 +146,7 @@ final class SafeBackup
                 throw new RuntimeException('The database did not start the restore transaction.');
             }
 
-            foreach (array_keys($data) as $table) {
+            foreach (array_reverse(array_keys($data)) as $table) {
                 $physicalTable = $prefix.$table;
                 $database->exec('DELETE FROM '.self::quoteIdentifier($physicalTable));
             }

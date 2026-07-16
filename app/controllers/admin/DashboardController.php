@@ -740,6 +740,13 @@ class Dashboard {
         if($request->taxrates){
             $data['taxrates'] = DB::taxrates()->findArray();
         }
+
+        if($request->payment){
+            $data['nowpayments_plans'] = DB::table('nowpayments_plans')->findArray();
+            $data['nowpayments_customers'] = DB::table('nowpayments_customers')->findArray();
+            $data['nowpayments_transactions'] = DB::table('nowpayments_transactions')->findArray();
+            $data['nowpayments_events'] = DB::table('nowpayments_events')->findArray();
+        }
         
         \Core\File::contentDownload('backup-'.date('Y-m-d').'.gem', function() use ($data){
             return serialize($data);
