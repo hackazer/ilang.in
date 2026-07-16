@@ -23,6 +23,8 @@ namespace Core;
 use Core\Helper;
 
 final class Request {
+	public const MAX_UPLOAD_BYTES = 52_428_800;
+
 	/**
 	 * Sessions
 	 *
@@ -70,27 +72,26 @@ final class Request {
 	 * @var array
 	 */
 	private $_FILEcommon	= [
-								"js" => ["application/javascript"],
-								"json" => ["application/json"],
-								"xml"  => ["application/xml"],
+								"js" => ["application/javascript", "text/javascript", "text/plain"],
+								"json" => ["application/json", "text/plain"],
+								"xml"  => ["application/xml", "text/xml", "text/plain"],
 								"zip"  => ["application/zip", "application/x-zip-compressed"],
 								"pdf"  => ["application/pdf"],
-								"sql"  => ["application/sql"],
+								"sql"  => ["application/sql", "text/plain"],
 								"doc"  => ["application/msword"],
 								"mpeg" => ["audio/mpeg"],
 								"mp4" => ["video/mp4"],
 								"ogg"  => ["audio/ogg"],
-								"css"  => ["text/css"],
+								"css"  => ["text/css", "text/plain"],
 								"html" => ["text/html"],
-								"xml"  => ["text/xml"],
-								"csv"  => ["text/csv"],
+								"csv"  => ["text/csv", "text/plain"],
 								"txt"	=> ["text/plain"],
 								"png"  => ["image/png"],
 								"jpeg" => ["image/jpeg"],
 								"jpg" => ["image/jpeg"],
 								"gif"  => ["image/gif"],
-								"ico" => ["image/x-icon"],
-								"svg" => ['image/svg+xml']
+								"ico" => ["image/x-icon", "image/vnd.microsoft.icon"],
+								"svg" => ["image/svg+xml", "application/xml", "text/xml", "text/plain"]
 							];
 	/**
 	 * File Object
@@ -187,23 +188,49 @@ final class Request {
 			$this->_HTTPfiles = new \stdClass;
 			foreach ($_FILES as $key => $file) {
 				
-				if(empty($file["type"]) || empty($file["name"])) continue;
+				if(empty($file["name"]) || empty($file["tmp_name"])) continue;
 				if(isset($this->_HTTPfiles->{$key})) continue;
 
+				$location = (string) $file["tmp_name"];
+				$type = $this->uploadedFileMime($location);
+				$size = $this->uploadedFileSize($location);
+				$extension = strtolower((string) Helper::extension($file["name"]));
+				$mimematch = isset($this->_FILEcommon[$extension]) && in_array($type, $this->_FILEcommon[$extension], true);
+				$sizevalid = $size > 0 && $size <= self::MAX_UPLOAD_BYTES;
+				$uploadvalid = (int) ($file["error"] ?? UPLOAD_ERR_OK) === UPLOAD_ERR_OK;
+
 				$this->_HTTPfiles->{$key} = new \stdCLass;
-				$this->_HTTPfiles->{$key}->allowed = in_array($file["type"], $this->_FILEacceptable) ? true : false;
 				$this->_HTTPfiles->{$key}->name = Helper::clean($file["name"]);
-				$this->_HTTPfiles->{$key}->ext = Helper::extension($file["name"]);
-				$this->_HTTPfiles->{$key}->type = Helper::clean($file["type"]);
-				$this->_HTTPfiles->{$key}->location = Helper::clean($file["tmp_name"]);
-				$this->_HTTPfiles->{$key}->size = $file["size"];
-				$this->_HTTPfiles->{$key}->sizekb = round($file["size"] / 1024, 2);
+				$this->_HTTPfiles->{$key}->ext = $extension;
+				$this->_HTTPfiles->{$key}->type = $type;
+				$this->_HTTPfiles->{$key}->location = Helper::clean($location);
+				$this->_HTTPfiles->{$key}->size = $size;
+				$this->_HTTPfiles->{$key}->sizekb = round($size / 1024, 2);
 				$this->_HTTPfiles->{$key}->sizemb = round($this->_HTTPfiles->{$key}->sizekb / 1024, 3);
-				$this->_HTTPfiles->{$key}->mimematch = (isset($this->_FILEcommon[Helper::extension($file["name"])]) && in_array($file["type"], $this->_FILEcommon[Helper::extension($file["name"])])) ? true : false;
-				$this->_HTTPfiles->{$key}->isvalid = $this->_HTTPfiles->{$key}->mimematch;
+				$this->_HTTPfiles->{$key}->mimematch = $mimematch;
+				$this->_HTTPfiles->{$key}->sizevalid = $sizevalid;
+				$this->_HTTPfiles->{$key}->isvalid = $uploadvalid && $mimematch && $sizevalid;
+				$this->_HTTPfiles->{$key}->allowed = $this->_HTTPfiles->{$key}->isvalid && in_array($type, $this->_FILEacceptable, true);
 			}
 		}
 
+	}
+
+	private function uploadedFileMime(string $location): string {
+		if(!is_file($location) || !is_readable($location)) return 'application/octet-stream';
+
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		$type = $finfo->file($location);
+
+		return is_string($type) && $type !== '' ? strtolower($type) : 'application/octet-stream';
+	}
+
+	private function uploadedFileSize(string $location): int {
+		if(!is_file($location)) return 0;
+
+		$size = filesize($location);
+
+		return is_int($size) && $size >= 0 ? $size : 0;
 	}
 	/**
 	 * Return File Object
@@ -253,7 +280,15 @@ final class Request {
 			
 			if(!isset($this->_FILEcommon[$type])) continue;
 
-			$this->_FILEacceptable[] = $this->_FILEcommon[$type];
+			$this->_FILEacceptable = array_merge($this->_FILEacceptable, $this->_FILEcommon[$type]);
+		}
+
+		$this->_FILEacceptable = array_values(array_unique($this->_FILEacceptable));
+
+		if($this->_HTTPfiles){
+			foreach($this->_HTTPfiles as $file){
+				$file->allowed = $file->isvalid && in_array($file->type, $this->_FILEacceptable, true);
+			}
 		}
 
 	}

@@ -23,6 +23,7 @@ use Core\Request;
 use Core\View;
 use Core\Helper;
 use Helpers\App;
+use Helpers\ArchiveValidator;
 use Core\Plugin;
 
 class Themes {
@@ -174,40 +175,31 @@ class Themes {
         \Gem::addMiddleware('DemoProtect');
 
         if($file = $request->file('file')){        
-            if(!$file->mimematch || !in_array($file->ext, ['zip'])) return Helper::redirect()->to(route('admin.themes'))->with('danger', e('The file is not valid. Only .zip files are accepted.'));    
-            
-            $name = str_replace('.'.$file->ext, '', $file->name);
+            if(!$file->isvalid || !$file->mimematch || $file->ext !== 'zip') return Helper::redirect()->to(route('admin.themes'))->with('danger', e('The file is not valid. Only .zip files are accepted.'));
 
-            $exists = file_exists(STORAGE.'/themes/'.$name);
-
-            $request->move($file, STORAGE.'/themes/');
-
-            $zip = new \ZipArchive();
-
-            $f = $zip->open(STORAGE.'/themes/'.$file->name);
-        
-            if($f === true) {
-              
-                if(!$exists) mkdir(STORAGE.'/themes/'.$name);
-
-                if(!$zip->extractTo(STORAGE.'/themes/'.$name.'/')){
-                    return Helper::redirect()->to(route('admin.themes'))->with('danger', e('The file was downloaded but cannot be extracted due to permission.'));
-                }
-        
-                $zip->close();
-
-                if(!file_exists(STORAGE.'/themes/'.$name.'/config.json')){
-                    \Helpers\App::deleteFolder(STORAGE.'/themes/'.$name);
-                    unlink(STORAGE.'/themes/'.$file->name);
-                    return Helper::redirect()->to(route('admin.themes'))->with('danger', e('Invalid theme. Please make sure the theme is up to date and includes a config.json file.'));
-                }
-              
-            } else {
-                return Helper::redirect()->to(route('admin.themes'))->with('danger', e('The file cannot be extracted. You can extract it manually.'));
+            try {
+                $name = ArchiveValidator::packageName($file->name);
+            } catch (\InvalidArgumentException $exception) {
+                return Helper::redirect()->to(route('admin.themes'))->with('danger', e('The theme filename is not valid.'));
             }
 
-            if(file_exists(STORAGE.'/themes/'.$file->name)){
-                unlink(STORAGE.'/themes/'.$file->name);
+            $exists = file_exists(STORAGE.'/themes/'.$name);
+            $archive = STORAGE.'/themes/'.$name.'.zip';
+
+            if(!$request->move($file, STORAGE.'/themes/', $name.'.zip')){
+                return Helper::redirect()->to(route('admin.themes'))->with('danger', e('The theme could not be uploaded.'));
+            }
+
+            try {
+                (new ArchiveValidator())->extract($archive, STORAGE.'/themes/'.$name, ArchiveValidator::TYPE_THEME);
+            } catch (\Throwable $exception) {
+                if(!$exists && file_exists(STORAGE.'/themes/'.$name)){
+                    \Helpers\App::deleteFolder(STORAGE.'/themes/'.$name);
+                }
+
+                return Helper::redirect()->to(route('admin.themes'))->with('danger', e('Invalid theme archive. The package was not installed.'));
+            } finally {
+                if(file_exists($archive)) unlink($archive);
             }
 
             return Helper::redirect()->to(route('admin.themes'))->with('success', $exists ? e('Theme has been updated successfully.') : e('Theme has been uploaded successfully.')); 
