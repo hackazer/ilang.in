@@ -53,17 +53,12 @@ class Dashboard {
         
         $payments = \Helpers\App::isExtended() ? DB::payment()->orderByDesc('date')->limit(5)->findMany() : [];
 
-        $subscriptions = \Helpers\App::isExtended() ? DB::subscription()->orderByDesc('date')->limit(5)->map(function($subscription){
-            if($user = User::where('id', $subscription->userid)->first()){
-                if(_STATE == "DEMO") $user->email = "demo@demo.com";
-                $subscription->user = $user->email;
-                $subscription->useravatar = $user->avatar();
-            }
-            if($plan = DB::plans()->where('id', $subscription->planid)->first()){
-                $subscription->plan = $plan->name;
-            }
-            return $subscription;
-        }) : [];
+        $subscriptions = \Helpers\App::isExtended()
+            ? self::withSubscriptionDetails(
+                DB::subscription()->orderByDesc('date')->limit(5)->findMany(),
+                _STATE == "DEMO"
+            )
+            : [];
 
         $counts = [];
         $counts['urls'] = ['name' => e('Links'), 'count' => DB::url()->count(), 'count.today' => DB::url()->whereRaw('`date` >= CURDATE()')->count()];
@@ -79,6 +74,55 @@ class Dashboard {
 
         return View::with('admin.index', compact('urls', 'users', 'reports', 'payments', 'subscriptions', 'counts'))->extend('admin.layouts.main');
     }    
+
+    private static function withSubscriptionDetails(
+        array $subscriptions,
+        bool $demo,
+        ?callable $loadUsers = null,
+        ?callable $loadPlans = null
+    ): array {
+        $userIds = [];
+        $planIds = [];
+
+        foreach($subscriptions as $subscription){
+            $userIds[(string) $subscription->userid] = $subscription->userid;
+            $planIds[(string) $subscription->planid] = $subscription->planid;
+        }
+
+        if(!$subscriptions) return $subscriptions;
+
+        $users = $loadUsers
+            ? $loadUsers(array_values($userIds))
+            : User::whereIn('id', array_values($userIds))->findMany();
+        $plans = $loadPlans
+            ? $loadPlans(array_values($planIds))
+            : DB::plans()->whereIn('id', array_values($planIds))->findMany();
+        $usersById = [];
+        $plansById = [];
+
+        foreach($users as $user){
+            $usersById[(string) $user->id] = $user;
+        }
+
+        foreach($plans as $plan){
+            $plansById[(string) $plan->id] = $plan;
+        }
+
+        foreach($subscriptions as $subscription){
+            if(isset($usersById[(string) $subscription->userid])){
+                $user = $usersById[(string) $subscription->userid];
+                if($demo) $user->email = "demo@demo.com";
+                $subscription->user = $user->email;
+                $subscription->useravatar = $user->avatar();
+            }
+            if(isset($plansById[(string) $subscription->planid])){
+                $subscription->plan = $plansById[(string) $subscription->planid]->name;
+            }
+        }
+
+        return $subscriptions;
+    }
+
     /**
      * Search database
      *

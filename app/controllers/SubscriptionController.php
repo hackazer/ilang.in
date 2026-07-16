@@ -58,6 +58,8 @@ class Subscription {
 
         $settings = ['monthly' => false, 'yearly' => false, 'lifetime' =>  false, 'discount' => 0];
 
+        $hasUsedTrial = Auth::logged() && DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first();
+
         foreach(DB::plans()->where('status', 1)->where('free', 1)->find() as $plan){
             $plans[$plan->id] = [
                 "free" => $plan->free,
@@ -85,8 +87,8 @@ class Subscription {
                     $plans[$plan->id]['planurl'] = '#';
                     $plans[$plan->id]['plantext'] = e('Current');
                 } else {
-                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, 'monthly']).($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '?trial=1': '');
-                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
+                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, 'monthly']).($plan->trial_days && !$hasUsedTrial ? '?trial=1': '');
+                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !$hasUsedTrial ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
                 }
             } else {
                 $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, 'monthly']).($plan->trial_days ? '?trial=1': '');
@@ -142,8 +144,8 @@ class Subscription {
                     $plans[$plan->id]['planurl'] = '#';
                     $plans[$plan->id]['plantext'] = e('Current');
                 } else {
-                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, $default]).($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '?trial=1': '');
-                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
+                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, $default]).($plan->trial_days && !$hasUsedTrial ? '?trial=1': '');
+                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !$hasUsedTrial ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
                 }
             } else {
                 $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, $default]).($plan->trial_days ? '?trial=1': '');

@@ -35,22 +35,15 @@ class Users {
      */
     public function index(){
 
-        $users = [];
+        $users = self::withListDetails(
+            User::orderByDesc('date')->paginate(15),
+            true,
+            e('Pro')
+        );
 
-        foreach(User::orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-
-            if($user->pro) {
-                if($plan = DB::plans()->first($user->planid)){
-                    $user->pro = $plan->name;
-                } else{
-                    $user->pro = e('Pro');
-                }
-            }
-
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Users'));
@@ -65,13 +58,15 @@ class Users {
      * @return void
      */
     public function inactive(){
-        $users = [];
+        $users = self::withListDetails(
+            User::where('active', 0)->orderByDesc('date')->paginate(15),
+            false,
+            e('Pro')
+        );
 
-        foreach(User::where('active', 0)->orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Inactive Users'));
@@ -86,13 +81,15 @@ class Users {
      * @return void
      */
     public function banned(){
-        $users = [];
+        $users = self::withListDetails(
+            User::where('banned', 1)->orderByDesc('date')->paginate(15),
+            false,
+            e('Pro')
+        );
 
-        foreach(User::where('banned', 1)->orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Banned Users'));
@@ -107,19 +104,77 @@ class Users {
      * @return void
      */
     public function admin(){
-        $users = [];
+        $users = self::withListDetails(
+            User::where('admin', 1)->orderByDesc('date')->paginate(15),
+            false,
+            e('Pro')
+        );
 
-        foreach(User::where('admin', 1)->orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Admin Users'));
 
         return View::with('admin.users.index', compact('users'))->extend('admin.layouts.main');
     }
+
+    private static function withListDetails(
+        array $users,
+        bool $includePlans,
+        string $defaultPlanName,
+        ?callable $loadCounts = null,
+        ?callable $loadPlans = null
+    ): array {
+        $userIds = [];
+        $planIds = [];
+
+        foreach($users as $user){
+            $userIds[(string) $user->id] = $user->id;
+            if($includePlans && $user->pro){
+                $planIds[(string) $user->planid] = $user->planid;
+            }
+        }
+
+        if(!$userIds) return $users;
+
+        $counts = $loadCounts
+            ? $loadCounts(array_values($userIds))
+            : DB::url()
+                ->select('userid')
+                ->selectExpr('COUNT(id)', 'count')
+                ->whereIn('userid', array_values($userIds))
+                ->groupBy('userid')
+                ->findMany();
+        $countsByUserId = [];
+
+        foreach($counts as $count){
+            $countsByUserId[(string) $count->userid] = (int) $count->count;
+        }
+
+        $plansById = [];
+        if($planIds){
+            $plans = $loadPlans
+                ? $loadPlans(array_values($planIds))
+                : DB::plans()->whereIn('id', array_values($planIds))->findMany();
+            foreach($plans as $plan){
+                $plansById[(string) $plan->id] = $plan;
+            }
+        }
+
+        foreach($users as $user){
+            $user->count = $countsByUserId[(string) $user->id] ?? 0;
+            if($includePlans && $user->pro){
+                $user->pro = isset($plansById[(string) $user->planid])
+                    ? $plansById[(string) $user->planid]->name
+                    : $defaultPlanName;
+            }
+        }
+
+        return $users;
+    }
+
     /**
      * Add Post
      *
