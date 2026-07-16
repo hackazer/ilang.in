@@ -48,6 +48,18 @@ final class LinkPasswordTest extends TestCase
         self::assertTrue(password_verify('modern-secret', $link->pass));
     }
 
+    public function testValidModernHashesWithStaleCostAreUpgraded(): void
+    {
+        $this->requireHelper();
+        $link = new LinkPasswordRecord((string) password_hash('modern-secret', PASSWORD_BCRYPT, ['cost' => 4]));
+
+        self::assertTrue(password_needs_rehash($link->pass, PASSWORD_DEFAULT));
+        self::assertTrue(LinkPassword::verifyAndUpgrade('modern-secret', $link));
+        self::assertSame(1, $link->saveCalls);
+        self::assertFalse(password_needs_rehash($link->pass, PASSWORD_DEFAULT));
+        self::assertTrue(password_verify('modern-secret', $link->pass));
+    }
+
     public function testLegacyPlaintextIsAcceptedOnceThenUpgraded(): void
     {
         $this->requireHelper();

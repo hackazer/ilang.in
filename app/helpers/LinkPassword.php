@@ -45,7 +45,16 @@ final class LinkPassword
         $info = password_get_info($stored);
 
         if (($info['algoName'] ?? 'unknown') !== 'unknown') {
-            return password_verify($password, $stored);
+            if (!password_verify($password, $stored)) {
+                return false;
+            }
+
+            if (password_needs_rehash($stored, PASSWORD_DEFAULT)) {
+                $link->pass = self::hash($password);
+                $link->save();
+            }
+
+            return true;
         }
 
         $valid = hash_equals($stored, $password);
