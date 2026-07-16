@@ -12,7 +12,7 @@ Only provider status `finished` for standard payments or `PAID` for recurring ch
 
 ## Initial setup
 
-1. Run the application updater once after deployment. It creates the four prefixed NOWPayments ledger tables and the disabled settings record.
+1. Run the application updater once after deployment. It creates or upgrades the five prefixed NOWPayments ledger tables and the disabled settings record.
 2. Open **Admin > Settings > Payment Gateway > NOWPayments**.
 3. Keep the environment on **Sandbox** while validating the integration.
 4. Enter the API key and IPN secret. Secret fields are encrypted at rest and are blank when the form reloads. A configured indicator confirms that the stored value remains available.
@@ -26,7 +26,7 @@ Production activation should happen only after a complete sandbox payment reache
 
 Email renewal requires the NOWPayments dashboard email and password because remote recurring plans use a short-lived dashboard JWT. Save those credentials before enabling the email mode.
 
-Remote plans are synchronized lazily for each local plan, term, amount, currency, and mode. Unchanged mappings are reused. Changed amounts or intervals update the mapped remote plan.
+Remote plans are synchronized lazily for each local plan, term, amount, currency, mode, and HTTPS IPN callback. Unchanged mappings are reused. Changed amounts, intervals, or callback URLs update the mapped remote plan.
 
 Lifetime plans cannot use recurring modes. They always use prepaid checkout.
 
@@ -44,7 +44,7 @@ Custody requires all of the following:
 
 Save the credentials first. Reload the page and confirm that readiness is green, then enable custodial automatic renewal.
 
-Each local user maps to one deterministic, non-email sub-partner. Funding creates a separate `custodial_deposit` ledger transaction. A successful deposit only funds the sub-partner balance. It never activates a plan. The separate recurring charge must reach `PAID` before entitlement changes.
+Each local user maps to one deterministic, non-email sub-partner. Funding creates a separate `custodial_deposit` ledger transaction. Its expected provider amount and currency are the estimated crypto deposit values; the original fiat funding target remains in ledger metadata for audit. A successful deposit only funds the sub-partner balance. It never activates a plan. The separate recurring charge must reach `PAID` before entitlement changes.
 
 ## Reconciliation cron
 
@@ -68,12 +68,14 @@ IPN remains the primary update path. Reconciliation recovers delayed or missed c
 
 The existing `payment`, `subscription`, `plans`, and `user` records remain the business source of truth. Dedicated tables preserve provider state:
 
-- `nowpayments_transactions`: payment attempts, recurring charges, custody deposits, retry state, and entitlement guard
+- `nowpayments_transactions`: payment attempts, one record per recurring billing cycle, custody deposits, retry state, and entitlement guard
 - `nowpayments_events`: verified payload hashes and processing history
 - `nowpayments_plans`: local to remote recurring plan mappings
 - `nowpayments_customers`: local user to custody sub-partner mappings
 
-Unique order IDs, idempotency keys, provider payment IDs, provider subscription IDs, and payload hashes prevent duplicate creation and replay.
+Unique order IDs, idempotency keys, provider payment IDs, provider cycle keys, and payload hashes prevent duplicate creation and replay. Provider subscription IDs are indexed parent identities and may appear on multiple cycle transactions. A recurring cycle uses the provider payment ID when available, otherwise a stable subscription and provider-period identity such as `expire_date`.
+
+Recurring reconciliation accepts provider responses that omit amount and currency only after matching the remote plan mapping and subscriber identity to the immutable local ledger context. Each new provider period creates a new transaction and local payment, so a later paid renewal extends entitlement exactly once. During the first updater run after this schema change, an older unkeyed recurring row is assigned the currently observed provider cycle without replaying an already-applied entitlement.
 
 ## Failure handling
 

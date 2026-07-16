@@ -115,7 +115,7 @@ final class EntitlementService
         }
 
         $expiry = self::expiry((string) $transaction->term, $user->expiration ? (string) $user->expiration : null);
-        $providerId = (string) ($transaction->provider_payment_id ?: $transaction->provider_subscription_id);
+        $providerId = (string) ($transaction->provider_payment_id ?: $transaction->provider_cycle_key ?: $transaction->provider_subscription_id);
 
         $payment = DB::payment()->where('tid', $providerId)->first();
 
@@ -150,7 +150,8 @@ final class EntitlementService
             'type' => 'nowpayments',
             'paymentmethod' => 'nowpayments',
             'mode' => $transaction->mode,
-            'provider_subscription_id' => $transaction->provider_subscription_id,
+                'provider_subscription_id' => $transaction->provider_subscription_id,
+                'provider_cycle_key' => $transaction->provider_cycle_key,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
         $subscription->save();
 

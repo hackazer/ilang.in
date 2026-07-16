@@ -14,12 +14,13 @@ final class RecurringPlan
         public readonly string $amount,
         public readonly string $currency,
         public readonly int $intervalDays,
+        public readonly string $ipnCallbackUrl,
         public readonly string $mappingKey,
         public readonly string $syncHash
     ) {
     }
 
-    public static function define(int $planId, string $title, string $term, string $mode, string $amount, string $currency): self
+    public static function define(int $planId, string $title, string $term, string $mode, string $amount, string $currency, string $ipnCallbackUrl): self
     {
         if ($planId <= 0 || !in_array($term, ['monthly', 'yearly'], true) || !in_array($mode, ['email', 'custodial'], true)) {
             throw new \InvalidArgumentException('Invalid recurring plan definition.');
@@ -29,9 +30,15 @@ final class RecurringPlan
             throw new \InvalidArgumentException('Invalid recurring plan amount or currency.');
         }
 
+        if (filter_var($ipnCallbackUrl, FILTER_VALIDATE_URL) === false
+            || strtolower((string) parse_url($ipnCallbackUrl, PHP_URL_SCHEME)) !== 'https') {
+            throw new \InvalidArgumentException('Recurring plan IPN callback URL must use HTTPS.');
+        }
+
         $interval = $term === 'yearly' ? 365 : 30;
         $identity = implode('|', [$planId, $term, $mode]);
-        $content = implode('|', [$identity, $title, $amount, strtoupper($currency), $interval]);
+        $ipnCallbackUrl = trim($ipnCallbackUrl);
+        $content = implode('|', [$identity, $title, $amount, strtoupper($currency), $interval, $ipnCallbackUrl]);
 
         return new self(
             $planId,
@@ -41,12 +48,13 @@ final class RecurringPlan
             $amount,
             strtoupper($currency),
             $interval,
+            $ipnCallbackUrl,
             hash('sha256', $identity),
             hash('sha256', $content)
         );
     }
 
-    /** @return array{title:string, interval_day:int, amount:string, currency:string} */
+    /** @return array{title:string, interval_day:int, amount:string, currency:string, ipn_callback_url:string} */
     public function payload(): array
     {
         return [
@@ -54,6 +62,7 @@ final class RecurringPlan
             'interval_day' => $this->intervalDays,
             'amount' => $this->amount,
             'currency' => strtolower($this->currency),
+            'ipn_callback_url' => $this->ipnCallbackUrl,
         ];
     }
 }

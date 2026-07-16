@@ -42,7 +42,7 @@ final class PlanManager
         $mapping->interval_days = $definition->intervalDays;
         $mapping->sync_hash = $definition->syncHash;
         $mapping->active = 1;
-        $mapping->metadata = json_encode(array_intersect_key($result, array_flip(['id', 'title', 'interval_day', 'amount', 'currency'])), JSON_THROW_ON_ERROR);
+        $mapping->metadata = json_encode(array_intersect_key($result, array_flip(['id', 'title', 'interval_day', 'amount', 'currency', 'ipn_callback_url'])), JSON_THROW_ON_ERROR);
         $mapping->last_synced_at = Helper::dtime();
         $mapping->created_at = $mapping->created_at ?: Helper::dtime();
         $mapping->updated_at = Helper::dtime();

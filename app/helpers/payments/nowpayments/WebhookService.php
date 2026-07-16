@@ -92,6 +92,14 @@ final class WebhookService
             $transaction->provider_status = $providerStatus;
             $transaction->status = $normalized;
 
+            if ($context['payment_id'] !== '' && empty($transaction->provider_payment_id)) {
+                $transaction->provider_payment_id = $context['payment_id'];
+            }
+
+            if ($context['cycle_key'] !== '' && empty($transaction->provider_cycle_key)) {
+                $transaction->provider_cycle_key = $context['cycle_key'];
+            }
+
             if ($context['received_amount'] !== null) {
                 $transaction->received_amount = $context['received_amount'];
             }
@@ -148,6 +156,9 @@ final class WebhookService
      *   currency:string,
      *   received_amount:?string,
      *   outcome_amount:?string,
+     *   cycle_key:string,
+     *   remote_plan_id:string,
+     *   subscriber:array<string,mixed>,
      *   complete:bool
      * }|null
      */
@@ -171,13 +182,16 @@ final class WebhookService
                 'kind' => 'payment',
                 'provider_id' => $paymentId,
                 'payment_id' => $paymentId,
-                'subscription_id' => '',
+                'subscription_id' => trim((string) ($payload['subscription_id'] ?? '')),
                 'order_id' => trim((string) ($payload['order_id'] ?? '')),
                 'status' => $status,
                 'amount' => $amount,
                 'currency' => $currency,
                 'received_amount' => self::firstDecimal($payload, ['actually_paid', 'amount_received']),
                 'outcome_amount' => self::firstDecimal($payload, ['outcome_amount']),
+                'cycle_key' => RecurringCycle::key($payload, trim((string) ($payload['subscription_id'] ?? ''))) ?? '',
+                'remote_plan_id' => trim((string) ($payload['subscription_plan_id'] ?? '')),
+                'subscriber' => is_array($payload['subscriber'] ?? null) ? $payload['subscriber'] : [],
                 'complete' => $amount !== null && $currency !== '',
             ];
         }
@@ -194,6 +208,10 @@ final class WebhookService
             ? EntitlementService::normalizeDecimal($payload['amount'])
             : null;
         $currency = trim((string) ($payload['currency'] ?? ''));
+        $cycleKey = RecurringCycle::key($payload, $subscriptionId) ?? '';
+        $remotePlanId = trim((string) ($payload['subscription_plan_id'] ?? ''));
+        $subscriber = is_array($payload['subscriber'] ?? null) ? $payload['subscriber'] : [];
+        $hasSubscriberIdentity = trim((string) ($subscriber['email'] ?? $subscriber['sub_partner_id'] ?? '')) !== '';
         $providerEvidence = $source === self::SOURCE_IPN || (
             $officialId !== ''
             && (array_key_exists('subscription_plan_id', $payload)
@@ -213,7 +231,14 @@ final class WebhookService
             'currency' => $currency,
             'received_amount' => $amount,
             'outcome_amount' => null,
-            'complete' => $providerEvidence && $amount !== null && $currency !== '',
+            'cycle_key' => $cycleKey,
+            'remote_plan_id' => $remotePlanId,
+            'subscriber' => $subscriber,
+            'complete' => $providerEvidence
+                && $cycleKey !== ''
+                && ($source === self::SOURCE_RECONCILIATION
+                    ? $remotePlanId !== '' && $hasSubscriberIdentity
+                    : (($amount !== null && $currency !== '') || ($remotePlanId !== '' && $hasSubscriberIdentity))),
         ];
     }
 
@@ -233,9 +258,9 @@ final class WebhookService
             }
         }
 
-        if ($context['subscription_id'] !== '') {
-            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_subscription_id` = ?{$lock}");
-            $statement->execute([$context['subscription_id']]);
+        if ($context['cycle_key'] !== '') {
+            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_cycle_key` = ?{$lock}");
+            $statement->execute([$context['cycle_key']]);
             $id = $statement->fetchColumn();
 
             if ($id !== false) {
@@ -243,11 +268,47 @@ final class WebhookService
             }
         }
 
+        if ($context['subscription_id'] !== '') {
+            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_subscription_id` = ? AND `provider_cycle_key` IS NULL ORDER BY `id` ASC LIMIT 1{$lock}");
+            $statement->execute([$context['subscription_id']]);
+            $id = $statement->fetchColumn();
+
+            if ($id !== false) {
+                return (int) $id;
+            }
+
+            if ($context['cycle_key'] !== '' && $context['complete']) {
+                $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_subscription_id` = ? ORDER BY `id` DESC LIMIT 1{$lock}");
+                $statement->execute([$context['subscription_id']]);
+                $templateId = $statement->fetchColumn();
+
+                if ($templateId !== false) {
+                    $template = DB::table('nowpayments_transactions')->where('id', (int) $templateId)->first();
+
+                    if ($template && $this->matches($template, $context, true)) {
+                        try {
+                            return $this->cloneRecurringCycle($template, $context);
+                        } catch (\Throwable $exception) {
+                            $statement = $pdo->prepare("SELECT `id` FROM `{$table}` WHERE `provider_cycle_key` = ?{$lock}");
+                            $statement->execute([$context['cycle_key']]);
+                            $concurrentId = $statement->fetchColumn();
+
+                            if ($concurrentId !== false) {
+                                return (int) $concurrentId;
+                            }
+
+                            throw $exception;
+                        }
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
     /** @param array<string, mixed> $context */
-    private function matches(object $transaction, array $context): bool
+    private function matches(object $transaction, array $context, bool $ignoreCycle = false): bool
     {
         if ($context['payment_id'] !== ''
             && (string) $context['payment_id'] !== (string) $transaction->provider_payment_id) {
@@ -256,6 +317,12 @@ final class WebhookService
 
         if ($context['subscription_id'] !== ''
             && (string) $context['subscription_id'] !== (string) $transaction->provider_subscription_id) {
+            return false;
+        }
+
+        if (!$ignoreCycle && $context['cycle_key'] !== ''
+            && trim((string) $transaction->provider_cycle_key) !== ''
+            && !hash_equals((string) $transaction->provider_cycle_key, $context['cycle_key'])) {
             return false;
         }
 
@@ -279,7 +346,76 @@ final class WebhookService
             }
         }
 
+        $metadata = json_decode((string) ($transaction->metadata ?? ''), true);
+        $metadata = is_array($metadata) ? $metadata : [];
+
+        if ($context['remote_plan_id'] !== ''
+            && (!isset($metadata['remote_plan_id'])
+                || !hash_equals((string) $metadata['remote_plan_id'], $context['remote_plan_id']))) {
+            return false;
+        }
+
+        if ($context['subscriber'] !== [] && !$this->subscriberMatches($transaction, $context['subscriber'])) {
+            return false;
+        }
+
         return true;
+    }
+
+    /** @param array<string, mixed> $context */
+    private function cloneRecurringCycle(object $template, array $context): int
+    {
+        $transaction = DB::table('nowpayments_transactions')->create([]);
+        $transaction->userid = $template->userid;
+        $transaction->planid = $template->planid;
+        $transaction->subscriptionid = $template->subscriptionid;
+        $transaction->order_id = RecurringCycle::orderId($context['cycle_key']);
+        $transaction->idempotency_key = RecurringCycle::idempotencyKey($context['cycle_key']);
+        $transaction->provider_payment_id = $context['payment_id'] !== '' ? $context['payment_id'] : null;
+        $transaction->provider_subscription_id = $context['subscription_id'];
+        $transaction->provider_cycle_key = $context['cycle_key'];
+        $transaction->mode = $template->mode;
+        $transaction->term = $template->term;
+        $transaction->price_currency = $template->price_currency;
+        $transaction->pay_currency = $template->pay_currency;
+        $transaction->settlement_currency = $template->settlement_currency;
+        $transaction->expected_amount = $template->expected_amount;
+        $transaction->status = Status::PENDING;
+        $transaction->retry_count = 0;
+        $transaction->next_retry_at = Helper::dtime();
+        $transaction->metadata = $template->metadata;
+        $transaction->created_at = Helper::dtime();
+        $transaction->updated_at = Helper::dtime();
+        $transaction->save();
+
+        return (int) $transaction->id;
+    }
+
+    /** @param array<string, mixed> $subscriber */
+    private function subscriberMatches(object $transaction, array $subscriber): bool
+    {
+        if (trim((string) ($subscriber['email'] ?? '')) !== '') {
+            $user = DB::user()->where('id', $transaction->userid)->first();
+
+            return $user
+                && isset($user->email)
+                && hash_equals(strtolower(trim((string) $user->email)), strtolower(trim((string) $subscriber['email'])));
+        }
+
+        if (trim((string) ($subscriber['sub_partner_id'] ?? '')) !== '') {
+            try {
+                $customer = DB::table('nowpayments_customers')
+                    ->where('userid', $transaction->userid)
+                    ->where('provider_subpartner_id', (string) $subscriber['sub_partner_id'])
+                    ->first();
+
+                return $customer !== false && $customer !== null;
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /** @param array{user_id:int, plan_id:int, payment_id:int} $applied */
@@ -403,7 +539,7 @@ final class WebhookService
             'id', 'payment_id', 'subscription_id', 'payment_status', 'status', 'order_id', 'price_amount',
             'price_currency', 'currency', 'amount', 'pay_amount', 'pay_currency', 'actually_paid',
             'amount_received', 'outcome_amount', 'outcome_currency', 'purchase_id', 'parent_payment_id',
-            'subscription_plan_id', 'is_active', 'expire_date', 'updated_at', 'created_at',
+            'subscription_plan_id', 'subscriber', 'is_active', 'expire_date', 'updated_at', 'created_at',
         ]));
     }
 

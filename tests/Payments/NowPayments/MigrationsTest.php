@@ -34,7 +34,8 @@ final class MigrationsTest extends TestCase
         self::assertContains('order_id', $unique['nowpayments_transactions']);
         self::assertContains('idempotency_key', $unique['nowpayments_transactions']);
         self::assertContains('provider_payment_id', $unique['nowpayments_transactions']);
-        self::assertContains('provider_subscription_id', $unique['nowpayments_transactions']);
+        self::assertContains('provider_cycle_key', $unique['nowpayments_transactions']);
+        self::assertNotContains('provider_subscription_id', $unique['nowpayments_transactions']);
         self::assertContains('payload_hash', $unique['nowpayments_events']);
         self::assertContains('mapping_key', $unique['nowpayments_plans']);
         self::assertContains('userid', $unique['nowpayments_customers']);

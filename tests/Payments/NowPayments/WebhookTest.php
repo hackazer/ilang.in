@@ -22,7 +22,7 @@ require_once $project.'/core/support/ORM.class.php';
 require_once $project.'/core/DB.class.php';
 require_once $project.'/core/Plugin.class.php';
 
-foreach (['Signature', 'Status', 'WebhookResult', 'EntitlementService', 'WebhookService'] as $classFile) {
+foreach (['Signature', 'Status', 'WebhookResult', 'RecurringCycle', 'EntitlementService', 'WebhookService'] as $classFile) {
     require_once $project.'/app/helpers/payments/nowpayments/'.$classFile.'.php';
 }
 
@@ -185,6 +185,33 @@ final class WebhookTest extends TestCase
         self::assertSame(0, self::$dispatchCount);
     }
 
+    public function testRecurringReconciliationAcceptsMappedContextWithoutAmountFields(): void
+    {
+        $cycleKey = hash('sha256', 'subscription:renewal-1|period:2026-08-17 00:00:00');
+        $this->seedTransaction(
+            mode: 'email',
+            expectedAmount: '10.10',
+            currency: 'USD',
+            providerSubscriptionId: 'renewal-1',
+            providerCycleKey: $cycleKey,
+            metadata: '{"remote_plan_id":"remote-plan-1","subscriber_email":"user@example.test"}'
+        );
+        $this->database->exec("UPDATE user SET email = 'user@example.test' WHERE id = 1");
+        $payload = [
+            'id' => 'renewal-1',
+            'status' => 'PAID',
+            'subscription_plan_id' => 'remote-plan-1',
+            'subscriber' => ['email' => 'user@example.test'],
+            'expire_date' => '2026-08-17T00:00:00Z',
+        ];
+
+        $result = (new WebhookService())->handleTrusted($payload);
+
+        self::assertSame(200, $result->httpStatus);
+        self::assertSame('processed', $result->result);
+        self::assertSame(1, (int) $this->database->query('SELECT COUNT(*) FROM payment')->fetchColumn());
+    }
+
     public function testActiveRecurringSubscriptionAmountRemainsCumulative(): void
     {
         $this->seedTransaction(
@@ -195,10 +222,47 @@ final class WebhookTest extends TestCase
             subscriptionStatus: 'Active',
             subscriptionAmount: '20.15'
         );
-        $payload = ['id' => 'renewal-2', 'status' => 'FINISHED', 'currency' => 'USD', 'amount' => '10.10'];
+        $payload = [
+            'id' => 'renewal-2',
+            'status' => 'FINISHED',
+            'currency' => 'USD',
+            'amount' => '10.10',
+            'expire_date' => '2026-08-17T00:00:00Z',
+        ];
 
         self::assertSame('processed', (new WebhookService())->handle($payload, $this->signature($payload), self::SECRET)->result);
         self::assertSame('30.25', $this->database->query('SELECT amount FROM subscription')->fetchColumn());
+    }
+
+    public function testLaterRecurringCycleCreatesASeparatePaymentAndExtendsEntitlement(): void
+    {
+        $this->seedTransaction(
+            mode: 'email',
+            expectedAmount: '10.10',
+            currency: 'USD',
+            providerSubscriptionId: 'renewing-subscription',
+            subscriptionAmount: '0'
+        );
+        $service = new WebhookService();
+        $first = [
+            'id' => 'renewing-subscription',
+            'status' => 'FINISHED',
+            'currency' => 'USD',
+            'amount' => '10.10',
+            'expire_date' => '2026-08-17T00:00:00Z',
+        ];
+        $second = $first;
+        $second['expire_date'] = '2026-09-17T00:00:00Z';
+
+        self::assertSame('processed', $service->handle($first, $this->signature($first), self::SECRET)->result);
+        $firstExpiry = (string) $this->database->query('SELECT expiry FROM subscription')->fetchColumn();
+        self::assertSame('processed', $service->handle($second, $this->signature($second), self::SECRET)->result);
+
+        self::assertSame(2, (int) $this->database->query('SELECT COUNT(*) FROM nowpayments_transactions')->fetchColumn());
+        self::assertSame(2, (int) $this->database->query('SELECT COUNT(*) FROM payment')->fetchColumn());
+        self::assertSame(2, (int) $this->database->query('SELECT COUNT(DISTINCT provider_cycle_key) FROM nowpayments_transactions')->fetchColumn());
+        self::assertSame('20.2', $this->database->query('SELECT amount FROM subscription')->fetchColumn());
+        self::assertGreaterThan($firstExpiry, (string) $this->database->query('SELECT expiry FROM subscription')->fetchColumn());
     }
 
     /** @return array<string, mixed> */
@@ -230,8 +294,10 @@ final class WebhookTest extends TestCase
         string $currency = 'USD',
         ?string $providerPaymentId = null,
         ?string $providerSubscriptionId = null,
+        ?string $providerCycleKey = null,
         string $subscriptionStatus = 'Pending',
-        ?string $subscriptionAmount = null
+        ?string $subscriptionAmount = null,
+        string $metadata = '{}'
     ): void {
         $this->database->exec("INSERT INTO user (expiration, trial, pro, planid) VALUES (NULL, 1, 0, 0)");
         $this->database->prepare('INSERT INTO subscription (userid, plan, planid, status, amount, data, uniqueid) VALUES (1, ?, 7, ?, ?, ?, ?)')->execute([
@@ -243,32 +309,33 @@ final class WebhookTest extends TestCase
         ]);
         $this->database->prepare('INSERT INTO nowpayments_transactions (
             userid, planid, subscriptionid, paymentid, order_id, idempotency_key,
-            provider_payment_id, provider_subscription_id, mode, term, price_currency,
+            provider_payment_id, provider_subscription_id, provider_cycle_key, mode, term, price_currency,
             settlement_currency, expected_amount, received_amount, outcome_amount, status,
             retry_count, metadata, created_at, updated_at
-        ) VALUES (1, 7, 1, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)')->execute([
+        ) VALUES (1, 7, 1, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, 0, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)')->execute([
             'np-order-1',
             'idempotency-1',
             $providerPaymentId,
             $providerSubscriptionId,
+            $providerCycleKey,
             $mode,
             'monthly',
             strtoupper($currency),
             strtoupper($currency),
             $expectedAmount,
             Status::PENDING,
-            '{}',
+            $metadata,
         ]);
     }
 
     private function createSchema(): void
     {
         foreach ([
-            'CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, expiration TEXT, last_payment TEXT, trial INTEGER, pro INTEGER, planid INTEGER)',
+            'CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, expiration TEXT, last_payment TEXT, trial INTEGER, pro INTEGER, planid INTEGER)',
             'CREATE TABLE subscription (id INTEGER PRIMARY KEY AUTOINCREMENT, tid TEXT, userid INTEGER, plan TEXT, planid INTEGER, status TEXT, amount TEXT, expiry TEXT, lastpayment TEXT, data TEXT, uniqueid TEXT)',
             'CREATE TABLE payment (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, tid TEXT UNIQUE, amount TEXT, userid INTEGER, status TEXT, expiry TEXT, data TEXT)',
             'CREATE TABLE coupons (id INTEGER PRIMARY KEY AUTOINCREMENT, used INTEGER)',
-            'CREATE TABLE nowpayments_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, planid INTEGER, subscriptionid INTEGER, paymentid INTEGER, order_id TEXT UNIQUE, idempotency_key TEXT UNIQUE, provider_payment_id TEXT UNIQUE, provider_subscription_id TEXT UNIQUE, mode TEXT, term TEXT, price_currency TEXT, pay_currency TEXT, settlement_currency TEXT, expected_amount TEXT, pay_amount TEXT, received_amount TEXT, outcome_amount TEXT, status TEXT, provider_status TEXT, pay_address TEXT, payin_extra_id TEXT, expires_at TEXT, last_checked_at TEXT, retry_count INTEGER, next_retry_at TEXT, metadata TEXT, entitlement_applied_at TEXT, created_at TEXT, updated_at TEXT)',
+            'CREATE TABLE nowpayments_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, planid INTEGER, subscriptionid INTEGER, paymentid INTEGER, order_id TEXT UNIQUE, idempotency_key TEXT UNIQUE, provider_payment_id TEXT UNIQUE, provider_subscription_id TEXT, provider_cycle_key TEXT UNIQUE, mode TEXT, term TEXT, price_currency TEXT, pay_currency TEXT, settlement_currency TEXT, expected_amount TEXT, pay_amount TEXT, received_amount TEXT, outcome_amount TEXT, status TEXT, provider_status TEXT, pay_address TEXT, payin_extra_id TEXT, expires_at TEXT, last_checked_at TEXT, retry_count INTEGER, next_retry_at TEXT, metadata TEXT, entitlement_applied_at TEXT, created_at TEXT, updated_at TEXT)',
             'CREATE TABLE nowpayments_events (id INTEGER PRIMARY KEY AUTOINCREMENT, transaction_id INTEGER, provider_payment_id TEXT, payload_hash TEXT UNIQUE, signature_verified INTEGER, source TEXT, status TEXT, result TEXT, failure_reason TEXT, payload TEXT, received_at TEXT, processed_at TEXT)',
             'CREATE TABLE nowpayments_outbox (id INTEGER PRIMARY KEY AUTOINCREMENT, event_key TEXT UNIQUE, transaction_id INTEGER UNIQUE, userid INTEGER, planid INTEGER, paymentid INTEGER, status TEXT, attempts INTEGER, last_error TEXT, available_at TEXT, dispatched_at TEXT, created_at TEXT, updated_at TEXT)',
         ] as $sql) {

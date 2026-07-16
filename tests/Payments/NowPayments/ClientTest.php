@@ -64,6 +64,28 @@ final class ClientTest extends TestCase
         self::assertSame('https://api.nowpayments.io/v1/subscriptions', $transport->requests[0]['url']);
     }
 
+    public function testRecurringGetRequestsUseBearerAndApiKey(): void
+    {
+        $transport = new RecordingTransport([
+            new TransportResponse(200, [], '{"id":"subscription-9"}'),
+            new TransportResponse(200, [], '{"result":[]}'),
+            new TransportResponse(200, [], '{"id":"plan-7"}'),
+            new TransportResponse(200, [], '{"result":[]}'),
+        ]);
+        $client = new Client($transport, 'api-key', 'https://api.nowpayments.io/v1');
+
+        $client->subscription('subscription-9', 'jwt-token');
+        $client->subscriptions('jwt-token');
+        $client->plan('plan-7', 'jwt-token');
+        $client->plans('jwt-token');
+
+        foreach ($transport->requests as $request) {
+            self::assertSame('GET', $request['method']);
+            self::assertSame('Bearer jwt-token', $request['headers']['Authorization'] ?? null);
+            self::assertSame('api-key', $request['headers']['x-api-key'] ?? null);
+        }
+    }
+
     public function testPaymentHistoryRequestUsesJwtAndPageQuery(): void
     {
         $transport = new RecordingTransport([

@@ -28,7 +28,7 @@ final class Migrations
     public static function uniqueKeys(): array
     {
         return [
-            'nowpayments_transactions' => ['order_id', 'idempotency_key', 'provider_payment_id', 'provider_subscription_id'],
+            'nowpayments_transactions' => ['order_id', 'idempotency_key', 'provider_payment_id', 'provider_cycle_key'],
             'nowpayments_events' => ['payload_hash'],
             'nowpayments_plans' => ['mapping_key', 'remote_plan_id'],
             'nowpayments_customers' => ['userid', 'provider_subpartner_id', 'provider_name'],
@@ -111,6 +111,7 @@ final class Migrations
             `idempotency_key` VARCHAR(191) NOT NULL,
             `provider_payment_id` VARCHAR(191) NULL,
             `provider_subscription_id` VARCHAR(191) NULL,
+            `provider_cycle_key` VARCHAR(64) NULL,
             `mode` VARCHAR(32) NOT NULL,
             `term` VARCHAR(32) NOT NULL,
             `price_currency` VARCHAR(16) NOT NULL,
@@ -136,7 +137,8 @@ final class Migrations
             UNIQUE KEY `np_transactions_order_id_unique` (`order_id`),
             UNIQUE KEY `np_transactions_idempotency_unique` (`idempotency_key`),
             UNIQUE KEY `np_transactions_payment_unique` (`provider_payment_id`),
-            UNIQUE KEY `np_transactions_subscription_unique` (`provider_subscription_id`),
+            UNIQUE KEY `np_transactions_cycle_unique` (`provider_cycle_key`),
+            KEY `np_transactions_subscription_index` (`provider_subscription_id`),
             KEY `np_transactions_user_index` (`userid`),
             KEY `np_transactions_plan_index` (`planid`),
             KEY `np_transactions_local_subscription_index` (`subscriptionid`),
@@ -236,9 +238,26 @@ final class Migrations
     private static function upgradeExistingSchema(): void
     {
         $events = self::table('nowpayments_events');
+        $transactions = self::table('nowpayments_transactions');
 
         if (!self::columnExists($events, 'source')) {
             DB::get_db()->exec("ALTER TABLE `{$events}` ADD COLUMN `source` VARCHAR(32) NOT NULL DEFAULT 'ipn' AFTER `signature_verified`, ADD INDEX `np_events_source_index` (`source`)");
+        }
+
+        if (!self::columnExists($transactions, 'provider_cycle_key')) {
+            DB::get_db()->exec("ALTER TABLE `{$transactions}` ADD COLUMN `provider_cycle_key` VARCHAR(64) NULL AFTER `provider_subscription_id`");
+        }
+
+        if (self::indexExists($transactions, 'np_transactions_subscription_unique')) {
+            DB::get_db()->exec("ALTER TABLE `{$transactions}` DROP INDEX `np_transactions_subscription_unique`");
+        }
+
+        if (!self::indexExists($transactions, 'np_transactions_subscription_index')) {
+            DB::get_db()->exec("ALTER TABLE `{$transactions}` ADD INDEX `np_transactions_subscription_index` (`provider_subscription_id`)");
+        }
+
+        if (!self::indexExists($transactions, 'np_transactions_cycle_unique')) {
+            DB::get_db()->exec("ALTER TABLE `{$transactions}` ADD UNIQUE INDEX `np_transactions_cycle_unique` (`provider_cycle_key`)");
         }
 
         foreach (self::monetaryColumns() as $tableName => $columns) {
@@ -261,6 +280,14 @@ final class Migrations
     private static function columnExists(string $table, string $column): bool
     {
         return self::columnMetadata($table, $column) !== null;
+    }
+
+    private static function indexExists(string $table, string $index): bool
+    {
+        $statement = DB::get_db()->prepare('SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1');
+        $statement->execute([$table, $index]);
+
+        return $statement->fetchColumn() !== false;
     }
 
     /** @return array<string, mixed>|null */

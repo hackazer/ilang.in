@@ -22,7 +22,15 @@ final class SubscriptionService
             throw new \UnexpectedValueException('NOWPayments dashboard authentication did not return a token.');
         }
 
-        $definition = RecurringPlan::define((int) $plan->id, (string) $plan->name, $term, $mode, $pricing->decimal(), (string) $settings['settlement_currency']);
+        $definition = RecurringPlan::define(
+            (int) $plan->id,
+            (string) $plan->name,
+            $term,
+            $mode,
+            $pricing->decimal(),
+            (string) $settings['settlement_currency'],
+            (string) $settings['callback_url']
+        );
         $remotePlanId = (new PlanManager($this->client))->sync($definition, $jwt);
         $order = Order::fromAttempt((int) $user->id, (int) $plan->id, $term, $mode, $attemptId);
         $subPartnerId = null;
@@ -50,10 +58,17 @@ final class SubscriptionService
 
             $transaction = DB::table('nowpayments_transactions')->where('id', $attempt->transactionId())->first();
             $transaction->provider_subscription_id = $remoteSubscriptionId;
+            $transaction->provider_cycle_key = RecurringCycle::key($result, $remoteSubscriptionId);
+            $transaction->provider_payment_id = isset($result['payment_id']) ? (string) $result['payment_id'] : null;
             $transaction->provider_status = (string) ($result['status'] ?? 'WAITING_PAY');
             $transaction->status = Status::normalize($transaction->provider_status);
             $transaction->expires_at = isset($result['expire_date']) && strtotime((string) $result['expire_date']) !== false ? date('Y-m-d H:i:s', strtotime((string) $result['expire_date'])) : null;
-            $transaction->metadata = json_encode(array_replace($pricing->metadata(), ['remote_plan_id' => $remotePlanId, 'subscriber' => $mode]), JSON_THROW_ON_ERROR);
+            $transaction->metadata = json_encode(array_replace($pricing->metadata(), [
+                'remote_plan_id' => $remotePlanId,
+                'subscriber_mode' => $mode,
+                'subscriber_email' => (string) $user->email,
+                'sub_partner_id' => $subPartnerId,
+            ]), JSON_THROW_ON_ERROR);
             $transaction->updated_at = Helper::dtime();
             $transaction->save();
 

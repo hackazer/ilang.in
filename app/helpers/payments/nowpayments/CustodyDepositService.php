@@ -65,8 +65,24 @@ final class CustodyDepositService
         }
     }
 
+    /** @return array{expected_amount:string,price_currency:string,pay_amount:string,pay_currency:string,metadata:array{fiat_target_amount:string,fiat_target_currency:string}} */
+    public static function ledgerContext(string $fiatAmount, string $fiatCurrency, string $cryptoAmount, string $cryptoCurrency): array
+    {
+        return [
+            'expected_amount' => $cryptoAmount,
+            'price_currency' => strtoupper($cryptoCurrency),
+            'pay_amount' => $cryptoAmount,
+            'pay_currency' => strtoupper($cryptoCurrency),
+            'metadata' => [
+                'fiat_target_amount' => $fiatAmount,
+                'fiat_target_currency' => strtoupper($fiatCurrency),
+            ],
+        ];
+    }
+
     private function createPending(object $user, object $plan, string $term, PrepaidAttempt $enrollment, PricingResult $pricing, Order $order, string $priceCurrency, string $payCurrency, string $payAmount): PrepaidAttempt
     {
+        $context = self::ledgerContext($pricing->decimal(), $priceCurrency, $payAmount, $payCurrency);
         $transaction = DB::table('nowpayments_transactions')->create();
         $transaction->userid = $user->id;
         $transaction->planid = $plan->id;
@@ -75,15 +91,18 @@ final class CustodyDepositService
         $transaction->idempotency_key = $order->idempotencyKey();
         $transaction->mode = 'custodial_deposit';
         $transaction->term = $term;
-        $transaction->price_currency = $priceCurrency;
-        $transaction->pay_currency = $payCurrency;
-        $transaction->settlement_currency = $priceCurrency;
-        $transaction->expected_amount = $pricing->decimal();
-        $transaction->pay_amount = $payAmount;
+        $transaction->price_currency = $context['price_currency'];
+        $transaction->pay_currency = $context['pay_currency'];
+        $transaction->settlement_currency = $context['price_currency'];
+        $transaction->expected_amount = $context['expected_amount'];
+        $transaction->pay_amount = $context['pay_amount'];
         $transaction->status = Status::PENDING;
         $transaction->retry_count = 0;
         $transaction->next_retry_at = Helper::dtime('+2 minutes');
-        $transaction->metadata = json_encode(['purpose' => 'custody_deposit', 'enrollment_transaction_id' => $enrollment->transactionId()], JSON_THROW_ON_ERROR);
+        $transaction->metadata = json_encode(array_replace($context['metadata'], [
+            'purpose' => 'custody_deposit',
+            'enrollment_transaction_id' => $enrollment->transactionId(),
+        ]), JSON_THROW_ON_ERROR);
         $transaction->created_at = Helper::dtime();
         $transaction->updated_at = Helper::dtime();
         $transaction->save();

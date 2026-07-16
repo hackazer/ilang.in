@@ -288,14 +288,25 @@ final class Reconciler
         }
 
         $remoteId = (string) $row['id'];
+        $remotePlanId = trim((string) ($row['subscription_plan_id'] ?? ''));
 
-        if (DB::table('nowpayments_transactions')->where('provider_subscription_id', $remoteId)->first()) {
+        if ($remotePlanId === '' || !hash_equals((string) $mapping->remote_plan_id, $remotePlanId)) {
             return false;
         }
 
         $user = $this->subscriber($row['subscriber'] ?? []);
 
         if (!$user) {
+            return false;
+        }
+
+        $cycleKey = RecurringCycle::key($row, $remoteId);
+
+        if ($cycleKey === '' || $cycleKey === null) {
+            return false;
+        }
+
+        if (DB::table('nowpayments_transactions')->where('provider_cycle_key', $cycleKey)->first()) {
             return false;
         }
 
@@ -309,14 +320,29 @@ final class Reconciler
             return false;
         }
 
-        $digest = hash('sha256', 'recurring|'.$remoteId);
+        $unassigned = DB::table('nowpayments_transactions')
+            ->where('provider_subscription_id', $remoteId)
+            ->where('userid', $user->id)
+            ->where('planid', $mapping->planid)
+            ->whereNull('provider_cycle_key')
+            ->orderByAsc('id')
+            ->first();
+
+        if ($unassigned) {
+            $this->assignCycle($unassigned, $mapping, $row, $cycleKey);
+            return false;
+        }
+
+        $digest = RecurringCycle::idempotencyKey($cycleKey);
         $transaction = DB::table('nowpayments_transactions')->create([]);
         $transaction->userid = $user->id;
         $transaction->planid = $mapping->planid;
         $transaction->subscriptionid = $subscription->id;
-        $transaction->order_id = 'np-recurring-'.substr($digest, 0, 40);
+        $transaction->order_id = RecurringCycle::orderId($cycleKey);
         $transaction->idempotency_key = $digest;
+        $transaction->provider_payment_id = isset($row['payment_id']) ? (string) $row['payment_id'] : null;
         $transaction->provider_subscription_id = $remoteId;
+        $transaction->provider_cycle_key = $cycleKey;
         $transaction->mode = $mapping->mode;
         $transaction->term = $mapping->term;
         $transaction->price_currency = $mapping->currency;
@@ -326,14 +352,20 @@ final class Reconciler
         $transaction->provider_status = (string) ($row['status'] ?? 'WAITING_PAY');
         $transaction->retry_count = 0;
         $transaction->next_retry_at = Helper::dtime();
-        $transaction->metadata = json_encode(['remote_plan_id' => $mapping->remote_plan_id, 'discovered' => true], JSON_THROW_ON_ERROR);
+        $transaction->expires_at = self::providerDate($row['expire_date'] ?? null);
+        $transaction->metadata = json_encode([
+            'remote_plan_id' => $mapping->remote_plan_id,
+            'subscriber_email' => (string) ($row['subscriber']['email'] ?? ''),
+            'sub_partner_id' => (string) ($row['subscriber']['sub_partner_id'] ?? ''),
+            'discovered' => true,
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
         $transaction->created_at = Helper::dtime();
         $transaction->updated_at = Helper::dtime();
 
         try {
             $transaction->save();
         } catch (\Throwable $exception) {
-            if (DB::table('nowpayments_transactions')->where('provider_subscription_id', $remoteId)->first()) {
+            if (DB::table('nowpayments_transactions')->where('provider_cycle_key', $cycleKey)->first()) {
                 return false;
             }
 
@@ -371,6 +403,8 @@ final class Reconciler
         $result['subscription_id'] = (string) ($result['subscription_id'] ?? $result['id'] ?? $transaction->provider_subscription_id);
         $result['status'] = (string) ($result['status'] ?? '');
 
+        $this->prepareRecurringCycle($transaction, $result);
+
         if (array_key_exists('amount', $result) && !array_key_exists('price_amount', $result)) {
             $result['price_amount'] = $result['amount'];
         }
@@ -380,6 +414,132 @@ final class Reconciler
         }
 
         return $result;
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function prepareRecurringCycle(object $transaction, array $payload): object
+    {
+        $subscriptionId = trim((string) ($payload['id'] ?? $payload['subscription_id'] ?? ''));
+
+        if ($subscriptionId === '' || !hash_equals((string) $transaction->provider_subscription_id, $subscriptionId)) {
+            throw new \UnexpectedValueException('NOWPayments recurring subscription identity does not match the ledger.');
+        }
+
+        $metadata = self::metadata($transaction);
+        $remotePlanId = trim((string) ($metadata['remote_plan_id'] ?? ''));
+        $payloadPlanId = trim((string) ($payload['subscription_plan_id'] ?? ''));
+        $mapping = $remotePlanId === '' ? null : DB::table('nowpayments_plans')->where('remote_plan_id', $remotePlanId)->first();
+
+        if (!$mapping
+            || (int) $mapping->planid !== (int) $transaction->planid
+            || $payloadPlanId === ''
+            || !hash_equals($remotePlanId, $payloadPlanId)) {
+            throw new \UnexpectedValueException('NOWPayments recurring plan identity does not match the ledger.');
+        }
+
+        $subscriber = $this->subscriber($payload['subscriber'] ?? []);
+
+        if (!$subscriber || (int) $subscriber->id !== (int) $transaction->userid) {
+            throw new \UnexpectedValueException('NOWPayments recurring subscriber identity does not match the ledger.');
+        }
+
+        $cycleKey = RecurringCycle::key($payload, $subscriptionId);
+
+        if ($cycleKey === null) {
+            throw new \UnexpectedValueException('NOWPayments recurring response has no stable billing-cycle identity.');
+        }
+
+        if ($existing = DB::table('nowpayments_transactions')->where('provider_cycle_key', $cycleKey)->first()) {
+            if ((int) $existing->userid !== (int) $transaction->userid
+                || (int) $existing->planid !== (int) $transaction->planid
+                || !hash_equals((string) $existing->provider_subscription_id, $subscriptionId)) {
+                throw new \UnexpectedValueException('NOWPayments recurring cycle is already bound to another ledger context.');
+            }
+
+            return $existing;
+        }
+
+        $stored = DB::table('nowpayments_transactions')->where('id', (int) $transaction->id)->first();
+
+        if (!$stored) {
+            throw new \RuntimeException('NOWPayments recurring ledger transaction is missing.');
+        }
+
+        if (empty($stored->provider_cycle_key)) {
+            $this->assignCycle($stored, $mapping, $payload, $cycleKey);
+            return $stored;
+        }
+
+        try {
+            return $this->createCycleFromTemplate($stored, $mapping, $payload, $cycleKey);
+        } catch (\Throwable $exception) {
+            if ($existing = DB::table('nowpayments_transactions')->where('provider_cycle_key', $cycleKey)->first()) {
+                return $existing;
+            }
+
+            throw $exception;
+        }
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function assignCycle(object $transaction, object $mapping, array $payload, string $cycleKey): void
+    {
+        $transaction->provider_cycle_key = $cycleKey;
+        $transaction->provider_payment_id = isset($payload['payment_id']) ? (string) $payload['payment_id'] : $transaction->provider_payment_id;
+        $transaction->expected_amount = $mapping->amount;
+        $transaction->price_currency = $mapping->currency;
+        $transaction->settlement_currency = $mapping->currency;
+        $transaction->expires_at = self::providerDate($payload['expire_date'] ?? null);
+        $metadata = array_replace(self::metadata($transaction), [
+            'remote_plan_id' => (string) $mapping->remote_plan_id,
+            'subscriber_email' => (string) ($payload['subscriber']['email'] ?? ''),
+            'sub_partner_id' => (string) ($payload['subscriber']['sub_partner_id'] ?? ''),
+        ]);
+        $transaction->metadata = json_encode($metadata, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        $transaction->updated_at = Helper::dtime();
+        $transaction->save();
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function createCycleFromTemplate(object $template, object $mapping, array $payload, string $cycleKey): object
+    {
+        $transaction = DB::table('nowpayments_transactions')->create([]);
+        $transaction->userid = $template->userid;
+        $transaction->planid = $template->planid;
+        $transaction->subscriptionid = $template->subscriptionid;
+        $transaction->order_id = RecurringCycle::orderId($cycleKey);
+        $transaction->idempotency_key = RecurringCycle::idempotencyKey($cycleKey);
+        $transaction->provider_payment_id = isset($payload['payment_id']) ? (string) $payload['payment_id'] : null;
+        $transaction->provider_subscription_id = $template->provider_subscription_id;
+        $transaction->provider_cycle_key = $cycleKey;
+        $transaction->mode = $template->mode;
+        $transaction->term = $template->term;
+        $transaction->price_currency = $mapping->currency;
+        $transaction->settlement_currency = $mapping->currency;
+        $transaction->expected_amount = $mapping->amount;
+        $transaction->status = Status::PENDING;
+        $transaction->provider_status = (string) ($payload['status'] ?? 'WAITING_PAY');
+        $transaction->expires_at = self::providerDate($payload['expire_date'] ?? null);
+        $transaction->retry_count = 0;
+        $transaction->next_retry_at = Helper::dtime();
+        $transaction->metadata = json_encode(array_replace(self::metadata($template), [
+            'remote_plan_id' => (string) $mapping->remote_plan_id,
+            'subscriber_email' => (string) ($payload['subscriber']['email'] ?? ''),
+            'sub_partner_id' => (string) ($payload['subscriber']['sub_partner_id'] ?? ''),
+            'renewal_cycle' => true,
+        ]), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        $transaction->created_at = Helper::dtime();
+        $transaction->updated_at = Helper::dtime();
+        $transaction->save();
+
+        return $transaction;
+    }
+
+    private static function providerDate(mixed $value): ?string
+    {
+        $timestamp = is_string($value) ? strtotime($value) : false;
+
+        return $timestamp === false ? null : gmdate('Y-m-d H:i:s', $timestamp);
     }
 
     private function jwt(): string

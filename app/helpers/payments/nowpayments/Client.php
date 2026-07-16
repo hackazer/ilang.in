@@ -103,14 +103,13 @@ final class Client implements PrepaidApi
         return $this->request(
             'GET',
             '/subscriptions/plans/'.rawurlencode((string) $planId),
-            jwt: $jwt,
-            useApiKey: false
+            jwt: $jwt
         );
     }
 
     public function plans(string $jwt, array $query = []): array
     {
-        return $this->request('GET', '/subscriptions/plans', $query, jwt: $jwt, useApiKey: false);
+        return $this->request('GET', '/subscriptions/plans', $query, jwt: $jwt);
     }
 
     public function createSubscription(array $payload, string $jwt): array
@@ -123,14 +122,13 @@ final class Client implements PrepaidApi
         return $this->request(
             'GET',
             '/subscriptions/'.rawurlencode((string) $subscriptionId),
-            jwt: $jwt,
-            useApiKey: false
+            jwt: $jwt
         );
     }
 
     public function subscriptions(string $jwt, array $query = []): array
     {
-        return $this->request('GET', '/subscriptions', $query, jwt: $jwt, useApiKey: false);
+        return $this->request('GET', '/subscriptions', $query, jwt: $jwt);
     }
 
     public function cancelSubscription(string|int $subscriptionId, string $jwt): array

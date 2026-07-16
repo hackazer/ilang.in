@@ -28,6 +28,7 @@ foreach ([
     'Signature.php',
     'WebhookResult.php',
     'EntitlementService.php',
+    'RecurringCycle.php',
     'WebhookService.php',
     'Reconciler.php',
 ] as $file) {
@@ -51,17 +52,34 @@ final class ReconcilerTest extends TestCase
     {
         $transport = new ReconcilerTransport([
             new TransportResponse(200, [], '{"token":"jwt-token"}'),
-            new TransportResponse(200, [], '{"result":{"id":"remote-sub-1","status":"PAID"}}'),
+            new TransportResponse(200, [], '{"result":{"id":"remote-sub-1","status":"PAID","subscription_plan_id":"remote-plan-1","subscriber":{"email":"user@example.test"},"expire_date":"2026-08-17T00:00:00Z"}}'),
         ]);
         $reconciler = new Reconciler(
             new Client($transport, 'api-key', 'https://api.nowpayments.io/v1'),
             ['dashboard_email' => 'merchant@example.test', 'dashboard_password' => 'password']
         );
         $transaction = (object) [
+            'id' => 1,
+            'userid' => 7,
+            'planid' => 1,
+            'subscriptionid' => 9,
             'provider_subscription_id' => 'remote-sub-1',
+            'provider_cycle_key' => null,
+            'provider_payment_id' => null,
             'expected_amount' => '99.90',
             'price_currency' => 'USD',
+            'settlement_currency' => 'USD',
+            'mode' => 'email',
+            'term' => 'monthly',
+            'order_id' => 'existing-order',
+            'idempotency_key' => 'existing-key',
+            'metadata' => '{"remote_plan_id":"remote-plan-1"}',
+            'entitlement_applied_at' => null,
         ];
+        $this->insertPlanMapping(1, 'remote-plan-1', '99.90');
+        DB::get_db()->exec("INSERT INTO user (id, email) VALUES (7, 'user@example.test')");
+        DB::get_db()->exec("INSERT INTO subscription (id, userid, planid, status) VALUES (9, 7, 1, 'Pending')");
+        DB::get_db()->exec("INSERT INTO nowpayments_transactions (id, userid, planid, subscriptionid, order_id, idempotency_key, provider_subscription_id, mode, term, price_currency, settlement_currency, expected_amount, status, metadata) VALUES (1, 7, 1, 9, 'existing-order', 'existing-key', 'remote-sub-1', 'email', 'monthly', 'USD', 'USD', 99.90, 'pending', '{\"remote_plan_id\":\"remote-plan-1\"}')");
 
         $method = (new \ReflectionClass($reconciler))->getMethod('recurringPayload');
         $payload = $method->invoke($reconciler, $transaction);
@@ -70,6 +88,57 @@ final class ReconcilerTest extends TestCase
         self::assertSame('PAID', $payload['status']);
         self::assertArrayNotHasKey('price_amount', $payload);
         self::assertArrayNotHasKey('price_currency', $payload);
+        self::assertNotEmpty(DB::table('nowpayments_transactions')->where('id', 1)->first()->provider_cycle_key);
+    }
+
+    public function testRecurringDiscoveryCreatesOneTransactionPerProviderPeriod(): void
+    {
+        $this->insertPlanMapping(1, 'remote-plan-1');
+        DB::get_db()->exec("INSERT INTO user (id, email) VALUES (7, 'user@example.test')");
+        DB::get_db()->exec("INSERT INTO subscription (id, userid, planid, status) VALUES (9, 7, 1, 'Active')");
+        $reconciler = new Reconciler(
+            new Client(new ReconcilerTransport([]), 'api-key', 'https://api.nowpayments.io/v1'),
+            ['dashboard_email' => 'merchant@example.test', 'dashboard_password' => 'password']
+        );
+        $method = (new \ReflectionClass($reconciler))->getMethod('discoverRecurringRow');
+        $base = [
+            'id' => 'remote-sub-renewal',
+            'status' => 'WAITING_PAY',
+            'subscription_plan_id' => 'remote-plan-1',
+            'subscriber' => ['email' => 'user@example.test'],
+        ];
+
+        self::assertTrue($method->invoke($reconciler, DB::table('nowpayments_plans')->first(), $base + ['expire_date' => '2026-08-17T00:00:00Z']));
+        self::assertTrue($method->invoke($reconciler, DB::table('nowpayments_plans')->first(), $base + ['expire_date' => '2026-09-17T00:00:00Z']));
+        self::assertFalse($method->invoke($reconciler, DB::table('nowpayments_plans')->first(), $base + ['expire_date' => '2026-09-17T00:00:00Z']));
+
+        $rows = DB::table('nowpayments_transactions')->where('provider_subscription_id', 'remote-sub-renewal')->findMany();
+        self::assertCount(2, $rows);
+        self::assertNotSame($rows[0]->provider_cycle_key, $rows[1]->provider_cycle_key);
+        self::assertNotSame($rows[0]->order_id, $rows[1]->order_id);
+        self::assertNotSame($rows[0]->idempotency_key, $rows[1]->idempotency_key);
+    }
+
+    public function testRecurringReconciliationRejectsMismatchedPlanOrSubscriber(): void
+    {
+        $this->insertPlanMapping(1, 'remote-plan-1');
+        DB::get_db()->exec("INSERT INTO user (id, email) VALUES (7, 'user@example.test')");
+        DB::get_db()->exec("INSERT INTO subscription (id, userid, planid, status) VALUES (9, 7, 1, 'Pending')");
+        DB::get_db()->exec("INSERT INTO nowpayments_transactions (id, userid, planid, subscriptionid, order_id, idempotency_key, provider_subscription_id, mode, term, price_currency, settlement_currency, expected_amount, status, metadata) VALUES (1, 7, 1, 9, 'existing-order', 'existing-key', 'remote-sub-1', 'email', 'monthly', 'USD', 'USD', 10, 'pending', '{\"remote_plan_id\":\"remote-plan-1\"}')");
+        $transport = new ReconcilerTransport([
+            new TransportResponse(200, [], '{"token":"jwt-token"}'),
+            new TransportResponse(200, [], '{"result":{"id":"remote-sub-1","status":"PAID","subscription_plan_id":"wrong-plan","subscriber":{"email":"attacker@example.test"},"expire_date":"2026-08-17T00:00:00Z"}}'),
+        ]);
+        $reconciler = new Reconciler(new Client($transport, 'api-key', 'https://api.nowpayments.io/v1'), [
+            'dashboard_email' => 'merchant@example.test',
+            'dashboard_password' => 'password',
+        ]);
+
+        $this->expectException(\UnexpectedValueException::class);
+        (new \ReflectionClass($reconciler))->getMethod('recurringPayload')->invoke(
+            $reconciler,
+            DB::table('nowpayments_transactions')->where('id', 1)->first()
+        );
     }
 
     public function testUnknownPrepaidPaymentIsRecoveredByOrderIdAcrossRemotePages(): void
@@ -155,6 +224,8 @@ final class ReconcilerTest extends TestCase
                 'id' => 'remote-recurring-51',
                 'status' => 'WAITING_PAY',
                 'subscriber' => ['email' => 'user@example.test'],
+                'subscription_plan_id' => 'remote-plan-1',
+                'expire_date' => '2026-08-17T00:00:00Z',
             ]]], JSON_THROW_ON_ERROR)),
         ]);
         $this->insertPlanMapping(1, 'remote-plan-1');
@@ -183,6 +254,8 @@ final class ReconcilerTest extends TestCase
                 'id' => 'remote-recurring-plan-51',
                 'status' => 'WAITING_PAY',
                 'subscriber' => ['email' => 'user@example.test'],
+                'subscription_plan_id' => 'remote-plan-51',
+                'expire_date' => '2026-08-17T00:00:00Z',
             ]] : [];
             $responses[] = new TransportResponse(200, [], json_encode(['result' => $result], JSON_THROW_ON_ERROR));
         }
@@ -228,6 +301,8 @@ final class ReconcilerTest extends TestCase
                 'id' => 'remote-recurring-plan-101',
                 'status' => 'WAITING_PAY',
                 'subscriber' => ['email' => 'user@example.test'],
+                'subscription_plan_id' => 'remote-plan-101',
+                'expire_date' => '2026-08-17T00:00:00Z',
             ]]], JSON_THROW_ON_ERROR)),
         ];
 
@@ -261,6 +336,8 @@ final class ReconcilerTest extends TestCase
                 'id' => 'remote-race',
                 'status' => 'WAITING_PAY',
                 'subscriber' => ['email' => 'user@example.test'],
+                'subscription_plan_id' => 'remote-plan-race',
+                'expire_date' => '2026-08-17T00:00:00Z',
             ]]], JSON_THROW_ON_ERROR)),
         ]);
         $reconciler = new Reconciler(
@@ -287,7 +364,8 @@ final class ReconcilerTest extends TestCase
             order_id TEXT UNIQUE,
             idempotency_key TEXT UNIQUE,
             provider_payment_id TEXT UNIQUE,
-            provider_subscription_id TEXT UNIQUE,
+            provider_subscription_id TEXT,
+            provider_cycle_key TEXT UNIQUE,
             mode TEXT,
             term TEXT,
             price_currency TEXT,
@@ -347,17 +425,18 @@ final class ReconcilerTest extends TestCase
         $statement->execute([$orderId, hash('sha256', $orderId)]);
     }
 
-    private function insertPlanMapping(int $planId, string $remotePlanId): void
+    private function insertPlanMapping(int $planId, string $remotePlanId, string $amount = '10'): void
     {
         $statement = DB::get_db()->prepare('INSERT INTO nowpayments_plans (
             mapping_key, planid, term, mode, remote_plan_id, amount, currency,
             interval_days, sync_hash, active, metadata, created_at, updated_at
-        ) VALUES (?, ?, "monthly", "email", ?, 10, "USD", 30, ?, 1, "{}",
+        ) VALUES (?, ?, "monthly", "email", ?, ?, "USD", 30, ?, 1, "{}",
             "2000-01-01 00:00:00", "2000-01-01 00:00:00")');
         $statement->execute([
             hash('sha256', $remotePlanId),
             $planId,
             $remotePlanId,
+            $amount,
             hash('sha256', 'sync-'.$remotePlanId),
         ]);
     }
