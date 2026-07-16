@@ -368,7 +368,7 @@ class Stripe{
 				$subscription = $stripe->subscriptions->create($intent);			
 				$sub->tid = $subscription->id;
 				$sub->save();
-				if(!in_array($subscription->status, ['incomplete', 'active'])){
+				if(!self::subscriptionGrantsEntitlement((string) $subscription->status)){
 					return back()->with("warning", e("Your credit card was declined. Please check your credit card and try again later."));
 				}
 	
@@ -398,6 +398,19 @@ class Stripe{
 			]);
 		$user->name = clean($request->name);
 		$user->save();
+
+		if($type === 'lifetime' && isset($charge) && !DB::payment()->where('tid', (string) $charge->id)->first()){
+			$payment = DB::payment()->create();
+			$payment->date = Helper::dtime();
+			$payment->cid = $uniqueid;
+			$payment->tid = (string) $charge->id;
+			$payment->amount = $price;
+			$payment->userid = $user->id;
+			$payment->status = 'Completed';
+			$payment->expiry = $user->expiration;
+			$payment->data = json_encode($charge);
+			$payment->save();
+		}
 
 		if(config('smtp')->user){
             $mailer = Email::factory('smtp', [
@@ -527,10 +540,19 @@ class Stripe{
 				return print("User does not exist");
 			}
 
-			$subscription = DB::subscription()->where('userid', $user->id)->orderByDesc('date')->first();
+			try {
+				$subscription = self::resolveWebhookSubscription($ey, $user, (string) $stripeConfig->secret);
+			} catch (\InvalidArgumentException $exception) {
+				$pdo->commit();
+				\GemError::log('Stripe Webhook: billing context mismatch.');
+				http_response_code(422);
+				return null;
+			}
 
 			if(!$subscription){
-				throw new \RuntimeException('Stripe subscription context does not exist.');
+				$pdo->commit();
+				http_response_code(202);
+				return null;
 			}
 
 			if($ey->paid == true && $ey->status == "succeeded"){
@@ -679,6 +701,64 @@ class Stripe{
 	 */
 	public static function isSupportedWebhookEventType(string $eventType): bool{
 		return in_array($eventType, ['charge.succeeded', 'charge.failed'], true);
+	}
+
+	public static function subscriptionGrantsEntitlement(string $status): bool{
+		return $status === 'active';
+	}
+
+	public static function webhookChargeContextIsValid(int $chargeAmount, string $chargeCurrency, int $expectedAmount, string $expectedCurrency): bool{
+		return $chargeAmount === $expectedAmount
+			&& hash_equals(strtolower($expectedCurrency), strtolower($chargeCurrency));
+	}
+
+	private static function resolveWebhookSubscription(object $charge, object $user, string $secret): ?object{
+		$chargeId = trim((string) ($charge->id ?? ''));
+		$chargeAmount = (int) ($charge->amount ?? -1);
+		$chargeCurrency = trim((string) ($charge->currency ?? ''));
+		$invoiceId = self::stripeObjectId($charge->invoice ?? null);
+
+		if($chargeId === '' || $chargeAmount < 0 || $chargeCurrency === ''){
+			throw new \InvalidArgumentException('Stripe charge context is incomplete.');
+		}
+
+		if($invoiceId === ''){
+			$subscription = DB::subscription()->where('userid', $user->id)->where('tid', $chargeId)->first();
+			$expectedAmount = $subscription ? (int) round(((float) $subscription->amount) * 100) : -1;
+
+			if(!$subscription || !self::webhookChargeContextIsValid($chargeAmount, $chargeCurrency, $expectedAmount, (string) config('currency'))){
+				throw new \InvalidArgumentException('Stripe one-time charge does not match its local checkout.');
+			}
+
+			return $subscription;
+		}
+
+		$invoice = (new \Stripe\StripeClient($secret))->invoices->retrieve($invoiceId, []);
+		$providerSubscriptionId = self::stripeObjectId($invoice->subscription ?? null);
+		$invoiceChargeId = self::stripeObjectId($invoice->charge ?? null);
+		$invoiceCustomerId = self::stripeObjectId($invoice->customer ?? null);
+		$expectedAmount = (int) (($charge->paid ?? false) ? ($invoice->amount_paid ?? -1) : ($invoice->amount_due ?? -1));
+		$expectedCurrency = (string) ($invoice->currency ?? '');
+
+		if($providerSubscriptionId === ''
+			|| ($invoiceChargeId !== '' && !hash_equals($chargeId, $invoiceChargeId))
+			|| ($invoiceCustomerId !== '' && !hash_equals((string) $user->customerid, $invoiceCustomerId))
+			|| !self::webhookChargeContextIsValid($chargeAmount, $chargeCurrency, $expectedAmount, $expectedCurrency)
+			|| !hash_equals(strtolower((string) config('currency')), strtolower($expectedCurrency))){
+			throw new \InvalidArgumentException('Stripe invoice does not match the signed charge.');
+		}
+
+		return DB::subscription()
+			->where('userid', $user->id)
+			->where('tid', $providerSubscriptionId)
+			->first();
+	}
+
+	private static function stripeObjectId(mixed $value): string{
+		if(is_string($value)) return trim($value);
+		if(is_object($value) && isset($value->id)) return trim((string) $value->id);
+
+		return '';
 	}
 
 	/**

@@ -102,6 +102,21 @@ final class StripeWebhookTest extends TestCase
         self::assertLessThanOrEqual(64, strlen($first));
     }
 
+    public function testOnlyActiveCheckoutSubscriptionsCanGrantImmediateAccess(): void
+    {
+        self::assertTrue(Stripe::subscriptionGrantsEntitlement('active'));
+        self::assertFalse(Stripe::subscriptionGrantsEntitlement('incomplete'));
+        self::assertFalse(Stripe::subscriptionGrantsEntitlement('past_due'));
+        self::assertFalse(Stripe::subscriptionGrantsEntitlement('canceled'));
+    }
+
+    public function testWebhookChargeMustMatchProviderBillingContext(): void
+    {
+        self::assertTrue(Stripe::webhookChargeContextIsValid(1200, 'usd', 1200, 'USD'));
+        self::assertFalse(Stripe::webhookChargeContextIsValid(1199, 'usd', 1200, 'USD'));
+        self::assertFalse(Stripe::webhookChargeContextIsValid(1200, 'eur', 1200, 'USD'));
+    }
+
     private function payload(): string
     {
         return json_encode([
