@@ -9,6 +9,7 @@ This living ExecPlan coordinates the PHP modernization, security and performance
 1. [PHP 8.3 and 8.5 Compatibility](../docs/superpowers/plans/2026-07-16-php-compatibility.md)
 2. [Security and Performance Hardening](../docs/superpowers/plans/2026-07-16-security-performance.md)
 3. [NOWPayments Gateway](../docs/superpowers/plans/2026-07-16-nowpayments-gateway.md)
+4. [Dependency and Frontend Runtime Modernization](../docs/superpowers/plans/2026-07-16-dependency-modernization.md)
 
 ## Progress
 
@@ -22,6 +23,7 @@ This living ExecPlan coordinates the PHP modernization, security and performance
 - [x] Execute PHP compatibility plan.
 - [ ] Execute security and performance plan.
 - [ ] Execute NOWPayments plan.
+- [ ] Execute dependency and frontend runtime modernization plan.
 - [ ] Run final verification and review.
 - [ ] Push `dev`, merge into `main`, and push `main`.
 
