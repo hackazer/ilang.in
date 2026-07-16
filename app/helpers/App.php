@@ -23,6 +23,10 @@ use Core\Helper;
 
 final class App {
 
+    private const IFRAME_POLICY_CONNECT_TIMEOUT = 2;
+    private const IFRAME_POLICY_TOTAL_TIMEOUT = 4;
+    private const IFRAME_POLICY_MAX_HEADER_BYTES = 65536;
+
     /**
      * Custom Pages Link
      *
@@ -483,22 +487,85 @@ final class App {
      * @author GemPixel <https://gempixel.com> 
      * @version 6.0
      * @param [type] $url
-     * @return void
+     * @param callable|null $resolver
+     * @param callable|null $transport
+     * @return bool
      */
-    public static function iframePolicy($url){
-        
-        if(!\Core\Helper::isURL($url)) return false;
+    public static function iframePolicy($url, ?callable $resolver = null, ?callable $transport = null){
 
-        $url_headers = get_headers($url);
-        foreach ($url_headers as $key => $value){
-            $x_frame_options_deny = strpos(strtolower($url_headers[$key]), strtolower('X-Frame-Options: DENY'));
-            $x_frame_options_sameorigin = strpos(strtolower($url_headers[$key]), strtolower('X-Frame-Options: SAMEORIGIN'));
-            $x_frame_options_allow_from = strpos(strtolower($url_headers[$key]), strtolower('X-Frame-Options: ALLOW-FROM'));
-            $csp_frame_ancestors_self = strpos(strtolower($url_headers[$key]), strtolower('content-security-policy: frame-ancestors')) && strpos(strtolower($url_headers[$key]), strtolower('self'));
-            if ($x_frame_options_deny !== false || $x_frame_options_sameorigin !== false || $x_frame_options_allow_from !== false || $csp_frame_ancestors_self !== false){
+        if(!is_string($url) || !\Core\Helper::isURL($url)) return false;
+
+        if(!class_exists(OutboundUrl::class)){
+            require_once __DIR__.'/OutboundUrl.php';
+        }
+
+        try {
+            $target = OutboundUrl::assertSafe($url, false, $resolver);
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+
+        $headers = [];
+        $headerBytes = 0;
+        $headerLimitExceeded = false;
+        $options = OutboundUrl::curlOptions(
+            $target,
+            self::IFRAME_POLICY_CONNECT_TIMEOUT,
+            self::IFRAME_POLICY_TOTAL_TIMEOUT
+        );
+        $options[CURLOPT_NOBODY] = true;
+        $options[CURLOPT_USERAGENT] = 'Mozilla/5.0 (compatible; iframe-policy-check/1.0)';
+        $options[CURLOPT_HEADERFUNCTION] = static function ($curl, string $line) use (&$headers, &$headerBytes, &$headerLimitExceeded): int {
+            $lineLength = strlen($line);
+            $headerBytes += $lineLength;
+
+            if($headerBytes > self::IFRAME_POLICY_MAX_HEADER_BYTES){
+                $headerLimitExceeded = true;
+                return 0;
+            }
+
+            $line = trim($line);
+
+            if($line !== '' && !str_starts_with(strtolower($line), 'http/')){
+                $headers[] = $line;
+            }
+
+            return $lineLength;
+        };
+
+        if($transport){
+            $result = $transport($url, $options);
+        } else {
+            $curl = curl_init($url);
+
+            if($curl === false) return false;
+
+            if(!curl_setopt_array($curl, $options)){
+                unset($curl);
+                return false;
+            }
+
+            $result = curl_exec($curl);
+            unset($curl);
+        }
+
+        if($headerLimitExceeded) return true;
+        if($result === false) return false;
+
+        foreach($headers as $header){
+            [$name, $value] = array_pad(explode(':', $header, 2), 2, '');
+            $name = strtolower(trim($name));
+            $value = strtolower(trim($value));
+
+            if($name === 'x-frame-options' && preg_match('/(?:^|[,\s])(deny|sameorigin|allow-from)(?:$|[,\s])/i', $value)){
+                return true;
+            }
+
+            if($name === 'content-security-policy' && preg_match('/(?:^|;)\s*frame-ancestors\s+[^;]*[\'\"]?self[\'\"]?(?:\s|;|$)/i', $value)){
                 return true;
             }
         }
+
         return false;
     }
     /**
