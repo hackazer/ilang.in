@@ -27,7 +27,7 @@
                                             <ul class="dropdown-menu">
                                                 <li><a class="dropdown-item" href="<?php echo route('team.edit', [$team->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></span></a></li>
                                                 <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item" href="<?php echo route('team.delete', [$team->teamid, $team->id, \Core\Helper::nonce('team.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                                                <li><form action="<?php echo route('team.delete', [$team->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item" onclick="return window.confirm(this.dataset.confirm)" data-confirm="<?php echo e('Are you sure you want to delete this team member?') ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                             </ul>                        
                                         </div>
                                     <?php endif ?>
@@ -82,23 +82,6 @@
         </div>
         <?php plug('sidebar.team') ?>
     </div>
-</div>
-<div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><?php ee('Are you sure you want to delete this?') ?></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p><?php ee('You are trying to delete a record. This action is permanent and cannot be reversed.') ?></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
-        <a href="#" class="btn btn-danger" data-trigger="confirm"><?php ee('Confirm') ?></a>
-      </div>
-    </div>
-  </div>
 </div>
 <?php if(!user()->teamid): ?>
 <div class="modal fade" id="inviteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">

@@ -167,7 +167,7 @@ Gem::group('/user', function(){
 
     Gem::get('/teams/', 'User\Teams@index')->name('team');
     Gem::post('/teams/invite', 'User\Teams@invite')->name('team.save');
-    Gem::get('/teams/{team}/user/{id}/remove/{nonce}', 'User\Teams@delete')->name('team.delete');
+    Gem::post('/teams/user/{id}/remove', 'User\Teams@delete')->name('team.delete');
     Gem::get('/teams/{id}/edit', 'User\Teams@edit')->name('team.edit');
     Gem::post('/teams/{id}/update', 'User\Teams@update')->name('team.update');
 
