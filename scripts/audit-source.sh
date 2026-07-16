@@ -9,7 +9,14 @@ scan() {
     pattern=$2
     shift 2
     echo "$label"
-    rg -n --glob '*.php' --glob '!vendor/**' "$pattern" "$@" || true
+    rg -n \
+        --glob '*.php' \
+        --glob '!vendor/**' \
+        --glob '!node_modules/**' \
+        --glob '!public/static/vendor/**' \
+        --glob '!public/static/frontend/libs/**' \
+        --glob '!tests/**' \
+        "$pattern" "$@" || true
 }
 
 scan "Dangerous parsing and execution" 'unserialize\(|eval\(|shell_exec\(|exec\(|system\(|passthru\(' .
@@ -23,4 +30,9 @@ echo "Tracked secret and runtime path candidates"
 git ls-files | rg '(^|/)(config\.php|\.env($|\.)|.*\.(key|pem|p12|pfx|sql|log|gem)$|storage/(cache|logs)/|public/content/)' || true
 
 echo "Conflict markers"
-rg -n --glob '!vendor/**' '^(<<<<<<<|=======|>>>>>>>)' . || true
+rg -n \
+    --glob '!vendor/**' \
+    --glob '!node_modules/**' \
+    --glob '!public/static/vendor/**' \
+    --glob '!public/static/frontend/libs/**' \
+    '^(<<<<<<<|=======|>>>>>>>)' . || true
