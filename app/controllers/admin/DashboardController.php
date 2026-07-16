@@ -620,18 +620,6 @@ class Dashboard {
      * @return void
      */
     public function update(Request $request){
-        
-        if($request->newcode){
-            \Gem::addMiddleware('DemoProtect');
-                        
-            $setting = DB::settings()->where('config', 'purchasecode')->first();
-    
-            $setting->var = Helper::RequestClean($request->newcode);
-            $setting->save();
-
-            return Helper::redirect()->back()->with('success', e('Purchase code has been updated successfully.')); 
-        }
-
         $update = \Helpers\App::newUpdate(true);
         $log = \Helpers\App::updateChangelog();
 
@@ -649,6 +637,20 @@ class Dashboard {
         View::set("title", e("Update Script"));
 
         return View::with('admin.update', compact('update', 'changes'))->extend('admin.layouts.main'); 
+    }
+
+    public function purchaseCode(Request $request){
+        \Gem::addMiddleware('DemoProtect');
+
+        if(!$request->newcode){
+            return Helper::redirect()->back()->with('danger', e('Please enter a purchase code.'));
+        }
+
+        $setting = DB::settings()->where('config', 'purchasecode')->first();
+        $setting->var = Helper::RequestClean((string) $request->newcode);
+        $setting->save();
+
+        return Helper::redirect()->back()->with('success', e('Purchase code has been updated successfully.'));
     }
     /**
      * Process Update

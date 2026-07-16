@@ -419,7 +419,8 @@ Gem::group('/admin', function(){
     Gem::get('/email', 'Admin\Dashboard@email')->name('admin.email');
     Gem::post('/email/send', 'Admin\Dashboard@emailSend')->name('admin.email.send');
     Gem::route(['GET', 'POST'], '/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template');
-    Gem::route(['GET', 'POST'], '/update', 'Admin\Dashboard@update')->name('admin.update');
+    Gem::get('/update', 'Admin\Dashboard@update')->name('admin.update');
+    Gem::post('/update/code', 'Admin\Dashboard@purchaseCode')->name('admin.update.code');
     Gem::post('/update/process', 'Admin\Dashboard@updateProcess')->name('admin.update.process');
     Gem::get('/tools/data', 'Admin\Dashboard@data')->name('admin.data');
     Gem::post('/tools/data/backup', 'Admin\Dashboard@backup')->name('admin.backup');
@@ -509,7 +510,8 @@ Gem::get("/script.js", 'Link@scriptjs')->name('scriptjs');
 
 Gem::get('/sitemap.xml', 'Sitemap@index')->name('sitemap');
 
-Gem::route(['GET', 'POST'], '/update', 'Update@index');
+Gem::get('/update', 'Update@index');
+Gem::post('/update', 'Update@process');
 
 Gem::post('/server/contact', 'Server@contact')->name('server.contact');
 Gem::post('/server/subscribe', 'Server@subscribe')->name('server.subscribe');
@@ -517,12 +519,10 @@ Gem::post('/server/vote', 'Server@vote')->name('server.vote');
 Gem::get('/server/states', '\Helpers\App@states')->middleware('CheckDomain')->name('server.states');
 
 // Webhooks
-Gem::route(['GET', 'POST'], '/ipn', 'Webhook@ipn')->middleware('CheckDomain')->name('webhook.paypal');
+Gem::post('/ipn', 'Webhook@ipn')->middleware('CheckDomain')->name('webhook.paypal');
 
-Gem::route(['GET', 'POST'], '/webhook[/{provider}]', 'Webhook@index')->middleware('CheckDomain')->name('webhook');
+Gem::post('/webhook[/{provider}]', 'Webhook@index')->middleware('CheckDomain')->name('webhook');
 Gem::post('/webhook/nowpayments', 'Webhook@nowpayments')->middleware('CheckDomain')->name('webhook.nowpayments');
-// Gem::route(['GET', 'POST'], '/webhook/paypal', 'Webhook@paypal')->middleware('CheckDomain')->name('webhook.paypalapi');
-// Gem::route(['GET', 'POST'], '/webhook/slack', 'Webhook@slack')->middleware('CheckDomain')->name('webhook.slack');
 
 // QR Codes
 Gem::get('/qr/{id}', 'QR@generate')->name('qr.generate');

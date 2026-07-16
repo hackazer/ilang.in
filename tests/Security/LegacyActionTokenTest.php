@@ -41,13 +41,13 @@ final class LegacyActionTokenTest extends TestCase
         self::assertDoesNotMatchRegularExpression('/\$expiry\s*!={1,2}\s*md5\s*\(/', $source);
     }
 
-    public function testUpdaterPrivateKeyKeepsItsDeployedFormatAndUsesATypeSafeConstantTimeCheck(): void
+    public function testUpdaterDoesNotAuthorizeMigrationsWithAQueryStringSecret(): void
     {
         $source = $this->source('app/controllers/UpdateController.php');
 
-        self::assertStringContainsString("hash_equals(md5('update.'.AuthToken), \$request->privatekey)", $source);
-        self::assertStringContainsString('is_string($request->privatekey)', $source);
-        self::assertDoesNotMatchRegularExpression('/\$request->privatekey\s*!={1,2}\s*md5\s*\(/', $source);
+        self::assertStringNotContainsString('$request->privatekey', $source);
+        self::assertStringNotContainsString("md5('update.'.AuthToken)", $source);
+        self::assertStringContainsString('if(!$user->admin)', $source);
     }
 
     public function testGoogleOauthStateUsesATypeSafeCsprngAndConstantTimeVerification(): void
