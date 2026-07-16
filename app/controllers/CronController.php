@@ -65,7 +65,7 @@ class Cron {
      */
     public function user(string $token){
         
-        if($token != md5('user'.AuthToken)) return null;    
+        if(!hash_equals(md5('user'.AuthToken), $token)) return null;
 
         if(!\Helpers\App::isExtended() || !config('pro')) return null;
 
@@ -97,7 +97,7 @@ class Cron {
      */
     public function data(string $token){
 
-        if($token != md5('data'.AuthToken)) return null;    
+        if(!hash_equals(md5('data'.AuthToken), $token)) return null;
 
         if(!config('pro')) return null;
 
@@ -130,7 +130,7 @@ class Cron {
      */
     public function urls(string $token){
         
-        if($token != md5('url'.AuthToken)) return null;        
+        if(!hash_equals(md5('url'.AuthToken), $token)) return null;
 
         $i = 0;
         
@@ -280,7 +280,7 @@ class Cron {
      */
     public function remind(string $days, string $token){
         
-        if($token != md5('remind'.AuthToken)) return null;        
+        if(!hash_equals(md5('remind'.AuthToken), $token)) return null;
 
         $i = 0;
         

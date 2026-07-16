@@ -54,7 +54,7 @@ class Update {
                 return GemError::trigger(403);
             }
     
-            if($request->privatekey && $request->privatekey != md5('update.'.AuthToken)){
+            if($request->privatekey && (!is_string($request->privatekey) || !hash_equals(md5('update.'.AuthToken), $request->privatekey))){
                 return GemError::trigger(403);
             }
         }

@@ -384,7 +384,7 @@ class Users {
 
         $expiry = $data[1];        
 
-        if($expiry != md5(AuthToken.": Expires on".strtotime(date('Y-m-d')))){
+        if(!hash_equals(md5(AuthToken.": Expires on".strtotime(date('Y-m-d'))), $expiry)){
             return Helper::redirect()->to(route('forgot'))->with("danger", e("Token has expired, please request another link."));
         }
 
@@ -414,7 +414,7 @@ class Users {
 
         $expiry = $data[1];
 
-        if($expiry != md5(AuthToken.": Expires on".strtotime(date('Y-m-d')))){
+        if(!hash_equals(md5(AuthToken.": Expires on".strtotime(date('Y-m-d'))), $expiry)){
             return Helper::redirect()->to(route('forgot'))->with("danger", e("Token has expired, please request another link."));
         }
 
@@ -849,7 +849,7 @@ class Users {
 
         $expiry = $data[1];        
 
-        if($expiry != md5(AuthToken.": Expires on".strtotime(date('Y-m-d H')))){
+        if(!hash_equals(md5(AuthToken.": Expires on".strtotime(date('Y-m-d H'))), $expiry)){
             return Helper::redirect()->to(route('login'))->with("danger", e("Token has expired, please login manually"));
         }
 
