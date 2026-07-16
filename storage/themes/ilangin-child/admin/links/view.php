@@ -38,9 +38,9 @@
                 <div class="list-group list-group-flush">                    
                     <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.edit', [$url->id]) ?>"><?php ee('Edit Link') ?></a>
                     <?php if($url->status): ?>
-                        <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.disable', [$url->id]) ?>"><?php ee('Disable Link') ?></a>
+                        <form action="<?php echo route('admin.links.disable', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Disable Link') ?></button></form>
                     <?php else: ?>
-                        <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.approve', [$url->id]) ?>"><?php ee('Approve Link') ?></a>
+                        <form action="<?php echo route('admin.links.approve', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Approve Link') ?></button></form>
                     <?php endif ?>
                     <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><?php ee('Delete Link') ?></a>
                 </div>

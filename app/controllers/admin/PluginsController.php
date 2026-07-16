@@ -36,10 +36,6 @@ class Plugins {
      */
     public function index(Request $request){
 
-        if($request->activated){            
-            \Core\Plugin::dispatch('admin.plugin.activate', $request->activated);
-        }
-
         $plugins = [];
 
         foreach (new \RecursiveDirectoryIterator(STORAGE."/plugins/") as $path){
@@ -93,7 +89,9 @@ class Plugins {
         $settings->var = json_encode($plugins);
         $settings->save();
 
-        return Helper::redirect()->to(route('admin.plugins', ['activated' => $id]))->with('success', e('Plugin was successfully activated.'));
+        \Core\Plugin::dispatch('admin.plugin.activate', $id);
+
+        return Helper::redirect()->to(route('admin.plugins'))->with('success', e('Plugin was successfully activated.'));
     }
 
      /**
@@ -183,10 +181,6 @@ class Plugins {
             return Helper::redirect()->to(route('admin.update'))->with('danger', e('Please update your purchase code in the sidebar.'));
         }
 
-        if($request->install){
-            return $this->install($request);            
-        }
-
         if($request->q){
             $http = \Core\Http::url('https://cdn.gempixel.com/plugins/v2/search?q='.$request->q)
                                 ->with('X-Authorization', 'TOKEN '.config('purchasecode'))
@@ -241,15 +235,16 @@ class Plugins {
      *
      * @author GemPixel <https://gempixel.com> 
      * @version 6.2
-     * @param [type] $request
+     * @param \Core\Request $request
+     * @param string $id
      * @return void
      */
-    public function install($request){
+    public function install(Request $request, string $id){
 
         \Gem::addMiddleware('DemoProtect');
 
         try {
-            $name = ArchiveValidator::packageName((string) $request->install);
+            $name = ArchiveValidator::packageName($id);
         } catch (\InvalidArgumentException $exception) {
             return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The plugin name is not valid.'));
         }

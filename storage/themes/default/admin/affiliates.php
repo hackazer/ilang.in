@@ -58,8 +58,8 @@
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
                                         <?php if($sale->status != "1" && $sale->status != "3"): ?>
-                                            <li><a class="dropdown-item" href="<?php echo route('admin.affiliate.update', [$sale->id, 'approve']) ?>"><i data-feather="check"></i> <?php ee('Approve Referral') ?></a></li>
-                                            <li><a class="dropdown-item" href="<?php echo route('admin.affiliate.update', [$sale->id, 'reject']) ?>"><i data-feather="x"></i> <?php ee('Reject Referral') ?></a></li>
+                                            <li><form action="<?php echo route('admin.affiliate.update', [$sale->id, 'approve']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check"></i> <?php ee('Approve Referral') ?></button></form></li>
+                                            <li><form action="<?php echo route('admin.affiliate.update', [$sale->id, 'reject']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x"></i> <?php ee('Reject Referral') ?></button></form></li>
                                         <?php endif ?>
                                         <li><a class="dropdown-item" href="<?php echo  route('admin.email', ['email'=> $sale->user->email])  ?>"><i data-feather="send"></i> <?php ee('Email User') ?></a></li>
                                     </ul>

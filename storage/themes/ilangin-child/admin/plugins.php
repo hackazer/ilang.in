@@ -53,9 +53,9 @@
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
                                         <?php if($plugin->enabled): ?>
-                                            <li><a class="dropdown-item" href="<?php echo route('admin.plugins.disable', [$plugin->id]) ?>"><i data-feather="delete"></i> <?php ee('Disable') ?></a></li>
+                                            <li><form action="<?php echo route('admin.plugins.disable', [$plugin->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="delete"></i> <?php ee('Disable') ?></button></form></li>
                                         <?php else: ?>
-                                            <li><a class="dropdown-item" href="<?php echo route('admin.plugins.activate', [$plugin->id]) ?>"><i data-feather="check-circle"></i> <?php ee('Activate') ?></a></li>
+                                            <li><form action="<?php echo route('admin.plugins.activate', [$plugin->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Activate') ?></button></form></li>
                                         <?php endif ?>
                                     </ul>
                                 </td>

@@ -28,7 +28,7 @@
                             <?php if(config('theme') == $theme->id): ?>
                                 <span class="badge bg-info fs-6"><?php ee('Active') ?></span>
                             <?php else: ?>
-                                <a href="<?php echo route('admin.themes.activate', [$theme->id]) ?>" class="btn btn-success btn-sm"><?php ee('Activate') ?></a>
+                                <form action="<?php echo route('admin.themes.activate', [$theme->id]) ?>" method="post" class="d-inline"><?php echo csrf() ?><button type="submit" class="btn btn-success btn-sm"><?php ee('Activate') ?></button></form>
                             <?php endif ?>
                         </div>
                         <div class="ms-auto">

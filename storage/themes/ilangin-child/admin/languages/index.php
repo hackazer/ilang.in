@@ -38,14 +38,14 @@
                         <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                         <ul class="dropdown-menu">
                             <?php if(config('default_lang') && config('default_lang') == $language["code"]): ?>
-                              <li><a class="dropdown-item" href="<?php echo route('admin.languages.set', ['en']) ?>"><i data-feather="check"></i> <?php ee('Set English as Default') ?></a></li>
+                              <li><form action="<?php echo route('admin.languages.set', ['en']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check"></i> <?php ee('Set English as Default') ?></button></form></li>
                             <?php else: ?>
-                            <li><a class="dropdown-item" href="<?php echo route('admin.languages.set', [$language["code"]]) ?>"><i data-feather="check"></i> <?php ee('Set as Default') ?></a></li>
+                            <li><form action="<?php echo route('admin.languages.set', [$language['code']]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check"></i> <?php ee('Set as Default') ?></button></form></li>
                             <?php endif ?>
                             <?php if(config('deepl')->enabled): ?>
-                              <li><a class="dropdown-item" href="<?php echo route('admin.languages.auto', [$language["code"]]) ?>"><i data-feather="cpu"></i> <?php ee('Automatic') ?></a></li>
+                              <li><form action="<?php echo route('admin.languages.auto', [$language['code']]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="cpu"></i> <?php ee('Automatic') ?></button></form></li>
                             <?php endif ?>
-                            <li><a class="dropdown-item" href="<?php echo route('admin.languages.sync', [$language["code"]]) ?>"><i data-feather="repeat"></i> <?php ee('Sync') ?></a></li>
+                            <li><form action="<?php echo route('admin.languages.sync', [$language['code']]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="repeat"></i> <?php ee('Sync') ?></button></form></li>
                             <li><a class="dropdown-item" href="<?php echo route('admin.languages.edit', [$language["code"]]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.languages.delete', [$language["code"], \Core\Helper::nonce('language.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>

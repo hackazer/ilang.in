@@ -17,7 +17,7 @@
                 <div>
                     <a class="btn btn-primary btn-sm" href="<?php echo route('admin.email', ['email'=> $user->email]) ?>"><span data-feather="message-square"></span> <?php echo e('Send Email') ?></a>
                     <?php if(!$user->verified): ?>                    
-                    <a class="btn btn-success btn-sm" href="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>"><i data-feather="check-circle"></i> <?php ee('Verify User') ?></a>
+                    <form action="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>" method="post" class="d-inline"><?php echo csrf() ?><button type="submit" class="btn btn-success btn-sm"><i data-feather="check-circle"></i> <?php ee('Verify User') ?></button></form>
                     <?php endif ?>
                     <a class="btn btn-primary btn-sm" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><span data-feather="edit"></span></a>                    
                 </div>

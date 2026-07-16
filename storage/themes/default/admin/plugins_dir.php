@@ -58,10 +58,10 @@
                             <?php else: ?>
                                 <?php if($plugin->installed): ?>
                                     <?php if(version_compare($plugin->installedversion, $plugin->version, '<')): ?>
-                                        <p><a href="<?php echo route('admin.plugins.dir', ['install' => $plugin->tag]) ?>" class="btn btn-primary"><?php ee("Update") ?></a></p>
+                                        <form action="<?php echo route('admin.plugins.install', [$plugin->tag]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="btn btn-primary"><?php ee('Update') ?></button></form>
                                     <?php endif ?>
                                 <?php else: ?>
-                                    <p><a href="<?php echo route('admin.plugins.dir', ['install' => $plugin->tag]) ?>" class="btn btn-primary"><?php ee("Install") ?></a></p>
+                                    <form action="<?php echo route('admin.plugins.install', [$plugin->tag]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="btn btn-primary"><?php ee('Install') ?></button></form>
                                 <?php endif ?>
                             <?php endif ?>
                         </div>

@@ -42,7 +42,7 @@
                                 <li><a class="dropdown-item" href="<?php echo route('admin.verifications.view', [$verification->id]) ?>"><i data-feather="file"></i> <?php ee('View Document') ?></a></li>
                                 <?php if($verification->status != '2') :?>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="<?php echo route('admin.users.verify', [$verification->user->id, \Core\Helper::nonce('verify-'.$verification->user->id)]) ?>"><i data-feather="check-circle" class="text-primary"></i> <?php ee('Verify User') ?></a></li>                      
+                                    <li><form action="<?php echo route('admin.users.verify', [$verification->user->id, \Core\Helper::nonce('verify-'.$verification->user->id)]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle" class="text-primary"></i> <?php ee('Verify User') ?></button></form></li>
                                 <?php endif ?>
                             </ul>
                         </td>
