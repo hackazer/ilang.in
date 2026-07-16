@@ -1,0 +1,253 @@
+{
+  "versions": {
+    "@adminkit/core": "3.4.0",
+    "@chenfengyuan/datepicker": "1.0.10",
+    "@highlightjs/cdn-assets": "11.11.1",
+    "@yaireo/tagify": "4.38.0",
+    "ace-builds": "1.44.0",
+    "bootstrap": "4.6.2",
+    "blockadblock": "3.2.1",
+    "chart.js": "4.5.1",
+    "clipboard": "2.0.11",
+    "cookieconsent": "3.1.1",
+    "daterangepicker": "3.1.0",
+    "devbridge-autocomplete": "2.0.4",
+    "feather-icons": "4.29.2",
+    "fontawesome-iconpicker": "3.2.0",
+    "fontselect-jquery-plugin": "1.1.0",
+    "jquery": "3.7.1",
+    "jquery-mask-plugin": "1.14.16",
+    "jsvectormap": "1.7.0",
+    "moment": "2.30.1",
+    "popper.js": "1.16.1",
+    "select2": "4.1.0",
+    "spectrum-colorpicker": "1.8.1",
+    "svg-injector": "1.1.3"
+  },
+  "holds": {
+    "jquery": "jQuery 4 is outside Bootstrap 4.6.2's supported peer range, so the public theme remains on jQuery 3.7.1.",
+    "publicBootstrap": "The compiled public theme and inherited views use Bootstrap 4 data APIs and utility classes, so the safest stable line is Bootstrap 4.6.2 until a full theme migration is owned.",
+    "publicPopper": "Bootstrap 4.6.2 requires the discontinued Popper 1 package line. popper.js 1.16.1 is pinned for audit coverage, while the production bootstrap.bundle asset embeds the compatible runtime.",
+    "dashboardBundle": "AdminKit 3.4.0 is the newest stable shell, but it still embeds Bootstrap 5.3.0 and Chart.js 2.9.4 and installs deprecated Babel polyfill and Core-JS 2 transitives. Shared chart configuration detects that bundled major, while stats pages replace the global once with standalone Chart.js 4.5.1 after the shell loads.",
+    "fontawesomeIconpicker": "Font Awesome Icon Picker 3.2.0 is discontinued. It remains pinned at its final stable release because active theme-admin call sites depend on its jQuery API.",
+    "fontselectPackageLayout": "fontselect-jquery-plugin 1.1.0 is pinned for inventory and audit coverage, but its non-searchable anchor-based UI is incompatible with the active searchable span-based font selector and existing CSS. The shipped compatible asset remains held until its UI can be migrated and tested."
+  },
+  "files": {
+    "backend/admin-vendor.min.css": {
+      "bytes": 27606,
+      "sha256": "6c5f5a388138cfdcf4cf088e737360bccc99826ab89ed103b3985b8e570aa17f"
+    },
+    "backend/admin-vendor.min.js": {
+      "bytes": 228285,
+      "sha256": "7176352cb4e5fe3b7bd3b8ec82567eac51870260a0d2314552a9f6068bfa7714"
+    },
+    "backend/css/app.css": {
+      "bytes": 238761,
+      "sha256": "feb7cf7c0168a11d1037d1b9101994ee5331fbd567ad0dcc067a790bb91ef8ff"
+    },
+    "backend/js/app.js": {
+      "bytes": 898297,
+      "sha256": "84e423c64d0dc644f7cf1f70432c9337facab38b2bdd1f13c143877cbb18fad7"
+    },
+    "backend/js/app.js.LICENSE.txt": {
+      "bytes": 23708,
+      "sha256": "cffc474db445c0ec215e9502a78858990875694e82337549d60a6c18dba2654a"
+    },
+    "backend/vendor.min.css": {
+      "bytes": 15559,
+      "sha256": "b3f74ff3ea515f8c424bc6e9e2c691f9d606c8a913e7f8cb42b9767acbad630e"
+    },
+    "backend/vendor.min.js": {
+      "bytes": 161029,
+      "sha256": "69ba85f6fd3e9f566a72b7b0a36e95a4c4254a46f0e387db0c299d64e728e744"
+    },
+    "bundle.pack.js": {
+      "bytes": 360180,
+      "sha256": "266b7c7b2f4f9e23889601654856142134406b30a2eb328e9f5da27753daf8a4"
+    },
+    "Chart.min.js": {
+      "bytes": 208522,
+      "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a"
+    },
+    "charts.min.js": {
+      "bytes": 4469,
+      "sha256": "c1bae1c95de557b894c7dfdf70c1d45ba114bf36f50fbc7ae86fc4a27814c7ee"
+    },
+    "cookieconsent.min.css": {
+      "bytes": 4958,
+      "sha256": "cd0d0b6e50ff01ff2f3a9a70d7cfb66a7c6cb9acf7a566325568be6d3bd31fc4"
+    },
+    "cookieconsent.min.js": {
+      "bytes": 20693,
+      "sha256": "e55842a856a6d829feca3c3ad736c136b6c7549e9247274f78aa296259e06e24"
+    },
+    "custom.min.js": {
+      "bytes": 15189,
+      "sha256": "f0cd1e341dc4bf3ba49bf63e1c2e43886224173ec861f8a47106482ff48b869c"
+    },
+    "frontend/libs/ace-builds/ace.js": {
+      "bytes": 475001,
+      "sha256": "5fc31b9c1e0241d33c9a72e83e3aa41c0b4df74b542749d379715390a158f754"
+    },
+    "frontend/libs/ace-builds/ext-language_tools.js": {
+      "bytes": 57765,
+      "sha256": "523064df9f82859080d12988109276fcbd4ea642aa120cb51d61df5cce42d137"
+    },
+    "frontend/libs/ace-builds/mode-css.js": {
+      "bytes": 20975,
+      "sha256": "8407799af24dc970a1fcd460e98e7c290cbee9e8d912d56e51f53ef0dd70373f"
+    },
+    "frontend/libs/ace-builds/mode-html.js": {
+      "bytes": 63586,
+      "sha256": "86b40aaf2ae6c20d747863921fc054b28c6d80418c594b88576662a77c0df8c5"
+    },
+    "frontend/libs/ace-builds/mode-javascript.js": {
+      "bytes": 28017,
+      "sha256": "517619eb371ea2a2195cc3975773f9b13e0a9cafdc6279e3f24e6349db257aba"
+    },
+    "frontend/libs/ace-builds/mode-json.js": {
+      "bytes": 5549,
+      "sha256": "244b539cc2114f4c4676a1edd45a55140f973395a6ee3045f5601fae706ace6c"
+    },
+    "frontend/libs/ace-builds/mode-php.js": {
+      "bytes": 507333,
+      "sha256": "af67d139cd4e8a37222ec72136ddf97cea0709d648a34101c08e10650691ff90"
+    },
+    "frontend/libs/ace-builds/theme-chrome.js": {
+      "bytes": 3865,
+      "sha256": "13fc2f2e91206819586feebc045a92e39fcbe848714edbbf333c0e90edf6d98f"
+    },
+    "frontend/libs/ace-builds/theme-dracula.js": {
+      "bytes": 4814,
+      "sha256": "1e3ae265d5e0201e527da2889b56791e8d9c794f87f057cc84f1d23ebbe3ce06"
+    },
+    "frontend/libs/ace-builds/worker-css.js": {
+      "bytes": 151197,
+      "sha256": "555e41b7ae89feed6348f10c79aee7ba6fc7b973c4a37257f0145ec2ec87d409"
+    },
+    "frontend/libs/ace-builds/worker-html.js": {
+      "bytes": 208997,
+      "sha256": "f3d616b0430a4e5ec6f402e88d470e6a252bfddecf82b8040d80cb6af8d6244d"
+    },
+    "frontend/libs/ace-builds/worker-javascript.js": {
+      "bytes": 513660,
+      "sha256": "734f64dec35627becadba981c7e90785ceada1b85dcdb19d2ce01715776e12fe"
+    },
+    "frontend/libs/ace-builds/worker-json.js": {
+      "bytes": 24461,
+      "sha256": "e4f0c5033651ab24fb7ebd6d5652c291271c9bd5e7c53830ee62f169c187fae9"
+    },
+    "frontend/libs/ace-builds/worker-php.js": {
+      "bytes": 78849,
+      "sha256": "bd289e0aae1ff3cc09f29b78c31c0fb6d71393a5daf372455c4fa7063b505679"
+    },
+    "frontend/libs/blockadblock/blockadblock.min.js": {
+      "bytes": 4740,
+      "sha256": "2e15e559c918e08b446105b698d90b91bd777cedf8fbbf80f4a88661e5f1f379"
+    },
+    "frontend/libs/bootstrap/dist/css/bootstrap.min.css": {
+      "bytes": 162264,
+      "sha256": "f886516f3d41e9e7bd994c7f7a39a89cafae9483f90396cb0ddeafe8d1ea5e72"
+    },
+    "frontend/libs/bootstrap/dist/js/bootstrap.bundle.min.js": {
+      "bytes": 83376,
+      "sha256": "19126b874a32753d42c12dfa6c17892bfd93820a5a5100ba1b34da4d07599b49"
+    },
+    "frontend/libs/clipboard/dist/clipboard.min.js": {
+      "bytes": 9160,
+      "sha256": "e17a1d816e13c0826e0ed7febfabc3277f45571234bde0bf9120829a7169edc9"
+    },
+    "frontend/libs/datepicker/datepicker.min.css": {
+      "bytes": 3510,
+      "sha256": "37a8f6af3364f68b0070fb4ef2fed2a63d529ef3eeacd9f19a484fa234336aea"
+    },
+    "frontend/libs/datepicker/datepicker.min.js": {
+      "bytes": 18765,
+      "sha256": "32f8d51e6cb30bddc20cb2046394fe8684bae7dbec9d1d27c3dabdf823090d61"
+    },
+    "frontend/libs/daterangepicker/daterangepicker.min.css": {
+      "bytes": 6154,
+      "sha256": "cdd4438241b92bf00b0293aa17b82fc58b8d110a25aaba3a435dd54a0d6e2259"
+    },
+    "frontend/libs/daterangepicker/daterangepicker.min.js": {
+      "bytes": 32270,
+      "sha256": "f2c1aa494b93b7df907d08f31aa3f05a90dda45fb375879286810502fe1f79ff"
+    },
+    "frontend/libs/devbridge-autocomplete/jquery.autocomplete.min.js": {
+      "bytes": 13471,
+      "sha256": "a94fbe89c98bae4870c6971f3f1cf8a03c0bcc5c584634d3b3fd17510b09c738"
+    },
+    "frontend/libs/feather-icons/dist/feather.min.js": {
+      "bytes": 76047,
+      "sha256": "ea465ac6b69a037dc49fda6ab1c585f95725091eff4515df61db91d9d3c5e54e"
+    },
+    "frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css": {
+      "bytes": 6184,
+      "sha256": "c84c44580e9bfdbaacdc55f1432d3768e58816dc7d4045671d9fc4c1e9912db7"
+    },
+    "frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js": {
+      "bytes": 110712,
+      "sha256": "42f04cdc79d6b2f7025aaa6a1d9aeda1e7e307cb76a8f3737520cdc9a48d1f94"
+    },
+    "frontend/libs/highlight.js/highlight.min.js": {
+      "bytes": 127496,
+      "sha256": "c4a399dd6f488bc97a3546e3476747b3e714c99c57b9473154c6fb8d259b9381"
+    },
+    "frontend/libs/highlight.js/night-owl.min.css": {
+      "bytes": 1421,
+      "sha256": "d8dfd126e376afbeadd941be47bc4ee88df1a82ccad09a25d03b3fc68d7d6a2e"
+    },
+    "frontend/libs/jquery-mask-plugin/dist/jquery.mask.min.js": {
+      "bytes": 8327,
+      "sha256": "2a0db34dc14ef4b5ce73b230701c7561e5012667a4c9cb274ecab646e1474995"
+    },
+    "frontend/libs/jquery/dist/jquery.min.js": {
+      "bytes": 87533,
+      "sha256": "fc9a93dd241f6b045cbff0481cf4e1901becd0e12fb45166a8f17f95823f0b1a"
+    },
+    "frontend/libs/jsvectormap/dist/css/jsvectormap.min.css": {
+      "bytes": 3260,
+      "sha256": "66c86acfa5fe46cd917f9b0fb6249b6beaf02c12f5653c8b069a5b60eb2d47d3"
+    },
+    "frontend/libs/jsvectormap/dist/js/jsvectormap.min.js": {
+      "bytes": 34344,
+      "sha256": "ca3a014fc66d8249c4da0700f32bd6131cf0f0bb0801f8fafebfd7030f3cf50c"
+    },
+    "frontend/libs/jsvectormap/dist/maps/world.js": {
+      "bytes": 102246,
+      "sha256": "de3c2c21cf63bdd95a4cfc477a566a4b189579daeb26157e8ecb101000224edd"
+    },
+    "frontend/libs/moment/moment.min.js": {
+      "bytes": 58890,
+      "sha256": "845c524969edd5b3af9aa6d8718d29fe92e8dbe25b955214a8e064a05a9a5027"
+    },
+    "frontend/libs/select2/dist/css/select2.min.css": {
+      "bytes": 16476,
+      "sha256": "5d5e14d587308b5d1ad79f51e9aea2f8f469b0a02b335f559f5a4bb756b81737"
+    },
+    "frontend/libs/select2/dist/js/select2.min.js": {
+      "bytes": 74294,
+      "sha256": "15692c266649fbc8acb4ebfb345e7e9499486d9551148241a235c9d62eea2f55"
+    },
+    "frontend/libs/spectrum/spectrum.min.css": {
+      "bytes": 10225,
+      "sha256": "e1fb553d081450dbb732a9d04bad95998b0206f383c9cc023cc4edec8c309e46"
+    },
+    "frontend/libs/spectrum/spectrum.min.js": {
+      "bytes": 27983,
+      "sha256": "2f625e6d7d356c2dbdf3218bcd15946638f268fee1a601d9a55860d2d5c9fbd1"
+    },
+    "frontend/libs/svg-injector/dist/svg-injector.min.js": {
+      "bytes": 4579,
+      "sha256": "0a306526fc6a2c25361cccc5ba74de9592c51c225daa00e81e2fea18959d4499"
+    },
+    "frontend/libs/tagify/tagify.css": {
+      "bytes": 12343,
+      "sha256": "7e3fd3a639d5fe4862ee0d1afb12cb0b4b8cfa5b6b21507b50b5dda702d89b4b"
+    },
+    "frontend/libs/tagify/tagify.min.js": {
+      "bytes": 67258,
+      "sha256": "9053774f6cef7755e022fd896f59fb698b2e4320365f7f9a8cabef8eb48adf16"
+    }
+  }
+}

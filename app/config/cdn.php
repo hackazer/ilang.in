@@ -54,9 +54,9 @@ return [
         'js' => [assets('frontend/libs/ace-builds/ace.js')]
     ],
     'spectrum' => [
-        'version' => '1.8.1',        
-        'js'=> ['//cdnjs.cloudflare.com/ajax/libs/spectrum/[version]/spectrum.min.js'],
-        'css'=> ['//cdnjs.cloudflare.com/ajax/libs/spectrum/[version]/spectrum.min.css']
+        'version' => '1.8.1',
+        'js' => [assets('frontend/libs/spectrum/spectrum.min.js')],
+        'css' => [assets('frontend/libs/spectrum/spectrum.min.css')]
     ],
     'autocomplete' => [
         'version' => '2.0.4',
@@ -77,6 +77,6 @@ return [
     ],
     'blockadblock' => [
         'version' => '3.2.1',
-        'js' => ['https://cdnjs.cloudflare.com/ajax/libs/blockadblock/[version]/blockadblock.min.js']
+        'js' => [assets('frontend/libs/blockadblock/blockadblock.min.js')]
     ]
 ];

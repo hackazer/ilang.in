@@ -560,14 +560,3 @@ Gem::get('/{id}/qr[/{size}]', 'Link@qr')->name('link.qr');
 Gem::get('/{id}/qr/download/{format}[/{size}]', 'Link@qrDownload')->name('link.qrDownload');
 
 Gem::route(['GET', 'POST'], '/{alias}', 'Link@redirect')->name('redirect');
-
-Gem::get('/compile/1a589a9d55e6fff984', function(){
-    \Core\View::compile([
-         "frontend/libs/jquery/dist/jquery.min.js",
-         "frontend/libs/bootstrap/dist/js/bootstrap.bundle.min.js",
-         "frontend/libs/bootstrap-notify/bootstrap-notify.min.js",
-         "frontend/libs/svg-injector/dist/svg-injector.min.js",
-         "frontend/libs/feather-icons/dist/feather.min.js",
-         "frontend/libs/select2/dist/js/select2.min.js",                   
-    ], 'bundle.pack.js');
-});

@@ -172,7 +172,6 @@ class Dashboard {
         $activeusers = DB::user()->where('active', 1)->count();
         $allusers = DB::user()->count();
         
-        View::push(assets('frontend/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js'), 'js')->toFooter();
         \Helpers\CDN::load('editor');
 
         View::push("<script>                        

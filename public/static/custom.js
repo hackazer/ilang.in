@@ -1,3 +1,32 @@
+window.AppNotify = window.AppNotify || {
+	show: function(message, type) {
+		let container = document.getElementById('app-toast-container');
+		if (!container) {
+			container = document.createElement('div');
+			container.id = 'app-toast-container';
+			container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+			container.style.zIndex = '1090';
+			document.body.appendChild(container);
+		}
+		const toast = document.createElement('div');
+		toast.className = 'toast align-items-center text-white bg-' + (type || 'danger') + ' border-0';
+		toast.setAttribute('role', 'alert');
+		toast.innerHTML = '<div class="d-flex"><div class="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+		toast.querySelector('.toast-body').textContent = message;
+		container.appendChild(toast);
+		if (window.bootstrap && window.bootstrap.Toast) {
+			const instance = new window.bootstrap.Toast(toast, { delay: 5000 });
+			toast.addEventListener('hidden.bs.toast', function() { toast.remove(); });
+			instance.show();
+		} else {
+			toast.classList.add('show');
+			setTimeout(function() { toast.remove(); }, 5000);
+		}
+		return toast;
+	},
+	error: function(message) { return this.show(message, 'danger'); }
+};
+
 $(document).ready(function(){
 
 	$('.sidebar-dropdown').on('shown.bs.collapse', function(){
@@ -75,8 +104,10 @@ $(document).ready(function(){
 	let $tags = $('[data-toggle="tags"]');
 	if ($tags.length) {
 		$tags.each(function() {
-			$(this).tagsinput({
-				tagClass: 'badge badge-primary'
+			new Tagify(this, {
+				originalInputValueFormat: function(values) {
+					return values.map(function(item) { return item.value; }).join(',');
+				}
 			});
 		});
 	}	
@@ -233,53 +264,11 @@ $(document).ready(function(){
 							data: datay
 						}]
 					},
-					options: {
-						maintainAspectRatio: false,
-						legend: {
-							display: false
-						},
-						tooltips: {
-							intersect: false
-						},
-						hover: {
-							intersect: true
-						},
-						plugins: {
-							filler: {
-								propagate: false
-							}
-						},
-						scales: {
-							xAxes: [{
-								reverse: true,
-								gridLines: {
-									color: "rgba(0,0,0,0.0)"
-								}
-							}],
-							yAxes: [{
-								ticks: {
-									stepSize: 1000
-								},
-								display: true,
-								borderDash: [3, 3],
-								gridLines: {
-									color: "rgba(0,0,0,0.0)"
-								}
-							}]
-						}
-					}
+					options: AppChartConfig.lineOptions(window.Chart, { reverseX: true, yStepSize: 1000 })
 				});		
 			})
 			.fail(function() {
-				$.notify({
-					message: 'Cannot retrieve charts. Server did not respond or an error ocurred.'
-				},{
-					type: 'danger',
-					placement: {
-						from: "bottom",
-						align: "right"
-					},
-				});
+				AppNotify.error('Cannot retrieve charts. Server did not respond or an error occurred.');
 			});		
 		});			
 	}
@@ -310,15 +299,7 @@ $(document).ready(function(){
 				});
 			})
 			.fail(function() {
-				$.notify({
-					message: 'Cannot retrieve maps. Server did not respond or an error ocurred.'
-				},{
-					type: 'danger',
-					placement: {
-						from: "bottom",
-						align: "right"
-					},
-				});
+				AppNotify.error('Cannot retrieve maps. Server did not respond or an error occurred.');
 			});	
 		});		
 	}
@@ -335,7 +316,7 @@ $(document).ready(function(){
 					counts.push(data[x]);
 				}			
 				new Chart(el, {
-					type: "pie",
+					type: "doughnut",
 					data: {
 						labels: labels,
 						datasets: [{
@@ -344,26 +325,11 @@ $(document).ready(function(){
 							borderWidth: 5
 						}]
 					},
-					options: {
-						responsive: !window.MSInputMethodContext,
-						maintainAspectRatio: false,
-						legend: {
-							display: false
-						},
-						cutoutPercentage: 75
-					}
+					options: AppChartConfig.doughnutOptions(window.Chart, { legendDisplay: false, cutout: 75 })
 				});
 			})
 			.fail(function() {
-				$.notify({
-					message: 'Cannot retrieve charts. Server did not respond or an error ocurred.'
-				},{
-					type: 'danger',
-					placement: {
-						from: "bottom",
-						align: "right"
-					},
-				});
+				AppNotify.error('Cannot retrieve charts. Server did not respond or an error occurred.');
 			});
 		});
 	}	
@@ -418,15 +384,7 @@ $(document).ready(function(){
 		e.preventDefault();
 		let el = $(this);
 		if($('#code').val().length < 1){
-			return $.notify({
-				message: 'Cannot detect language code. Please enter an ISO 639-1 code in the code input.'
-			},{
-				type: 'danger',
-				placement: {
-					from: "bottom",
-					align: "right"
-				},
-			});			
+			return AppNotify.error('Cannot detect language code. Please enter an ISO 639-1 code in the code input.');
 		}
 		$.ajax({
             type: "POST",

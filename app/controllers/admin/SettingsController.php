@@ -70,8 +70,6 @@ class Settings {
 
         View::set('title', ucfirst($config).' '.e('Settings').' - Admin');
 
-        View::push(assets('frontend/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js'), 'js')->toFooter();    
-
         $paypal = null;
 
         foreach($this->processor() as $id => $processor){

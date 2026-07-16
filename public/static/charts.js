@@ -48,15 +48,7 @@ function cities(code){
         el.html(response);
     })
     .fail(function() {
-        $.notify({
-            message: lang.nodata
-        },{
-            type: 'danger',
-            placement: {
-                from: "bottom",
-                align: "right"
-            },
-        });
+        AppNotify.error(lang.nodata);
     });	
 }
 function piechart(el, url){
@@ -70,7 +62,7 @@ function piechart(el, url){
             counts.push(data['chart'][x]);
         }			
         window.datachart = new Chart(el, {
-            type: "pie",
+            type: "doughnut",
             data: {
                 labels: labels,
                 datasets: [{
@@ -79,17 +71,7 @@ function piechart(el, url){
                     backgroundColor: ['#0F87FF','#0080C0','#80FFFF','#FF0000','#C0C0C0','#000000','#F1DF03','#d40000','#4D4D4D','#464646','#7A7A7A','#a4c639','#0080FF','#FF0080','#EEEEEE']
                 }]
             },
-            options: {
-                responsive: !window.MSInputMethodContext,
-                maintainAspectRatio: false,
-                plugins:{
-                    legend: {
-                        position: 'bottom',
-                        display: true
-                    }
-                },
-                cutoutPercentage: 75
-            }
+            options: AppChartConfig.doughnutOptions(window.Chart, { legendDisplay: true, legendPosition: 'bottom', cutout: 75 })
         });
         $('#top-'+el.data('type')).html('');
         for (const [key, value] of Object.entries(data['top'])) {        
@@ -104,15 +86,7 @@ function piechart(el, url){
         }
     })
     .fail(function() {
-        $.notify({
-            message: lang.nodata
-        },{
-            type: 'danger',
-            placement: {
-                from: "bottom",
-                align: "right"
-            },
-        });
+        AppNotify.error(lang.nodata);
     });
 }
 function charts(url){
@@ -142,27 +116,10 @@ function charts(url){
                     data: datay
                 }]
             },
-            options: {
-                maintainAspectRatio: false,
-                legend: {display: false},
-                tooltips: {intersect: false},hover: {intersect: true},
-                plugins: {filler: {propagate: false}, legend: {display: false}},
-                scales: {
-                    x: {grid: {display: false}, min: 0},
-                    y: {display: true,grid: {display: false}, min: 0}
-                }
-            }
+            options: AppChartConfig.lineOptions(window.Chart)
         });		
     }).fail(function() {
-        $.notify({
-            message: lang.nodata
-        },{
-            type: 'danger',
-            placement: {
-                from: 'bottom',
-                align: 'right'
-            },
-        });
+        AppNotify.error(lang.nodata);
     });	
 }
 function maps(el, url){
@@ -198,14 +155,6 @@ function maps(el, url){
         });
     })
     .fail(function() {
-        $.notify({
-            message: lang.nodata
-        },{
-            type: 'danger',
-            placement: {
-                from: "bottom",
-                align: "right"
-            },
-        });
+        AppNotify.error(lang.nodata);
     });
 }

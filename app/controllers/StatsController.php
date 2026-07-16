@@ -107,7 +107,7 @@ class Stats {
             View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
         }
 
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
 		\Helpers\CDN::load("daterangepicker");
@@ -510,7 +510,7 @@ class Stats {
 		View::set("description", e("Platform statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');	        
 
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
         \Helpers\CDN::load("daterangepicker");
@@ -695,7 +695,7 @@ class Stats {
 			});			
 		});</script>", "custom")->tofooter();
 
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
 		return View::with('stats.browsers', compact('url', 'top'))->extend('layouts.main');
@@ -850,7 +850,7 @@ class Stats {
 			});			
 		});</script>", "custom")->tofooter();
 
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
 		return View::with('stats.languages', compact('url', 'top'))->extend('layouts.main');
@@ -1002,10 +1002,10 @@ class Stats {
 
 		View::set("description", e("Country statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
-        View::push(assets('Chart.min.js'), "script")->toHeader();
+        View::push(assets('Chart.min.js'), "script")->toFooter();
         View::push(assets('charts.min.js'), "script")->tofooter();
 
-        View::push("<script>new Chart($('canvas'), {type: 'pie',data: {labels: ['Facebook', 'Twitter', 'Instagram', 'Linkedin'],datasets: [{data: ".json_encode($social).",borderWidth: 5,backgroundColor: ['#3b5998','#1DA1F2', '#fbad50', '#0077b5']}]},options: {responsive: !window.MSInputMethodContext,maintainAspectRatio: false,plugins:{legend: {position: 'bottom',display: true}},cutoutPercentage: 75}})</script>", 'custom')->tofooter();
+        View::push("<script>new Chart($('canvas'), {type: 'doughnut',data: {labels: ['Facebook', 'Twitter', 'Instagram', 'Linkedin'],datasets: [{data: ".json_encode($social).",borderWidth: 5,backgroundColor: ['#3b5998','#1DA1F2', '#fbad50', '#0077b5']}]},options: {responsive: !window.MSInputMethodContext,maintainAspectRatio: false,plugins:{legend: {position: 'bottom',display: true}},cutout: '75%'}})</script>", 'custom')->tofooter();
 
         return View::with('stats.referrers', compact('url', 'top', 'topReferrer'))->extend('layouts.main');
     }
