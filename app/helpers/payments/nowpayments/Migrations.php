@@ -18,6 +18,7 @@ final class Migrations
             'nowpayments_events',
             'nowpayments_plans',
             'nowpayments_customers',
+            'nowpayments_outbox',
         ];
     }
 
@@ -31,6 +32,25 @@ final class Migrations
             'nowpayments_events' => ['payload_hash'],
             'nowpayments_plans' => ['mapping_key', 'remote_plan_id'],
             'nowpayments_customers' => ['userid', 'provider_subpartner_id', 'provider_name'],
+            'nowpayments_outbox' => ['event_key', 'transaction_id'],
+        ];
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    public static function monetaryColumns(): array
+    {
+        return [
+            'nowpayments_transactions' => [
+                'expected_amount' => 'DECIMAL(36,18)',
+                'pay_amount' => 'DECIMAL(36,18)',
+                'received_amount' => 'DECIMAL(36,18)',
+                'outcome_amount' => 'DECIMAL(36,18)',
+            ],
+            'nowpayments_plans' => [
+                'amount' => 'DECIMAL(36,18)',
+            ],
         ];
     }
 
@@ -62,6 +82,8 @@ final class Migrations
         self::createEvents();
         self::createPlans();
         self::createCustomers();
+        self::createOutbox();
+        self::upgradeExistingSchema();
     }
 
     public static function ensureSettings(): void
@@ -78,39 +100,51 @@ final class Migrations
 
     private static function createTransactions(): void
     {
-        DB::schema('nowpayments_transactions', static function ($table): void {
-            $table->charset('utf8mb4');
-            $table->increment('id');
-            $table->bigint('userid')->index();
-            $table->bigint('planid')->index();
-            $table->bigint('subscriptionid')->index();
-            $table->bigint('paymentid')->index();
-            $table->string('order_id', 191, false)->unique();
-            $table->string('idempotency_key', 191, false)->unique();
-            $table->string('provider_payment_id')->unique();
-            $table->string('provider_subscription_id')->unique();
-            $table->string('mode', 32, false)->index();
-            $table->string('term', 32, false);
-            $table->string('price_currency', 16, false);
-            $table->string('pay_currency', 32);
-            $table->string('settlement_currency', 16);
-            $table->double('expected_amount', '20,8', '0');
-            $table->double('pay_amount', '20,8', '0');
-            $table->double('received_amount', '20,8', '0');
-            $table->double('outcome_amount', '20,8', '0');
-            $table->string('status', 32, 'pending')->index();
-            $table->string('provider_status', 64);
-            $table->text('pay_address');
-            $table->string('payin_extra_id');
-            $table->datetime('expires_at', null);
-            $table->datetime('last_checked_at', null);
-            $table->integer('retry_count', null, '0');
-            $table->datetime('next_retry_at', null)->index();
-            $table->text('metadata');
-            $table->datetime('entitlement_applied_at', null);
-            $table->timestamp('created_at');
-            $table->timestamp('updated_at');
-        });
+        $table = self::table('nowpayments_transactions');
+        DB::get_db()->exec("CREATE TABLE IF NOT EXISTS `{$table}` (
+            `id` BIGINT NOT NULL AUTO_INCREMENT,
+            `userid` BIGINT NULL,
+            `planid` BIGINT NULL,
+            `subscriptionid` BIGINT NULL,
+            `paymentid` BIGINT NULL,
+            `order_id` VARCHAR(191) NOT NULL,
+            `idempotency_key` VARCHAR(191) NOT NULL,
+            `provider_payment_id` VARCHAR(191) NULL,
+            `provider_subscription_id` VARCHAR(191) NULL,
+            `mode` VARCHAR(32) NOT NULL,
+            `term` VARCHAR(32) NOT NULL,
+            `price_currency` VARCHAR(16) NOT NULL,
+            `pay_currency` VARCHAR(32) NULL,
+            `settlement_currency` VARCHAR(16) NULL,
+            `expected_amount` DECIMAL(36,18) NOT NULL DEFAULT 0,
+            `pay_amount` DECIMAL(36,18) NOT NULL DEFAULT 0,
+            `received_amount` DECIMAL(36,18) NOT NULL DEFAULT 0,
+            `outcome_amount` DECIMAL(36,18) NOT NULL DEFAULT 0,
+            `status` VARCHAR(32) NOT NULL DEFAULT 'pending',
+            `provider_status` VARCHAR(64) NULL,
+            `pay_address` TEXT NULL,
+            `payin_extra_id` VARCHAR(191) NULL,
+            `expires_at` DATETIME NULL,
+            `last_checked_at` DATETIME NULL,
+            `retry_count` INT NOT NULL DEFAULT 0,
+            `next_retry_at` DATETIME NULL,
+            `metadata` TEXT NULL,
+            `entitlement_applied_at` DATETIME NULL,
+            `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `np_transactions_order_id_unique` (`order_id`),
+            UNIQUE KEY `np_transactions_idempotency_unique` (`idempotency_key`),
+            UNIQUE KEY `np_transactions_payment_unique` (`provider_payment_id`),
+            UNIQUE KEY `np_transactions_subscription_unique` (`provider_subscription_id`),
+            KEY `np_transactions_user_index` (`userid`),
+            KEY `np_transactions_plan_index` (`planid`),
+            KEY `np_transactions_local_subscription_index` (`subscriptionid`),
+            KEY `np_transactions_local_payment_index` (`paymentid`),
+            KEY `np_transactions_mode_index` (`mode`),
+            KEY `np_transactions_status_index` (`status`),
+            KEY `np_transactions_retry_index` (`next_retry_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private static function createEvents(): void
@@ -122,6 +156,7 @@ final class Migrations
             $table->string('provider_payment_id')->index();
             $table->string('payload_hash', 64, false)->unique();
             $table->int('signature_verified', 1, '0');
+            $table->string('source', 32, 'ipn')->index();
             $table->string('status', 64);
             $table->string('result', 32, 'received');
             $table->text('failure_reason');
@@ -133,24 +168,29 @@ final class Migrations
 
     private static function createPlans(): void
     {
-        DB::schema('nowpayments_plans', static function ($table): void {
-            $table->charset('utf8mb4');
-            $table->increment('id');
-            $table->string('mapping_key', 64, false)->unique();
-            $table->bigint('planid')->index();
-            $table->string('term', 32, false);
-            $table->string('mode', 32, false);
-            $table->string('remote_plan_id')->unique();
-            $table->double('amount', '20,8', '0');
-            $table->string('currency', 16, false);
-            $table->integer('interval_days');
-            $table->string('sync_hash', 64);
-            $table->int('active', 1, '1')->index();
-            $table->text('metadata');
-            $table->datetime('last_synced_at', null);
-            $table->timestamp('created_at');
-            $table->timestamp('updated_at');
-        });
+        $table = self::table('nowpayments_plans');
+        DB::get_db()->exec("CREATE TABLE IF NOT EXISTS `{$table}` (
+            `id` BIGINT NOT NULL AUTO_INCREMENT,
+            `mapping_key` VARCHAR(64) NOT NULL,
+            `planid` BIGINT NULL,
+            `term` VARCHAR(32) NOT NULL,
+            `mode` VARCHAR(32) NOT NULL,
+            `remote_plan_id` VARCHAR(191) NULL,
+            `amount` DECIMAL(36,18) NOT NULL DEFAULT 0,
+            `currency` VARCHAR(16) NOT NULL,
+            `interval_days` INT NULL,
+            `sync_hash` VARCHAR(64) NULL,
+            `active` TINYINT(1) NOT NULL DEFAULT 1,
+            `metadata` TEXT NULL,
+            `last_synced_at` DATETIME NULL,
+            `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `np_plans_mapping_unique` (`mapping_key`),
+            UNIQUE KEY `np_plans_remote_unique` (`remote_plan_id`),
+            KEY `np_plans_local_plan_index` (`planid`),
+            KEY `np_plans_active_index` (`active`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private static function createCustomers(): void
@@ -167,5 +207,76 @@ final class Migrations
             $table->timestamp('created_at');
             $table->timestamp('updated_at');
         });
+    }
+
+    private static function createOutbox(): void
+    {
+        $table = self::table('nowpayments_outbox');
+        DB::get_db()->exec("CREATE TABLE IF NOT EXISTS `{$table}` (
+            `id` BIGINT NOT NULL AUTO_INCREMENT,
+            `event_key` VARCHAR(191) NOT NULL,
+            `transaction_id` BIGINT NOT NULL,
+            `userid` BIGINT NOT NULL,
+            `planid` BIGINT NOT NULL,
+            `paymentid` BIGINT NOT NULL,
+            `status` VARCHAR(32) NOT NULL DEFAULT 'pending',
+            `attempts` INT NOT NULL DEFAULT 0,
+            `last_error` VARCHAR(191) NULL,
+            `available_at` DATETIME NOT NULL,
+            `dispatched_at` DATETIME NULL,
+            `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `np_outbox_event_unique` (`event_key`),
+            UNIQUE KEY `np_outbox_transaction_unique` (`transaction_id`),
+            KEY `np_outbox_pending_index` (`status`, `available_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private static function upgradeExistingSchema(): void
+    {
+        $events = self::table('nowpayments_events');
+
+        if (!self::columnExists($events, 'source')) {
+            DB::get_db()->exec("ALTER TABLE `{$events}` ADD COLUMN `source` VARCHAR(32) NOT NULL DEFAULT 'ipn' AFTER `signature_verified`, ADD INDEX `np_events_source_index` (`source`)");
+        }
+
+        foreach (self::monetaryColumns() as $tableName => $columns) {
+            $table = self::table($tableName);
+
+            foreach ($columns as $column => $definition) {
+                $metadata = self::columnMetadata($table, $column);
+
+                if ($metadata === null
+                    || strtolower((string) $metadata['DATA_TYPE']) !== 'decimal'
+                    || (int) $metadata['NUMERIC_PRECISION'] !== 36
+                    || (int) $metadata['NUMERIC_SCALE'] !== 18) {
+                    DB::get_db()->exec("UPDATE `{$table}` SET `{$column}` = 0 WHERE `{$column}` IS NULL");
+                    DB::get_db()->exec("ALTER TABLE `{$table}` MODIFY COLUMN `{$column}` {$definition} NOT NULL DEFAULT 0");
+                }
+            }
+        }
+    }
+
+    private static function columnExists(string $table, string $column): bool
+    {
+        return self::columnMetadata($table, $column) !== null;
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function columnMetadata(string $table, string $column): ?array
+    {
+        $statement = DB::get_db()->prepare('SELECT DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $statement->execute([$table, $column]);
+        $metadata = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        return is_array($metadata) ? $metadata : null;
+    }
+
+    private static function table(string $name): string
+    {
+        $prefix = defined('DBprefix') ? (string) constant('DBprefix') : '';
+
+        return str_replace('`', '``', $prefix.$name);
     }
 }

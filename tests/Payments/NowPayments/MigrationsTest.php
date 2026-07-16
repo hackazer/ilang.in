@@ -23,6 +23,7 @@ final class MigrationsTest extends TestCase
             'nowpayments_events',
             'nowpayments_plans',
             'nowpayments_customers',
+            'nowpayments_outbox',
         ], Migrations::tables());
     }
 
@@ -38,6 +39,23 @@ final class MigrationsTest extends TestCase
         self::assertContains('mapping_key', $unique['nowpayments_plans']);
         self::assertContains('userid', $unique['nowpayments_customers']);
         self::assertContains('provider_subpartner_id', $unique['nowpayments_customers']);
+        self::assertContains('event_key', $unique['nowpayments_outbox']);
+        self::assertContains('transaction_id', $unique['nowpayments_outbox']);
+    }
+
+    public function testEveryProviderMonetaryColumnUsesExactDecimalStorage(): void
+    {
+        self::assertSame([
+            'nowpayments_transactions' => [
+                'expected_amount' => 'DECIMAL(36,18)',
+                'pay_amount' => 'DECIMAL(36,18)',
+                'received_amount' => 'DECIMAL(36,18)',
+                'outcome_amount' => 'DECIMAL(36,18)',
+            ],
+            'nowpayments_plans' => [
+                'amount' => 'DECIMAL(36,18)',
+            ],
+        ], Migrations::monetaryColumns());
     }
 
     public function testDefaultConfigurationKeepsPrepaidEnabledAndCustodyDisabled(): void

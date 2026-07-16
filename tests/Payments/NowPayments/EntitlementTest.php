@@ -36,4 +36,27 @@ final class EntitlementTest extends TestCase
         self::assertTrue(EntitlementService::shouldApply('custodial', 'paid'));
         self::assertFalse(EntitlementService::shouldApply('prepaid', 'confirming'));
     }
+
+    public function testDecimalComparisonNeverUsesFloatTolerance(): void
+    {
+        self::assertTrue(EntitlementService::decimalEquals('10.00', '10'));
+        self::assertFalse(EntitlementService::decimalEquals('10.000000000000000001', '10'));
+        self::assertFalse(EntitlementService::decimalEquals('0.100000000000000001', 0.1));
+    }
+
+    public function testPendingSubscriptionInitializesWithoutDoubleCounting(): void
+    {
+        self::assertSame(
+            '10',
+            EntitlementService::nextSubscriptionAmount('10.000000000000000000', 'Pending', '10')
+        );
+    }
+
+    public function testActiveSubscriptionPreservesItsCumulativeAmount(): void
+    {
+        self::assertSame(
+            '30.25',
+            EntitlementService::nextSubscriptionAmount('20.15', 'Active', '10.10')
+        );
+    }
 }
