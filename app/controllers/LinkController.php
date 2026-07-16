@@ -24,6 +24,7 @@ use Core\View;
 use Core\Plugin;
 use Core\Auth;
 use Helpers\Gate;
+use Helpers\LinkPassword;
 use Helpers\LinkTargeting;
 use Models\User;
 
@@ -134,11 +135,8 @@ class Link {
 
 		// Password check is stored in a session. User will have access until the browser is closed.
 		if($request->isPost() && $request->password){
-			// if encrypted Password (old version)
-			if(strlen($url->pass) == 32) $request->password = md5($request->password);
-
 			// Check Password
-			if($request->password != $url->pass){
+			if(!LinkPassword::verifyAndUpgrade($request->password, $url)){
 				return back()->with("danger", e("The password is invalid or does not match."));
 			}
 

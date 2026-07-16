@@ -25,6 +25,7 @@ use Core\Helper;
 use Core\Response;
 use Core\Request;
 use Helpers\App;
+use Helpers\LinkPassword;
 
 trait Links {    
 
@@ -394,7 +395,7 @@ trait Links {
         $link->location = $countries;
         $link->devices = $devices;
         $link->date = Helper::dtime();
-        $link->pass = $request->pass ? clean($request->pass) : null;
+        $link->pass = LinkPassword::hash($request->pass ?: null);
         $link->userid = $user ? $user->rID() : 0;
         $link->domain = $request->domain ? trim($request->domain) : null;
         $link->pixels = $pixels;
@@ -669,7 +670,7 @@ trait Links {
         $link->description = $request->description ? clean($request->description) : '';
         $link->location = $countries;
         $link->devices = $devices;
-        $link->pass = $request->pass ? clean($request->pass) : null;
+        $link->pass = LinkPassword::hash($request->pass ?: null);
         $link->domain = $request->domain ? trim($request->domain) : null;
         $link->pixels = $pixels;
         $link->parameters = $parameters;

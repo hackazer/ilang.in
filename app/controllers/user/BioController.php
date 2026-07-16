@@ -23,6 +23,7 @@ use Core\DB;
 use Core\Auth;
 use Core\Helper;
 use Core\View;
+use Helpers\LinkPassword;
 use Models\User;
 
 class Bio {
@@ -330,7 +331,7 @@ class Bio {
         $url->date = Helper::dtime();
 
         if($request->pass){
-            $url->pass = clean($request->pass);
+            $url->pass = LinkPassword::hash($request->pass);
         }
                 
         $url->save();
@@ -582,7 +583,7 @@ class Bio {
             $url->alias = $profile->alias;
         }
 
-        $url->pass = clean($request->pass);
+        $url->pass = LinkPassword::hash($request->pass ?: null);
 
         if($request->pixels){            
             $url->pixels = $request->pixels && $user && $user->has('pixels') ? clean(implode(",", $request->pixels)) : null;

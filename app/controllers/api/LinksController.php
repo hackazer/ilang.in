@@ -23,6 +23,7 @@ use \Core\Request;
 use \Core\Response;
 use \Core\DB;
 use \Core\Auth;
+use \Helpers\LinkPassword;
 use \Models\User;
 
 class Links {
@@ -225,7 +226,7 @@ class Links {
 
         $link->custom = (isset($data->custom) && !empty($data->custom)) ? clean($data->custom) : null;
 
-		$link->pass = (isset($data->password) && !empty($data->password)) ? clean($data->password) : null;
+		$link->pass = LinkPassword::hash((isset($data->password) && !empty($data->password)) ? $data->password : null);
 
 		$link->domain = (isset($data->domain) && !empty($data->domain)) ? clean($data->domain) : null;
 
@@ -350,7 +351,7 @@ class Links {
 
         $link->custom = (isset($data->custom) && !empty($data->custom)) ? clean($data->custom) : null;
 
-		$link->pass = (isset($data->password) && !empty($data->password)) ? clean($data->password) : null;
+		$link->pass = LinkPassword::hash((isset($data->password) && !empty($data->password)) ? $data->password : null);
 
 		$link->domain = (isset($data->domain) && !empty($data->domain)) ? clean($data->domain) : null;
 
