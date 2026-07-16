@@ -141,6 +141,9 @@ class PaypalApi{
                 $price = round($price * (1+($tax->rate / 100)), 2);
             }
 
+            $amount = self::money($price);
+            $currency = strtoupper(trim((string) config('currency')));
+
             try {
                 $order = $client->createOrder([
                     'intent' => 'CAPTURE',
@@ -148,14 +151,14 @@ class PaypalApi{
                         'description' => 'userid:'.$user->id,
                         'custom_id' => 'userid:'.$user->id,
                         'amount' => [
-                            'currency_code' => config('currency'),
-                            'value' => self::money($price),
+                            'currency_code' => $currency,
+                            'value' => $amount,
                         ],
                     ]],
                     'payment_source' => [
                         'paypal' => [
                             'experience_context' => [
-                                'return_url' => url("webhook/paypal?success=true&type=lifetime&planid={$plan->id}"),
+                                'return_url' => url('webhook/paypal?success=true'),
                                 'cancel_url' => url('webhook/paypal?success=false'),
                                 'user_action' => 'PAY_NOW',
                             ],
@@ -164,7 +167,34 @@ class PaypalApi{
                 ]);
                 $approvalUrl = self::approvalUrl($order);
 
-                if($approvalUrl === null) throw new ApiException('PayPal did not return an approval URL.');
+                if($approvalUrl === null || empty($order['id'])) {
+                    throw new ApiException('PayPal did not return an order ID and approval URL.');
+                }
+
+                $sub = DB::subscription()->create();
+                $sub->tid = $order['id'];
+                $sub->userid = $user->id;
+                $sub->plan = 'lifetime';
+                $sub->planid = $plan->id;
+                $sub->status = "Pending";
+                $sub->amount = $amount;
+                $sub->date = Helper::dtime();
+                $sub->expiry = Helper::dtime('+1 day');
+                $sub->lastpayment = Helper::dtime();
+                $sub->data = json_encode([
+                    'paymentmethod' => 'PaypalApi',
+                    'intent' => [
+                        'order_id' => (string) $order['id'],
+                        'user_id' => (int) $user->id,
+                        'plan_id' => (int) $plan->id,
+                        'term' => 'lifetime',
+                        'amount' => $amount,
+                        'currency' => $currency,
+                    ],
+                    'paypal' => $order,
+                ], JSON_THROW_ON_ERROR);
+                $sub->uniqueid = Helper::rand(16);
+                $sub->save();
 
                 header("Location: {$approvalUrl}");
                 exit;
@@ -269,7 +299,9 @@ class PaypalApi{
         }
 
         try {
-            if($request->type == 'lifetime') return self::completeLifetimeOrder($request, $client);
+            if(self::lifetimeIntentForCallback($request) !== null) {
+                return self::completeLifetimeOrder($request, $client);
+            }
 
             return self::completeSubscription($request, $client);
         } catch (\Exception $exception) {
@@ -437,59 +469,252 @@ class PaypalApi{
         }
     }
 
+    /**
+     * Resolve lifetime checkout context exclusively from the locally stored order intent.
+     */
+    public static function lifetimeIntentForCallback($request, ?callable $lookup = null): ?array{
+        $orderId = trim((string) ($request->token ?? ''));
+
+        if($orderId === '') return null;
+
+        $lookup ??= static fn(string $id) => DB::subscription()->where('tid', $id)->first();
+        $subscription = $lookup($orderId);
+
+        if(!$subscription) return null;
+
+        $data = json_decode((string) ($subscription->data ?? ''), true);
+        $intent = is_array($data) && is_array($data['intent'] ?? null) ? $data['intent'] : null;
+
+        if(($data['paymentmethod'] ?? null) !== 'PaypalApi' || !$intent || ($intent['term'] ?? null) !== 'lifetime') {
+            return null;
+        }
+
+        $intentAmount = self::canonicalMoney($intent['amount'] ?? null);
+        $storedAmount = self::canonicalMoney($subscription->amount ?? null);
+        $trusted = [
+            'order_id' => trim((string) ($intent['order_id'] ?? '')),
+            'user_id' => (int) ($intent['user_id'] ?? 0),
+            'plan_id' => (int) ($intent['plan_id'] ?? 0),
+            'term' => 'lifetime',
+            'amount' => $intentAmount,
+            'currency' => strtoupper(trim((string) ($intent['currency'] ?? ''))),
+        ];
+
+        if(
+            $trusted['order_id'] === ''
+            || !hash_equals($trusted['order_id'], $orderId)
+            || $trusted['user_id'] < 1
+            || $trusted['plan_id'] < 1
+            || $trusted['amount'] === null
+            || $trusted['currency'] === ''
+            || (string) ($subscription->tid ?? '') !== $trusted['order_id']
+            || (int) ($subscription->userid ?? 0) !== $trusted['user_id']
+            || (int) ($subscription->planid ?? 0) !== $trusted['plan_id']
+            || (string) ($subscription->plan ?? '') !== $trusted['term']
+            || $storedAmount === null
+            || !hash_equals($trusted['amount'], $storedAmount)
+        ) {
+            throw new ApiException('Local PayPal lifetime intent is invalid.');
+        }
+
+        return $trusted;
+    }
+
+    /**
+     * Recover an already captured order, or capture an approved order exactly once.
+     */
+    public static function captureOrFetchLifetimeOrder(string $orderId, callable $fetch, callable $capture): array{
+        $order = $fetch($orderId);
+
+        if(($order['status'] ?? null) === 'COMPLETED') return $order;
+
+        if(($order['status'] ?? null) !== 'APPROVED') {
+            throw new ApiException('PayPal order is not approved for capture.');
+        }
+
+        return $capture($orderId);
+    }
+
+    /**
+     * Verify a captured PayPal order against the immutable local checkout intent.
+     */
+    public static function validateLifetimeCapture(array $order, array $intent): array{
+        $orderId = trim((string) ($order['id'] ?? ''));
+        $expectedOrderId = trim((string) ($intent['order_id'] ?? ''));
+        $purchaseUnits = $order['purchase_units'] ?? [];
+        $captures = is_array($purchaseUnits) && count($purchaseUnits) === 1
+            ? ($purchaseUnits[0]['payments']['captures'] ?? [])
+            : [];
+        $capture = is_array($captures) && count($captures) === 1 ? $captures[0] : [];
+        $captureId = trim((string) ($capture['id'] ?? ''));
+        $actualAmount = self::canonicalMoney($capture['amount']['value'] ?? null);
+        $expectedAmount = self::canonicalMoney($intent['amount'] ?? null);
+        $actualCurrency = strtoupper(trim((string) ($capture['amount']['currency_code'] ?? '')));
+        $expectedCurrency = strtoupper(trim((string) ($intent['currency'] ?? '')));
+
+        if(
+            $orderId === ''
+            || $expectedOrderId === ''
+            || !hash_equals($expectedOrderId, $orderId)
+            || ($order['status'] ?? null) !== 'COMPLETED'
+            || ($capture['status'] ?? null) !== 'COMPLETED'
+            || $captureId === ''
+            || $actualAmount === null
+            || $expectedAmount === null
+            || !hash_equals($expectedAmount, $actualAmount)
+            || $actualCurrency === ''
+            || $expectedCurrency === ''
+            || !hash_equals($expectedCurrency, $actualCurrency)
+            || (int) ($intent['user_id'] ?? 0) < 1
+            || (int) ($intent['plan_id'] ?? 0) < 1
+            || ($intent['term'] ?? null) !== 'lifetime'
+        ) {
+            throw new ApiException('Captured PayPal order does not match the local lifetime intent.');
+        }
+
+        return [
+            'order_id' => $expectedOrderId,
+            'capture_id' => $captureId,
+            'user_id' => (int) ($intent['user_id'] ?? 0),
+            'plan_id' => (int) ($intent['plan_id'] ?? 0),
+            'term' => 'lifetime',
+            'amount' => $expectedAmount,
+            'currency' => $expectedCurrency,
+        ];
+    }
+
+    /**
+     * Commit local lifetime effects as one idempotent database transaction.
+     */
+    public static function applyLifetimeTransaction(\PDO $pdo, callable $alreadyProcessed, callable $apply): bool{
+        $pdo->beginTransaction();
+
+        try {
+            if($alreadyProcessed()) {
+                $pdo->commit();
+                return false;
+            }
+
+            $apply();
+            $pdo->commit();
+
+            return true;
+        } catch (\Throwable $exception) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    private static function withLifetimeOrderLock(string $orderId, callable $callback): mixed{
+        $pdo = DB::get_db();
+        $lockName = 'paypal-lifetime:'.substr(hash('sha256', $orderId), 0, 48);
+        $acquire = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $acquire->execute(['lock_name' => $lockName]);
+
+        if((int) $acquire->fetchColumn() !== 1) {
+            throw new ApiException('Unable to acquire PayPal lifetime order lock.');
+        }
+
+        try {
+            return $callback();
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
+    }
+
     private static function completeLifetimeOrder($request, Client $client){
-        $orderId = $request->token ?: $request->paymentId;
+        $orderId = trim((string) ($request->token ?? ''));
 
-        if(!$orderId) throw new ApiException('PayPal order ID is missing.');
+        if($orderId === '') throw new ApiException('PayPal order ID is missing.');
 
-        $order = $client->captureOrder((string) $orderId);
+        $result = self::withLifetimeOrderLock($orderId, static function () use ($request, $client, $orderId): ?array {
+            if(DB::payment()->where('cid', $orderId)->first()) return null;
 
-        if(($order['status'] ?? null) !== 'COMPLETED') throw new ApiException('PayPal order was not completed.');
+            $subscription = DB::subscription()->where('tid', $orderId)->first();
+            $intent = self::lifetimeIntentForCallback(
+                $request,
+                static fn(string $id) => $id === $orderId ? $subscription : null
+            );
 
-        $purchaseUnit = $order['purchase_units'][0] ?? [];
-        $capture = $purchaseUnit['payments']['captures'][0] ?? [];
-        $userid = str_replace('userid:', '', (string) ($purchaseUnit['custom_id'] ?? $purchaseUnit['description'] ?? ''));
-        $amount = $capture['amount']['value'] ?? $purchaseUnit['amount']['value'] ?? null;
+            if($intent === null || (string) ($subscription->status ?? '') !== 'Pending') {
+                throw new ApiException('Local PayPal lifetime intent is not pending.');
+            }
 
-        if(!$userid || $amount === null || !$user = DB::user()->where('id', $userid)->first()) {
-            throw new ApiException('PayPal order data did not match a user.');
-        }
+            $order = self::captureOrFetchLifetimeOrder(
+                $orderId,
+                static fn(string $id): array => $client->getOrder($id),
+                static fn(string $id): array => $client->captureOrder($id)
+            );
+            $capture = self::validateLifetimeCapture($order, $intent);
+            $pdo = DB::get_db();
+            $dispatch = null;
 
-        if(DB::payment()->where('cid', $order['id'])->first()) {
-            return Helper::redirect()->to(route('billing'))->with("success", e("Your payment was successfully made. Thank you."));
-        }
+            self::applyLifetimeTransaction(
+                $pdo,
+                static fn(): bool => (bool) DB::payment()->where('cid', $capture['order_id'])->first()
+                    || (bool) DB::payment()->where('tid', $capture['capture_id'])->first(),
+                static function () use (&$dispatch, $capture, $intent, $order, $orderId): void {
+                    $subscription = DB::subscription()->where('tid', $orderId)->first();
+                    $freshIntent = self::lifetimeIntentForCallback(
+                        (object) ['token' => $orderId],
+                        static fn(string $id) => $id === $orderId ? $subscription : null
+                    );
 
-        $sub = DB::subscription()->create();
-        $sub->tid = $order['id'];
-        $sub->userid = $user->id;
-        $sub->plan = 'lifetime';
-        $sub->planid = $request->planid;
-        $sub->status = "Active";
-        $sub->amount = $amount;
-        $sub->date = Helper::dtime();
-        $sub->expiry = Helper::dtime('+10 years');
-        $sub->lastpayment = Helper::dtime();
-        $sub->data = json_encode(['paymentmethod' => 'PaypalApi', 'paypal' => $order]);
-        $sub->uniqueid = Helper::rand(16);
-        $sub->save();
+                    if(
+                        $freshIntent === null
+                        || $freshIntent !== $intent
+                        || (string) ($subscription->status ?? '') !== 'Pending'
+                    ) {
+                        throw new ApiException('Local PayPal lifetime intent changed during capture.');
+                    }
 
-        $payment = DB::payment()->create();
-        $payment->date = Helper::dtime('now');
-        $payment->cid = $order['id'];
-        $payment->tid = Helper::rand(16);
-        $payment->amount = $amount;
-        $payment->userid = $user->id;
-        $payment->status = "Completed";
-        $payment->expiry = Helper::dtime('+10 years');
-        $payment->data = json_encode($order);
-        $payment->save();
+                    $user = DB::user()->where('id', $capture['user_id'])->first();
 
-        $user->expiration = Helper::dtime('+10 years');
-        $user->pro = 1;
-        $user->planid = $request->planid;
-        $user->save();
+                    if(!$user || !DB::plans()->where('id', $capture['plan_id'])->first()) {
+                        throw new ApiException('Local PayPal lifetime user or plan no longer exists.');
+                    }
 
-        \Core\Plugin::dispatch('payment.success', [$user, $request->planid, $payment->id]);
+                    $expiry = Helper::dtime('+10 years');
+                    $payment = DB::payment()->create();
+                    $payment->date = Helper::dtime('now');
+                    $payment->cid = $capture['order_id'];
+                    $payment->tid = $capture['capture_id'];
+                    $payment->amount = $capture['amount'];
+                    $payment->userid = $capture['user_id'];
+                    $payment->status = "Completed";
+                    $payment->expiry = $expiry;
+                    $payment->data = json_encode([
+                        'intent' => $intent,
+                        'paypal' => $order,
+                    ], JSON_THROW_ON_ERROR);
+                    $payment->save();
+
+                    $subscription->status = "Active";
+                    $subscription->amount = $capture['amount'];
+                    $subscription->expiry = $expiry;
+                    $subscription->lastpayment = Helper::dtime();
+                    $subscription->data = json_encode([
+                        'paymentmethod' => 'PaypalApi',
+                        'intent' => $intent,
+                        'paypal' => $order,
+                    ], JSON_THROW_ON_ERROR);
+                    $subscription->save();
+
+                    $user->last_payment = Helper::dtime();
+                    $user->expiration = $expiry;
+                    $user->pro = 1;
+                    $user->planid = $capture['plan_id'];
+                    $user->save();
+
+                    $dispatch = [$user, $capture['plan_id'], $payment->id()];
+                }
+            );
+
+            return $dispatch;
+        });
+
+        if($result !== null) \Core\Plugin::dispatch('payment.success', $result);
 
         return Helper::redirect()->to(route('billing'))->with("success", e("Your payment was successfully made. Thank you."));
     }
@@ -619,6 +844,14 @@ class PaypalApi{
     }
 
     private static function money($amount): string{
+        return number_format((float) $amount, 2, '.', '');
+    }
+
+    private static function canonicalMoney($amount): ?string{
+        $amount = trim((string) $amount);
+
+        if(!preg_match('/^\d+(?:\.\d{1,2})?$/D', $amount)) return null;
+
         return number_format((float) $amount, 2, '.', '');
     }
 }
