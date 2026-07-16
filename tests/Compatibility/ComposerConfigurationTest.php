@@ -40,8 +40,18 @@ final class ComposerConfigurationTest extends TestCase
 
     public function testPhpunitAndVerificationScriptsAreConfigured(): void
     {
-        self::assertSame('^11.5', $this->composer['require-dev']['phpunit/phpunit'] ?? null);
+        self::assertSame('^12.5', $this->composer['require-dev']['phpunit/phpunit'] ?? null);
         self::assertSame('@php vendor/bin/phpunit --configuration phpunit.xml', $this->composer['scripts']['test'] ?? null);
         self::assertSame('sh scripts/lint-php.sh', $this->composer['scripts']['lint'] ?? null);
+    }
+
+    public function testDirectPackagesTrackCurrentStableCompatibilityLines(): void
+    {
+        self::assertSame('^8.2', $this->composer['require']['abraham/twitteroauth'] ?? null);
+        self::assertSame('^6.0', $this->composer['require']['endroid/qr-code'] ?? null);
+        self::assertSame('^3.10', $this->composer['require']['monolog/monolog'] ?? null);
+        self::assertSame('^9.2', $this->composer['require']['phpfastcache/phpfastcache'] ?? null);
+        self::assertSame('^7.1', $this->composer['require']['phpmailer/phpmailer'] ?? null);
+        self::assertSame('^21.0', $this->composer['require']['stripe/stripe-php'] ?? null);
     }
 }

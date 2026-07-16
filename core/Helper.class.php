@@ -665,13 +665,8 @@ final class Helper {
    * @return       mixed
    */
   public static function cacheConfig(?string $path = null){
-    if($path){
-      CacheManager::setDefaultConfig(new ConfigurationOption([
-          'path' => $path,
-      ]));
-    }
-
-    self::$cacheInstance = CacheManager::getInstance(self::CACHEDRIVER);
+    $config = $path ? new ConfigurationOption(['path' => $path]) : null;
+    self::$cacheInstance = CacheManager::getInstance(self::CACHEDRIVER, $config);
   }
   /**
    * Get Cache

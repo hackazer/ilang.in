@@ -117,6 +117,69 @@ final class StripeWebhookTest extends TestCase
         self::assertFalse(Stripe::webhookChargeContextIsValid(1200, 'eur', 1200, 'USD'));
     }
 
+    public function testInvoiceSubscriptionIdSupportsCurrentAndLegacyStripeShapes(): void
+    {
+        $current = (object) [
+            'parent' => (object) [
+                'subscription_details' => (object) ['subscription' => 'sub_current'],
+            ],
+        ];
+        $legacy = (object) ['subscription' => 'sub_legacy'];
+
+        self::assertSame('sub_current', Stripe::invoiceSubscriptionId($current));
+        self::assertSame('sub_legacy', Stripe::invoiceSubscriptionId($legacy));
+    }
+
+    public function testInvoicePaymentContextSupportsCurrentStripeShape(): void
+    {
+        $invoicePayment = (object) [
+            'invoice' => 'in_current',
+            'payment' => (object) [
+                'charge' => 'ch_current',
+                'payment_intent' => 'pi_current',
+            ],
+        ];
+
+        self::assertSame([
+            'invoice_id' => 'in_current',
+            'charge_id' => 'ch_current',
+            'payment_intent_id' => 'pi_current',
+        ], Stripe::invoicePaymentContext($invoicePayment));
+    }
+
+    public function testSubscriptionBillingContextSupportsCurrentAndLegacyStripeShapes(): void
+    {
+        $current = (object) [
+            'items' => (object) [
+                'data' => [
+                    (object) [
+                        'current_period_start' => 100,
+                        'current_period_end' => 200,
+                        'price' => (object) [
+                            'recurring' => (object) ['interval' => 'year'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        $legacy = (object) [
+            'current_period_start' => 300,
+            'current_period_end' => 400,
+            'plan' => (object) ['interval' => 'month'],
+        ];
+
+        self::assertSame([
+            'interval' => 'year',
+            'start' => 100,
+            'end' => 200,
+        ], Stripe::subscriptionBillingContext($current));
+        self::assertSame([
+            'interval' => 'month',
+            'start' => 300,
+            'end' => 400,
+        ], Stripe::subscriptionBillingContext($legacy));
+    }
+
     private function payload(): string
     {
         return json_encode([

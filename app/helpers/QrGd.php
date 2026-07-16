@@ -20,12 +20,10 @@ namespace Helpers;
 
 use Endroid\QrCode\Color\Color;
 use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelHigh;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelMedium;
+use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Label\Label;
 use Endroid\QrCode\Logo\Logo;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
+use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Writer\PdfWriter;
 use Endroid\QrCode\Writer\SvgWriter;
@@ -58,7 +56,7 @@ class QRGd {
      * @author GemPixel <https://gempixel.com> 
      * @version 6.0
      */
-    private $QR = null;    
+    private QrCode $qrCode;
 
     /**
      * Generate QR Code
@@ -68,12 +66,14 @@ class QRGd {
      */
     public function __construct($data, $size = 200, $margin = 10){
         
-        $this->qrCode = QrCode::create($data)
-                        ->setEncoding(new Encoding('UTF-8'))
-                        ->setErrorCorrectionLevel(new ErrorCorrectionLevelMedium())
-                        ->setSize($size)
-                        ->setMargin($margin)
-                        ->setRoundBlockSizeMode(new RoundBlockSizeModeMargin());
+        $this->qrCode = new QrCode(
+            data: $data,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::Medium,
+            size: $size,
+            margin: $margin,
+            roundBlockSizeMode: RoundBlockSizeMode::Margin
+        );
 
         return $this;
         
@@ -88,8 +88,7 @@ class QRGd {
      * @return void
      */
     public function withLogo($path, $size = 50){
-        $this->logo = Logo::create($path)
-                    ->setResizeToWidth($size);
+        $this->logo = new Logo(path: $path, resizeToWidth: $size);
         return $this;
     }
     /**
@@ -136,11 +135,19 @@ class QRGd {
         if(isset($color[1])){
             $bgColor = \explode(',', $color[1]);
         } else {
-            $fgColor = [255,255,255];
+            $bgColor = [255,255,255];
         }
 
-        $this->qrCode->setForegroundColor(new Color($fgColor[0], $fgColor[1], $fgColor[2]))
-                     ->setBackgroundColor(new Color($bgColor[0], $bgColor[1], $bgColor[2]));
+        $this->qrCode = new QrCode(
+            data: $this->qrCode->getData(),
+            encoding: $this->qrCode->getEncoding(),
+            errorCorrectionLevel: $this->qrCode->getErrorCorrectionLevel(),
+            size: $this->qrCode->getSize(),
+            margin: $this->qrCode->getMargin(),
+            roundBlockSizeMode: $this->qrCode->getRoundBlockSizeMode(),
+            foregroundColor: new Color($fgColor[0], $fgColor[1], $fgColor[2]),
+            backgroundColor: new Color($bgColor[0], $bgColor[1], $bgColor[2])
+        );
 
         return $this;
     }

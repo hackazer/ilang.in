@@ -712,14 +712,66 @@ class Stripe{
 			&& hash_equals(strtolower($expectedCurrency), strtolower($chargeCurrency));
 	}
 
+	public static function invoiceSubscriptionId(object $invoice): string{
+		return self::stripeObjectId($invoice->parent->subscription_details->subscription ?? $invoice->subscription ?? null);
+	}
+
+	/**
+	 * @return array{invoice_id:string, charge_id:string, payment_intent_id:string}
+	 */
+	public static function invoicePaymentContext(object $invoicePayment): array{
+		return [
+			'invoice_id' => self::stripeObjectId($invoicePayment->invoice ?? null),
+			'charge_id' => self::stripeObjectId($invoicePayment->payment->charge ?? null),
+			'payment_intent_id' => self::stripeObjectId($invoicePayment->payment->payment_intent ?? null),
+		];
+	}
+
+	/**
+	 * @return array{interval:string, start:int, end:int}
+	 */
+	public static function subscriptionBillingContext(object $subscription): array{
+		$item = $subscription->items->data[0] ?? null;
+
+		return [
+			'interval' => trim((string) ($item->price->recurring->interval ?? $item->plan->interval ?? $subscription->plan->interval ?? '')),
+			'start' => (int) ($item->current_period_start ?? $subscription->current_period_start ?? 0),
+			'end' => (int) ($item->current_period_end ?? $subscription->current_period_end ?? 0),
+		];
+	}
+
 	private static function resolveWebhookSubscription(object $charge, object $user, string $secret): ?object{
 		$chargeId = trim((string) ($charge->id ?? ''));
 		$chargeAmount = (int) ($charge->amount ?? -1);
 		$chargeCurrency = trim((string) ($charge->currency ?? ''));
 		$invoiceId = self::stripeObjectId($charge->invoice ?? null);
+		$paymentIntentId = self::stripeObjectId($charge->payment_intent ?? null);
+		$invoicePaymentContext = [
+			'invoice_id' => '',
+			'charge_id' => '',
+			'payment_intent_id' => '',
+		];
 
 		if($chargeId === '' || $chargeAmount < 0 || $chargeCurrency === ''){
 			throw new \InvalidArgumentException('Stripe charge context is incomplete.');
+		}
+
+		$stripe = new \Stripe\StripeClient($secret);
+
+		if($invoiceId === '' && $paymentIntentId !== ''){
+			$invoicePayments = $stripe->invoicePayments->all([
+				'payment' => [
+					'type' => 'payment_intent',
+					'payment_intent' => $paymentIntentId,
+				],
+				'limit' => 1,
+			]);
+			$invoicePayment = $invoicePayments->data[0] ?? null;
+
+			if(is_object($invoicePayment)){
+				$invoicePaymentContext = self::invoicePaymentContext($invoicePayment);
+				$invoiceId = $invoicePaymentContext['invoice_id'];
+			}
 		}
 
 		if($invoiceId === ''){
@@ -733,15 +785,17 @@ class Stripe{
 			return $subscription;
 		}
 
-		$invoice = (new \Stripe\StripeClient($secret))->invoices->retrieve($invoiceId, []);
-		$providerSubscriptionId = self::stripeObjectId($invoice->subscription ?? null);
-		$invoiceChargeId = self::stripeObjectId($invoice->charge ?? null);
+		$invoice = $stripe->invoices->retrieve($invoiceId, []);
+		$providerSubscriptionId = self::invoiceSubscriptionId($invoice);
+		$invoiceChargeId = $invoicePaymentContext['charge_id'] ?: self::stripeObjectId($invoice->charge ?? null);
+		$invoicePaymentIntentId = $invoicePaymentContext['payment_intent_id'];
 		$invoiceCustomerId = self::stripeObjectId($invoice->customer ?? null);
 		$expectedAmount = (int) (($charge->paid ?? false) ? ($invoice->amount_paid ?? -1) : ($invoice->amount_due ?? -1));
 		$expectedCurrency = (string) ($invoice->currency ?? '');
 
 		if($providerSubscriptionId === ''
 			|| ($invoiceChargeId !== '' && !hash_equals($chargeId, $invoiceChargeId))
+			|| ($paymentIntentId !== '' && $invoicePaymentIntentId !== '' && !hash_equals($paymentIntentId, $invoicePaymentIntentId))
 			|| ($invoiceCustomerId !== '' && !hash_equals((string) $user->customerid, $invoiceCustomerId))
 			|| !self::webhookChargeContextIsValid($chargeAmount, $chargeCurrency, $expectedAmount, $expectedCurrency)
 			|| !hash_equals(strtolower((string) config('currency')), strtolower($expectedCurrency))){
@@ -978,19 +1032,36 @@ class Stripe{
 			return null;			
 		}
 
-		if($response->plan->interval == "yearly"){
+		$billingContext = self::subscriptionBillingContext($response);
+
+		if($billingContext['interval'] === 'year'){
 			
 			try{
-				$invoice = $stripe->invoices->all(["subscription" => $subscription->tid]);
+				$invoices = $stripe->invoices->all(['subscription' => $subscription->tid, 'limit' => 1]);
 			}catch (\Exception $e) {
 				return null;			
 			}
 
-			$charge = $invoice->data[0]->charge;
-			$amount = $invoice->data[0]->total / 100;
+			$invoice = $invoices->data[0] ?? null;
+			if(!is_object($invoice)) return null;
 
-			$start = $response->current_period_start;
-			$end = $response->current_period_end;
+			$charge = self::stripeObjectId($invoice->charge ?? null);
+			$paymentIntent = '';
+			if($charge === ''){
+				$invoicePayments = $stripe->invoicePayments->all(['invoice' => self::stripeObjectId($invoice), 'limit' => 1]);
+				$invoicePayment = $invoicePayments->data[0] ?? null;
+				if(is_object($invoicePayment)){
+					$paymentContext = self::invoicePaymentContext($invoicePayment);
+					$charge = $paymentContext['charge_id'];
+					$paymentIntent = $paymentContext['payment_intent_id'];
+				}
+			}
+
+			if(($charge === '' && $paymentIntent === '') || $billingContext['start'] <= 0 || $billingContext['end'] <= 0) return null;
+
+			$amount = $invoice->total / 100;
+			$start = $billingContext['start'];
+			$end = $billingContext['end'];
 
 			$yStart = date('Y', $start);
 			$yEnd = date('Y', $end);
@@ -1002,21 +1073,22 @@ class Stripe{
 
 			$refund = round(($diff - 1) * $amount / 12, 2);
 
-			$refund = $stripe->refunds->create([
-			  "charge" => $charge,
-			  "amount" => $refund * 100
-			]);
+			$refundRequest = ['amount' => (int) round($refund * 100)];
+			if($charge !== ''){
+				$refundRequest['charge'] = $charge;
+			}else{
+				$refundRequest['payment_intent'] = $paymentIntent;
+			}
 
-			$response->cancel();
+			$refund = $stripe->refunds->create($refundRequest);
+
+			$stripe->subscriptions->cancel($subscription->tid, []);
 		
 			return $refund;
 
 		}else{
-
-			$response->cancel_at_period_end = true;
-
 			try {
-				$response->cancel();
+				$stripe->subscriptions->update($subscription->tid, ['cancel_at_period_end' => true]);
 			}catch (\Exception $e) {
 				return null;			
 			}

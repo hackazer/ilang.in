@@ -715,7 +715,7 @@ class Users {
         }
 
         // The TwitterOAuth instance          
-        $twitteroauth = new \Abraham\TwitterOAuth\TwitterOAuth(config("twitter_key"), config("twitter_secret"), $request->session('oauth_token')); 
+        $twitteroauth = new \Abraham\TwitterOAuth\TwitterOAuth(config("twitter_key"), config("twitter_secret"));
 
         try{
             
