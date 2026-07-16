@@ -158,7 +158,7 @@ class Stripe{
 							}
 						});
 						</script>", "custom")->tofooter();
-			
+
 			echo '<div id="stripe" class="paymentOptions"><script src="https://js.stripe.com/v3/"></script>
 					<input type="hidden" id="stripeToken">
 					<div class="form-group" id="stripeElement">
@@ -905,11 +905,17 @@ class Stripe{
 	 * @version 6.0
 	 * @return void
 	 */
-    public static function updateplan($request, $plan){
-		
-		$stripe = new \Stripe\StripeClient(config('stripe')->secret);
-		
-		$productid = $oldplan->product;
+	    public static function updateplan($request, $plan){
+
+			$stripe = new \Stripe\StripeClient(config('stripe')->secret);
+			$providerData = json_decode((string) $plan->data, true);
+			$productid = $providerData['stripe'] ?? null;
+
+			if(!$productid){
+				$existingPrice = $plan->price_monthly ? $plan->slug."monthly" : $plan->slug."yearly";
+				$existingPlan = $stripe->plans->retrieve($existingPrice);
+				$productid = $existingPlan->product;
+			}
 
 		if($request->price_monthly != $plan->price_monthly){
 			$oldplan = $stripe->plans->retrieve($plan->slug."monthly");
