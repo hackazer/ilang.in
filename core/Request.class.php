@@ -424,17 +424,95 @@ final class Request {
 	 * @return  boolean [description]
 	 */
 	public function isSecure(){
+		$https = $_SERVER['HTTPS'] ?? null;
 
-		if($this->server('HTTPS') == 'on' || $this->server('SERVER_PORT') == 443 || $this->server('HTTP_X_FORWARDED_PROTO') == 'https'){
-			return true;
+		if(!empty($https) && is_scalar($https) && strtolower(trim((string) $https)) !== 'off') return true;
+		if((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443) return true;
+		if(!$this->isTrustedProxyPeer()) return false;
+
+		$schemes = [];
+
+		foreach([$this->forwardedHeaderScheme(), $this->xForwardedProtoScheme()] as $scheme){
+			if($scheme !== null) $schemes[] = $scheme;
 		}
 
-		if($this->server('HTTP_CF_VISITOR')){
-			$visitor = json_decode($this->server('HTTP_CF_VISITOR'));
-			if(isset($visitor) && $visitor->scheme == 'https') return true;
+		if($this->isTrustedCloudflarePeer()){
+			$cloudflareScheme = $this->cloudflareVisitorScheme();
+
+			if($cloudflareScheme !== null) $schemes[] = $cloudflareScheme;
 		}
 
-		return false;
+		$schemes = array_values(array_unique($schemes));
+
+		return count($schemes) === 1 && $schemes[0] === 'https';
+	}
+
+	/**
+	 * Check whether the immediate peer is explicitly trusted to set proxy headers.
+	 */
+	private function isTrustedProxyPeer(): bool {
+		$remoteAddress = $this->normalizeIp($_SERVER['REMOTE_ADDR'] ?? null);
+
+		if($remoteAddress === null) return false;
+		if($this->ipMatchesAnyCidr($remoteAddress, $this->trustedProxyCidrs())) return true;
+
+		return $this->isTrustedCloudflarePeer($remoteAddress);
+	}
+
+	/**
+	 * Return the scheme from the nearest RFC 7239 Forwarded element.
+	 */
+	private function forwardedHeaderScheme(): ?string {
+		$header = $_SERVER['HTTP_FORWARDED'] ?? null;
+
+		if(!is_string($header) || trim($header) === '') return null;
+
+		$elements = explode(',', $header);
+		$nearestElement = trim((string) end($elements));
+
+		foreach(explode(';', $nearestElement) as $parameter){
+			$parts = explode('=', $parameter, 2);
+
+			if(count($parts) !== 2 || strtolower(trim($parts[0])) !== 'proto') continue;
+
+			return $this->normalizeForwardedScheme(trim($parts[1], " \t\n\r\0\x0B\""));
+		}
+
+		return null;
+	}
+
+	/**
+	 * Return the scheme reported by the nearest X-Forwarded-Proto hop.
+	 */
+	private function xForwardedProtoScheme(): ?string {
+		$header = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null;
+
+		if(!is_string($header) || trim($header) === '') return null;
+
+		$schemes = explode(',', $header);
+
+		return $this->normalizeForwardedScheme((string) end($schemes));
+	}
+
+	/**
+	 * Return Cloudflare's visitor scheme only for an opted-in official edge.
+	 */
+	private function cloudflareVisitorScheme(): ?string {
+		$header = $_SERVER['HTTP_CF_VISITOR'] ?? null;
+
+		if(!is_string($header) || trim($header) === '') return null;
+
+		$visitor = json_decode($header);
+
+		return isset($visitor->scheme) && is_string($visitor->scheme)
+			? $this->normalizeForwardedScheme($visitor->scheme)
+			: null;
+	}
+
+	private function normalizeForwardedScheme(string $scheme): ?string {
+		$scheme = strtolower(trim($scheme));
+
+		return in_array($scheme, ['http', 'https'], true) ? $scheme : null;
 	}
 	/**
 	 * Is Ajax
@@ -508,6 +586,17 @@ final class Request {
 		if(!is_string($value)) return false;
 
 		return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+	}
+
+	/**
+	 * Check whether the immediate peer is an explicitly trusted Cloudflare edge.
+	 */
+	private function isTrustedCloudflarePeer(?string $remoteAddress = null): bool {
+		if(!$this->trustsCloudflare()) return false;
+
+		$remoteAddress = $remoteAddress ?? $this->normalizeIp($_SERVER['REMOTE_ADDR'] ?? null);
+
+		return $remoteAddress !== null && $this->ipMatchesAnyCidr($remoteAddress, self::cloudflareCidrs());
 	}
 
 	/**
@@ -752,8 +841,7 @@ final class Request {
 
 	public static function cookieOptions(int $expires, ?bool $secure = null): array {
 		if($secure === null){
-			$secure = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
-				|| (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+			$secure = (new self())->isSecure();
 		}
 
 		return [

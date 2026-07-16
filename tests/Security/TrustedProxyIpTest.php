@@ -178,6 +178,62 @@ final class TrustedProxyIpTest extends TestCase
         self::assertSame('173.245.48.10', $request->ip());
     }
 
+    public function testDirectHttpsRemainsSecure(): void
+    {
+        $request = $this->requestFrom([
+            'REMOTE_ADDR' => '203.0.113.20',
+            'HTTPS' => 'on',
+        ]);
+
+        self::assertTrue($request->isSecure());
+        self::assertSame('https', $request->http());
+    }
+
+    #[DataProvider('spoofedSecureSchemeHeaderProvider')]
+    public function testUntrustedPeerCannotSpoofSecureScheme(string $header, string $value): void
+    {
+        putenv('TRUSTED_PROXY_CIDRS=10.0.0.0/8');
+
+        $request = $this->requestFrom([
+            'REMOTE_ADDR' => '203.0.113.20',
+            $header => $value,
+        ]);
+
+        self::assertFalse($request->isSecure());
+        self::assertSame('http', $request->http());
+    }
+
+    public static function spoofedSecureSchemeHeaderProvider(): array
+    {
+        return [
+            'X-Forwarded-Proto' => ['HTTP_X_FORWARDED_PROTO', 'https'],
+            'Forwarded' => ['HTTP_FORWARDED', 'for=198.51.100.25;proto=https'],
+            'CF-Visitor' => ['HTTP_CF_VISITOR', '{"scheme":"https"}'],
+        ];
+    }
+
+    #[DataProvider('trustedSecureSchemeHeaderProvider')]
+    public function testTrustedProxyCanReportSecureScheme(string $header, string $value): void
+    {
+        putenv('TRUSTED_PROXY_CIDRS=10.0.0.0/8');
+
+        $request = $this->requestFrom([
+            'REMOTE_ADDR' => '10.0.0.9',
+            $header => $value,
+        ]);
+
+        self::assertTrue($request->isSecure());
+        self::assertSame('https', $request->http());
+    }
+
+    public static function trustedSecureSchemeHeaderProvider(): array
+    {
+        return [
+            'X-Forwarded-Proto' => ['HTTP_X_FORWARDED_PROTO', 'https'],
+            'Forwarded' => ['HTTP_FORWARDED', 'for=198.51.100.25;proto=https'],
+        ];
+    }
+
     private function requestFrom(array $server): Request
     {
         $_SERVER = array_merge([
