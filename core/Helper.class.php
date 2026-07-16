@@ -825,10 +825,19 @@ final class Helper {
    * @param string $key
    * @return void
    */
-  public static function nonce($action = '', $duration = 60){
-    $i = ceil( time() / ( $duration*60 / 2 ) );
-    $nonce = md5( $i . $action . $action);
-    return substr($nonce, -12, 10);
+  public static function nonce($action = '', $duration = 60, ?int $time = null, ?string $secret = null, ?string $session = null){
+    $duration = max(1, (int) $duration);
+    $time ??= time();
+    $secret ??= defined('AuthToken') ? (string) AuthToken : (defined('EncryptionToken') ? (string) EncryptionToken : '');
+    $session ??= session_id() ?: 'no-session';
+
+    if($secret === ''){
+      throw new \RuntimeException('A server secret is required to generate an action nonce.');
+    }
+
+    $window = (int) floor($time / max(1, (int) (($duration * 60) / 2)));
+
+    return substr(hash_hmac('sha256', $window.'|'.$action.'|'.$session, $secret), 0, 32);
   }
   /**
    * Validate Nonce
@@ -839,10 +848,19 @@ final class Helper {
    * @param string $key
    * @return void
    */
-  public static function validateNonce($nonce, $action = ""){
-    if(substr(self::nonce($action), -12, 10) == $nonce){
-      return true;
+  public static function validateNonce($nonce, $action = "", $duration = 60, ?int $time = null, ?string $secret = null, ?string $session = null){
+    $nonce = (string) $nonce;
+    $time ??= time();
+    $windowSeconds = max(1, (int) ((max(1, (int) $duration) * 60) / 2));
+
+    foreach([$time, $time - $windowSeconds] as $candidateTime){
+      $expected = self::nonce($action, $duration, $candidateTime, $secret, $session);
+
+      if(strlen($nonce) === strlen($expected) && hash_equals($expected, $nonce)){
+        return true;
+      }
     }
+
     return false;
   } 
   /**
