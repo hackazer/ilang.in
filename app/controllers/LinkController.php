@@ -231,7 +231,7 @@ class Link {
 			}
 		}
 
-		if(DB::reports()->whereRaw('bannedlink LIKE ?', ['%'.$url->url.'%'])->first()){
+		if($this->domainBlacklisted($url->url)){
 			return Gate::disabled();		    
 		}
 
