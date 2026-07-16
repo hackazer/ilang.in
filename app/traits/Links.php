@@ -715,7 +715,8 @@ trait Links {
         ?callable $cacheReader = null,
         ?callable $cacheWriter = null,
         ?callable $cacheInvalidator = null,
-        ?\DateTimeInterface $now = null
+        ?\DateTimeInterface $now = null,
+        ?callable $withReservation = null
     ): bool {
         if($limit <= 0){
             $accept();
@@ -731,23 +732,75 @@ trait Links {
                 Helper::cacheDelete($cacheKey);
             }
         };
+        $withReservation ??= static fn(string $reservationKey, callable $reservation): mixed =>
+            self::withMonthlyClickQuotaReservation($reservationKey, $reservation);
 
-        $count = $cacheReader($key);
-
-        if($count === null){
-            $count = (int) $countLoader();
-            $cacheWriter($key, $count, 60 * 60 * 24);
-        }
-
-        if((int) $count >= $limit) return false;
+        $cachedCount = $cacheReader($key);
+        $authoritativeCount = null;
+        $mutationStarted = false;
 
         try {
-            $accept();
+            $accepted = (bool) $withReservation(
+                $key,
+                static function () use (
+                    $limit,
+                    $countLoader,
+                    $accept,
+                    &$authoritativeCount,
+                    &$mutationStarted
+                ): bool {
+                    $authoritativeCount = (int) $countLoader();
+
+                    if($authoritativeCount >= $limit) return false;
+
+                    $mutationStarted = true;
+                    $accept();
+
+                    return true;
+                }
+            );
         } finally {
-            $cacheInvalidator($key);
+            if($mutationStarted) $cacheInvalidator($key);
         }
 
-        return true;
+        if(!$accepted && ($cachedCount === null || (int) $cachedCount !== $authoritativeCount)){
+            $cacheWriter($key, (int) $authoritativeCount, 60 * 60 * 24);
+        }
+
+        return $accepted;
+    }
+
+    /**
+     * Serialize a user's monthly quota decision and commit its click record atomically.
+     */
+    private static function withMonthlyClickQuotaReservation(string $key, callable $reservation): mixed {
+        $pdo = DB::get_db();
+
+        if($pdo->inTransaction()){
+            throw new \RuntimeException('Monthly click quota reservation cannot join an existing transaction.');
+        }
+
+        $lockName = 'monthly-clicks:'.substr(hash('sha256', $key), 0, 48);
+        $lock = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $lock->execute(['lock_name' => $lockName]);
+
+        if((int) $lock->fetchColumn() !== 1){
+            throw new \RuntimeException('Unable to acquire monthly click quota lock.');
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $result = $reservation();
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
     }
 
     /**
