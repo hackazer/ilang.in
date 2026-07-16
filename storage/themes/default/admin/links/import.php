@@ -12,7 +12,7 @@
                 <p><?php ee('This tool allows you to import links from other software. You need to format the import file as CSV with the following structure. Note that this tool only imports links. It does not import statistics.') ?></p>
 
                 <p><?php ee('When creating the CSV file, you need to keep the header but the column name can be anything as long as their position is respected. If the custom alias is taken, the importer will generate a random alias.') ?></p>
-                <form method="post" action="<?php echo route('admin.links.import') ?>" enctype="multipart/form-data">
+                <form method="post" action="<?php echo route('admin.links.import.process') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
                     <div class="form-group">
                         <label for="file" class="form-label"><?php ee('CSV File') ?> (.csv)</label>

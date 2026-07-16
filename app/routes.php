@@ -284,7 +284,8 @@ Gem::group('/admin', function(){
     Gem::post('/links/bad/{id}/cancel', 'Admin\Links@badCancel')->name('admin.links.bad.cancel');
     Gem::post('/links/{id}/disable', 'Admin\Links@disable')->name('admin.links.disable');
     Gem::post('/links/{id}/approve', 'Admin\Links@approve')->name('admin.links.approve');
-    Gem::route(['GET', 'POST'], '/links/import', 'Admin\Links@import')->name('admin.links.import');
+    Gem::get('/links/import', 'Admin\Links@import')->name('admin.links.import');
+    Gem::post('/links/import', 'Admin\Links@import')->name('admin.links.import.process');
     // Users
     Gem::get('/users', 'Admin\Users@index')->name('admin.users');
     Gem::get('/users/new', 'Admin\Users@new')->name('admin.users.new');
@@ -418,7 +419,8 @@ Gem::group('/admin', function(){
     Gem::get('/tools/{action}/{nonce}', 'Admin\Dashboard@toolsAction')->name('admin.toolsAction');
     Gem::get('/email', 'Admin\Dashboard@email')->name('admin.email');
     Gem::post('/email/send', 'Admin\Dashboard@emailSend')->name('admin.email.send');
-    Gem::route(['GET', 'POST'], '/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template');
+    Gem::get('/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template');
+    Gem::post('/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template.save');
     Gem::get('/update', 'Admin\Dashboard@update')->name('admin.update');
     Gem::post('/update/code', 'Admin\Dashboard@purchaseCode')->name('admin.update.code');
     Gem::post('/update/process', 'Admin\Dashboard@updateProcess')->name('admin.update.process');
