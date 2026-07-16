@@ -25,6 +25,7 @@ use Core\Response;
 use Core\Helper;
 use Core\Localization;
 use Core\Plugin;
+use Helpers\ArchiveValidator;
 
 class Languages {
     /**
@@ -266,33 +267,29 @@ class Languages {
         
         \Gem::addMiddleware('DemoProtect');
 
-        if($file = $request->file('file')){        
+        if($file = $request->file('file')){
 
-            if(!$file->mimematch || !in_array($file->ext, ['zip'])) return Helper::redirect()->to(route('admin.languages'))->with('danger', e('The file is not valid. Only .zip files are accepted.'));    
+            if(!$file->isvalid || !$file->mimematch || $file->ext !== 'zip') return Helper::redirect()->to(route('admin.languages'))->with('danger', e('The file is not valid. Only .zip files are accepted.'));
 
-            $request->move($file, LOCALE);
+            $uploadDirectory = dirname(LOCALE);
+            $archiveName = '.language-upload-'.bin2hex(random_bytes(12)).'.zip';
+            $archive = $uploadDirectory.'/'.$archiveName;
 
-            $zip = new \ZipArchive();
-
-            $f = $zip->open(LOCALE.'/'.$file->name);
-        
-            if($f === TRUE) {
-              
-              if(!$zip->extractTo(LOCALE."/")){
-                return Helper::redirect()->to(route('admin.languages'))->with('danger', e('The file was downloaded but cannot be extracted due to permission.'));
-              }
-        
-              $zip->close();
-              
-            } else {
-                return Helper::redirect()->to(route('admin.languages'))->with('danger', e('The file cannot be extracted. You can extract it manually.'));
+            if(!$request->move($file, $uploadDirectory, $archiveName)){
+                return Helper::redirect()->to(route('admin.languages'))->with('danger', e('The language package could not be uploaded.'));
             }
 
-            if(file_exists(LOCALE.'/'.$file->name)){
-                unlink(LOCALE.'/'.$file->name);
+            chmod($archive, 0600);
+
+            try {
+                (new ArchiveValidator())->extract($archive, LOCALE, ArchiveValidator::TYPE_LANGUAGE);
+            } catch (\Throwable $exception) {
+                return Helper::redirect()->to(route('admin.languages'))->with('danger', e('Invalid language archive. The package was not installed.'));
+            } finally {
+                if(file_exists($archive)) unlink($archive);
             }
 
-            return Helper::redirect()->to(route('admin.languages'))->with('success', e('Language has been uploaded successfully.')); 
+            return Helper::redirect()->to(route('admin.languages'))->with('success', e('Language has been uploaded successfully.'));
         }
 
         return Helper::redirect()->to(route('admin.languages'))->with('danger', e('An unexpected error occurred. Please try again.'));
