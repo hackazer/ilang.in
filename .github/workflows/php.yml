@@ -10,6 +10,32 @@ permissions:
   contents: read
 
 jobs:
+  browser:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up locked Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.18.0'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked browser dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Audit browser dependencies
+        run: npm audit --audit-level=high
+
+      - name: Run browser compatibility tests
+        run: npm test
+
+      - name: Verify browser asset reproducibility
+        run: npm run check:browser
+
   test:
     runs-on: ubuntu-latest
     strategy:

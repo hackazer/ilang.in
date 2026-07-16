@@ -6,10 +6,14 @@ export LC_ALL=C
 file_list=$(mktemp "${TMPDIR:-/tmp}/ilang-php-lint.XXXXXX")
 trap 'rm -f "$file_list"' EXIT HUP INT TERM
 
-{
-    find app core public storage/themes -type f -name '*.php' -print
-    printf '%s\n' index.php config.sample.php
-} | sort > "$file_list"
+git ls-files '*.php' | while IFS= read -r file; do
+    case "$file" in
+        vendor/*|storage/plugins/*|storage/addons/*|storage/backups/*|storage/cache/*|storage/logs/*|storage/sessions/*|storage/temp/*|storage/tmp/*|storage/uploads/*)
+            continue
+            ;;
+    esac
+    printf '%s\n' "$file"
+done | sort -u > "$file_list"
 
 status=0
 
