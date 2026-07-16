@@ -443,7 +443,7 @@ $npmNames = [
     'ace-builds' => 'ace-builds', 'datepicker' => '@chenfengyuan/datepicker',
     'daterangepicker' => 'daterangepicker', 'devbridge-autocomplete' => 'devbridge-autocomplete',
     'highlight.js' => '@highlightjs/cdn-assets', 'moment' => 'moment',
-    'tagify' => '@yaireo/tagify',
+    'spectrum' => 'spectrum-colorpicker', 'tagify' => '@yaireo/tagify',
 ];
 if (is_dir($libraryRoot)) {
     $directories = array_values(array_filter(scandir($libraryRoot) ?: [], static fn (string $name): bool => $name !== '.' && $name !== '..'));

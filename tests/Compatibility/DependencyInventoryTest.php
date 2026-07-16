@@ -69,7 +69,8 @@ JSON);
     "@yaireo/tagify": "4.38.0",
     "fontawesome-iconpicker": "3.2.0",
     "jquery": "3.6.0",
-    "popper.js": "1.16.1"
+    "popper.js": "1.16.1",
+    "spectrum-colorpicker": "1.8.1"
   },
   "browserCompatibility": {
     "holds": {
@@ -84,14 +85,15 @@ JSON);
 {
   "lockfileVersion": 3,
   "packages": {
-    "": {"dependencies":{"@adminkit/core":"3.4.0","@yaireo/tagify":"4.38.0","fontawesome-iconpicker":"3.2.0","jquery":"3.6.0","popper.js":"1.16.1"}},
+    "": {"dependencies":{"@adminkit/core":"3.4.0","@yaireo/tagify":"4.38.0","fontawesome-iconpicker":"3.2.0","jquery":"3.6.0","popper.js":"1.16.1","spectrum-colorpicker":"1.8.1"}},
     "node_modules/@adminkit/core": {"version":"3.4.0","license":"MIT"},
     "node_modules/@adminkit/core/node_modules/bootstrap": {"version":"5.3.0","license":"MIT"},
     "node_modules/@adminkit/core/node_modules/chart.js": {"version":"2.9.4","license":"MIT"},
     "node_modules/@yaireo/tagify": {"version":"4.38.0","license":"MIT"},
     "node_modules/fontawesome-iconpicker": {"version":"3.2.0","license":"MIT"},
     "node_modules/jquery": {"version":"3.6.0","license":"MIT"},
-    "node_modules/popper.js": {"version":"1.16.1","license":"MIT"}
+    "node_modules/popper.js": {"version":"1.16.1","license":"MIT"},
+    "node_modules/spectrum-colorpicker": {"version":"1.8.1","license":"MIT"}
   }
 }
 JSON);
@@ -135,13 +137,15 @@ JSON);
         $this->write('public/static/vendor/jodit/LICENSE.txt', "MIT License\n");
         $this->write('public/static/frontend/libs/tagify/tagify.min.js', '!function(){}();');
         $this->write('public/static/frontend/libs/fontawesome-picker/dist/fontawesome-iconpicker.min.js', '!function(){}();');
+        $this->write('public/static/frontend/libs/spectrum/spectrum.min.js', '!function(){}();');
         $this->write('public/static/backend/js/app.js', '!function(){}();');
         $this->write('public/static/vendor-manifest.json', <<<'JSON'
 {
   "versions": {
     "@adminkit/core": "3.4.0",
     "@yaireo/tagify": "4.38.0",
-    "jquery": "3.6.0"
+    "jquery": "3.6.0",
+    "spectrum-colorpicker": "1.8.1"
   },
   "holds": {
     "dashboardBundle": "Admin shell compatibility hold.",
@@ -200,6 +204,7 @@ JSON);
         self::assertStringContainsString("browser\tjquery\tvendored\t3.6.0\t-\t3.7.1\tMIT\tactive\tpublic/static/frontend/libs/jquery/package.json", $first);
         self::assertStringContainsString("browser\tjodit\tvendored\t4.13.3\t-", $first);
         self::assertStringContainsString("browser\t@yaireo/tagify\tvendored\t4.38.0\t-\t4.38.0\tMIT\tactive", $first);
+        self::assertStringContainsString("browser\tspectrum-colorpicker\tvendored\t1.8.1", $first);
         self::assertStringContainsString("cdn\teditor\tremote\t4.16.1", $first);
         self::assertStringContainsString("cdn\tsimpleeditor\tself-hosted\t4.13.3", $first);
         self::assertStringNotContainsString("cdn\tsimpleeditor\tself-hosted\t4.13.3\t-\t-\t-\teol", $first);
