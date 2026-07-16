@@ -669,6 +669,9 @@ class Dashboard {
         try {
 
             $update->install();
+
+            $migrator = new \Update();
+            $migrator->process();
             
             $setting = DB::settings()->where('config', 'purchasecode')->first();
 

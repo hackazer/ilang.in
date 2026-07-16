@@ -47,6 +47,20 @@ final class ArchiveValidatorTest extends TestCase
         self::assertFileExists($themeDestination.'/layouts/main.php');
     }
 
+    public function testApplicationPackageIsValidatedWithoutAPluginManifest(): void
+    {
+        $archive = $this->zip([
+            'app/controllers/UpdateController.php' => '<?php return true;',
+            'public/static/app.js' => 'console.log("updated");',
+        ]);
+        $destination = $this->directory('application-package-');
+
+        (new ArchiveValidator())->extract($archive, $destination, ArchiveValidator::TYPE_APPLICATION);
+
+        self::assertFileExists($destination.'/app/controllers/UpdateController.php');
+        self::assertFileExists($destination.'/public/static/app.js');
+    }
+
     #[DataProvider('unsafePathProvider')]
     public function testUnsafePathsAreRejectedBeforeExtraction(string $entry): void
     {

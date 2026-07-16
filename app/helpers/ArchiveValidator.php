@@ -13,6 +13,7 @@ final class ArchiveValidator
 {
     public const TYPE_PLUGIN = 'plugin';
     public const TYPE_THEME = 'theme';
+    public const TYPE_APPLICATION = 'application';
     public const MAX_ARCHIVE_BYTES = Request::MAX_UPLOAD_BYTES;
     public const MAX_ENTRIES = 5_000;
     public const MAX_UNCOMPRESSED_BYTES = 262_144_000;
@@ -60,7 +61,7 @@ final class ArchiveValidator
 
     public function validate(string $archivePath, string $type): void
     {
-        if (!in_array($type, [self::TYPE_PLUGIN, self::TYPE_THEME], true)) {
+        if (!in_array($type, [self::TYPE_PLUGIN, self::TYPE_THEME, self::TYPE_APPLICATION], true)) {
             throw new InvalidArgumentException('Package type is invalid.');
         }
 
@@ -122,8 +123,12 @@ final class ArchiveValidator
                 $this->rejectUnexpectedExecutable($zip, $index, $name);
             }
 
-            if (!$hasConfig) {
+            if ($type !== self::TYPE_APPLICATION && !$hasConfig) {
                 throw new InvalidArgumentException('Package must contain config.json at its root.');
+            }
+
+            if ($type === self::TYPE_APPLICATION) {
+                return;
             }
 
             $config = $zip->getFromName('config.json', 1_048_577, ZipArchive::FL_UNCHANGED);
