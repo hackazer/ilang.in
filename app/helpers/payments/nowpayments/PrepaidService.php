@@ -27,7 +27,10 @@ final class PrepaidService
 
             return $this->store->markCreated($attempt, $response);
         } catch (\Throwable $exception) {
-            $this->store->markFailed($attempt);
+            if ($exception instanceof ApiException && $exception->isDefinitiveClientFailure()) {
+                $this->store->markFailed($attempt);
+            }
+
             throw $exception;
         }
     }

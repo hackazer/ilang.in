@@ -17,4 +17,11 @@ final class ApiException extends RuntimeException
     {
         return $this->statusCode;
     }
+
+    public function isDefinitiveClientFailure(): bool
+    {
+        return $this->statusCode >= 400
+            && $this->statusCode < 500
+            && !in_array($this->statusCode, [408, 409, 425, 429], true);
+    }
 }

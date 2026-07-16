@@ -62,9 +62,9 @@ final class Client implements PrepaidApi
         return $this->request('GET', '/payment/'.rawurlencode((string) $paymentId));
     }
 
-    public function payments(array $query = []): array
+    public function payments(array $query = [], ?string $jwt = null): array
     {
-        return $this->request('GET', '/payment', $query);
+        return $this->request('GET', '/payment', $query, jwt: $jwt);
     }
 
     public function createInvoice(array $payload): array

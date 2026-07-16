@@ -64,6 +64,27 @@ final class ClientTest extends TestCase
         self::assertSame('https://api.nowpayments.io/v1/subscriptions', $transport->requests[0]['url']);
     }
 
+    public function testPaymentHistoryRequestUsesJwtAndPageQuery(): void
+    {
+        $transport = new RecordingTransport([
+            new TransportResponse(200, [], '{"data":[]}'),
+        ]);
+        $client = new Client($transport, 'api-key', 'https://api.nowpayments.io/v1');
+
+        $client->payments([
+            'limit' => 50,
+            'page' => 2,
+            'sortBy' => 'created_at',
+            'orderBy' => 'desc',
+        ], 'jwt-token');
+
+        self::assertSame('Bearer jwt-token', $transport->requests[0]['headers']['Authorization'] ?? null);
+        self::assertSame(
+            'https://api.nowpayments.io/v1/payment?limit=50&page=2&sortBy=created_at&orderBy=desc',
+            $transport->requests[0]['url']
+        );
+    }
+
     public function testTransientGetFailureRetriesButPostDoesNot(): void
     {
         $transport = new RecordingTransport([

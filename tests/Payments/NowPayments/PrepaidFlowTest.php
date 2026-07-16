@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Payments\NowPayments;
 
+use Helpers\Payments\Nowpayments\ApiException;
 use Helpers\Payments\Nowpayments\PrepaidApi;
 use Helpers\Payments\Nowpayments\PrepaidAttempt;
 use Helpers\Payments\Nowpayments\PrepaidCommand;
@@ -11,7 +12,7 @@ use Helpers\Payments\Nowpayments\PrepaidService;
 use Helpers\Payments\Nowpayments\PrepaidStore;
 use PHPUnit\Framework\TestCase;
 
-foreach (['Status.php', 'PrepaidApi.php', 'PrepaidAttempt.php', 'PrepaidCommand.php', 'PrepaidStore.php', 'PrepaidService.php'] as $file) {
+foreach (['Status.php', 'ApiException.php', 'PrepaidApi.php', 'PrepaidAttempt.php', 'PrepaidCommand.php', 'PrepaidStore.php', 'PrepaidService.php'] as $file) {
     $path = dirname(__DIR__, 3).'/app/helpers/payments/nowpayments/'.$file;
 
     if (is_file($path)) {
@@ -47,10 +48,10 @@ final class PrepaidFlowTest extends TestCase
         (new PrepaidService($store, $api))->create($this->command());
     }
 
-    public function testRemoteFailureMarksAttemptFailedAndRethrowsSafeError(): void
+    public function testAmbiguousTransportFailureKeepsAttemptPendingAndRethrowsSafeError(): void
     {
         $store = new InMemoryPrepaidStore();
-        $api = new FakePrepaidApi(throw: true);
+        $api = new FakePrepaidApi(exception: new ApiException('gateway failed'));
         $service = new PrepaidService($store, $api);
 
         try {
@@ -58,6 +59,60 @@ final class PrepaidFlowTest extends TestCase
             self::fail('Expected remote failure.');
         } catch (\RuntimeException $exception) {
             self::assertSame('gateway failed', $exception->getMessage());
+        }
+
+        self::assertSame('pending', array_values($store->attempts)[0]->status());
+    }
+
+    public function testProviderServerFailureKeepsAttemptPending(): void
+    {
+        $store = new InMemoryPrepaidStore();
+        $service = new PrepaidService(
+            $store,
+            new FakePrepaidApi(exception: new ApiException('gateway failed', 503))
+        );
+
+        try {
+            $service->create($this->command());
+            self::fail('Expected provider failure.');
+        } catch (ApiException $exception) {
+            self::assertSame(503, $exception->statusCode());
+        }
+
+        self::assertSame('pending', array_values($store->attempts)[0]->status());
+    }
+
+    public function testProviderRateLimitKeepsAttemptPending(): void
+    {
+        $store = new InMemoryPrepaidStore();
+        $service = new PrepaidService(
+            $store,
+            new FakePrepaidApi(exception: new ApiException('gateway throttled', 429))
+        );
+
+        try {
+            $service->create($this->command());
+            self::fail('Expected provider throttling.');
+        } catch (ApiException $exception) {
+            self::assertSame(429, $exception->statusCode());
+        }
+
+        self::assertSame('pending', array_values($store->attempts)[0]->status());
+    }
+
+    public function testDefinitiveProviderClientFailureMarksAttemptFailed(): void
+    {
+        $store = new InMemoryPrepaidStore();
+        $service = new PrepaidService(
+            $store,
+            new FakePrepaidApi(exception: new ApiException('invalid payment', 422))
+        );
+
+        try {
+            $service->create($this->command());
+            self::fail('Expected provider rejection.');
+        } catch (ApiException $exception) {
+            self::assertSame(422, $exception->statusCode());
         }
 
         self::assertSame('failed', array_values($store->attempts)[0]->status());
@@ -85,7 +140,10 @@ final class FakePrepaidApi implements PrepaidApi
 {
     public int $calls = 0;
 
-    public function __construct(private readonly ?\Closure $before = null, private readonly bool $throw = false)
+    public function __construct(
+        private readonly ?\Closure $before = null,
+        private readonly ?\Throwable $exception = null
+    )
     {
     }
 
@@ -94,8 +152,8 @@ final class FakePrepaidApi implements PrepaidApi
         $this->calls++;
         ($this->before ?? static fn () => null)();
 
-        if ($this->throw) {
-            throw new \RuntimeException('gateway failed');
+        if ($this->exception !== null) {
+            throw $this->exception;
         }
 
         return [
