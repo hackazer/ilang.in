@@ -367,6 +367,7 @@ class Gate {
 		} 
 
         $profiledata = json_decode($profile->data, true);
+        $profiledata = HtmlSanitizer::sanitizeBioProfileData(is_array($profiledata) ? $profiledata : []);
 
         if($url && $user && $user->has('pixels')){
 			self::injectPixels($url->pixels, $user);

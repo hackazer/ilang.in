@@ -23,6 +23,7 @@ use Core\DB;
 use Core\Auth;
 use Core\Helper;
 use Core\View;
+use Helpers\HtmlSanitizer;
 use Helpers\LinkPassword;
 use Models\User;
 
@@ -297,9 +298,9 @@ class Bio {
                 $value['image'] = $filename;
             }
 
-            $data['links'][$key] = in_array($value['type'], ['html', 'text']) ? array_map(function($value){
-                return Helper::clean($value, 3, false, '<strong><i><a><b><u><img><iframe><ul><ol><li><p>');
-            }, $value) :  array_map('clean', $value);
+            $data['links'][$key] = in_array($value['type'], ['html', 'text'], true)
+                ? HtmlSanitizer::sanitizeBioBlock($value)
+                : array_map('clean', $value);
         }
         
         foreach($request->social as $key => $value){
@@ -413,7 +414,9 @@ class Bio {
 
         $url = DB::url()->first($bio->urlid);
 
-        $bio->data = json_decode($bio->data);
+        $bioData = json_decode($bio->data, true);
+        $bioData = HtmlSanitizer::sanitizeBioProfileData(is_array($bioData) ? $bioData : []);
+        $bio->data = json_decode((string) json_encode($bioData));
         $bio->responses = json_decode($bio->responses);
 
         if($request->downloadqr){
@@ -499,7 +502,10 @@ class Bio {
 
         View::push(assets('bio.min.js'), 'script')->toFooter();
 
-        View::push('<script> var biodata = '.json_encode($bio->data->links).'; bioupdate();</script>', 'custom')->toFooter();
+        View::push('<script> var biodata = '.json_encode(
+            $bio->data->links,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        ).'; bioupdate();</script>', 'custom')->toFooter();
         View::push('<script>$(document).ready(function() { changeTheme("'.$bio->data->style->bg.'","'.($bio->data->style->gradient->start ?? '').'","'.($bio->data->style->gradient->stop ?? '').'","'.$bio->data->style->buttoncolor.'","'.$bio->data->style->buttontextcolor.'","'.$bio->data->style->textcolor.'") } ); </script>', 'custom')->toFooter();
         
 
@@ -687,9 +693,9 @@ class Bio {
             }
 
 
-            $data['links'][$key] = in_array($value['type'], ['html', 'text']) ? array_map(function($value){
-                return Helper::clean($value, 3, false, '<strong><i><a><b><u><img><iframe><ul><ol><li><p>');
-            }, $value) :  array_map('clean', $value);
+            $data['links'][$key] = in_array($value['type'], ['html', 'text'], true)
+                ? HtmlSanitizer::sanitizeBioBlock($value)
+                : array_map('clean', $value);
         }
 
         foreach($request->social as $key => $value){
@@ -854,7 +860,10 @@ class Bio {
         $newurl->save();
 
         $new->urlid = $newurl->id;
-        $new->data = $profile->data;
+        $profileData = json_decode($profile->data, true);
+        $new->data = is_array($profileData)
+            ? json_encode(HtmlSanitizer::sanitizeBioProfileData($profileData))
+            : $profile->data;
         $new->created_at = Helper::dtime();
 
         $new->save();
