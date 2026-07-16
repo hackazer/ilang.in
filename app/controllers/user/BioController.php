@@ -177,7 +177,7 @@ class Bio {
         \Helpers\CDN::load('simpleeditor');
 
         View::push("<script>                        
-                        var texteditor = CKEDITOR.replace('editor');
+                        EditorAdapter.create('editor');
                         $('input[name=icon]').iconpicker();
                     </script>", "custom")->toFooter();
 
@@ -493,7 +493,7 @@ class Bio {
         View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.js'), 'script')->toFooter();
 
         View::push("<script>                        
-                        var texteditor = CKEDITOR.replace('editor');
+                        EditorAdapter.create('editor');
                         $('input[name=icon]').iconpicker();                        
                     </script>", "custom")->toFooter();
 

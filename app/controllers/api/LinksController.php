@@ -187,10 +187,20 @@ class Links {
             }
         }  
 
-        $stats['socialCount']['facebook'] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%facebook.%' OR domain LIKE '%fb.%')")->count();
-        $stats['socialCount']['twitter'] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%twitter.%' OR domain LIKE '%t.co%')")->count();
-        $stats['socialCount']['instagram']  = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%instagram.%')")->count();
-        $stats['socialCount']['linkedin']  = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%linkedin.%')")->count();
+        $socialCounts = DB::stats()
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%facebook.%' OR domain LIKE '%fb.%' THEN 1 ELSE 0 END)", 'social_facebook')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%twitter.%' OR domain LIKE '%t.co%' THEN 1 ELSE 0 END)", 'social_twitter')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%instagram.%' THEN 1 ELSE 0 END)", 'social_instagram')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%linkedin.%' THEN 1 ELSE 0 END)", 'social_linkedin')
+                            ->where('urlid', $url->id)
+                            ->first();
+
+        $stats['socialCount'] = [
+            'facebook' => (int) ($socialCounts->social_facebook ?? 0),
+            'twitter' => (int) ($socialCounts->social_twitter ?? 0),
+            'instagram' => (int) ($socialCounts->social_instagram ?? 0),
+            'linkedin' => (int) ($socialCounts->social_linkedin ?? 0),
+        ];
     
         return Response::factory(['error' => 0, 'details' => $result, 'data' => $stats])->json();
     }

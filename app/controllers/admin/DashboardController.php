@@ -176,7 +176,7 @@ class Dashboard {
         \Helpers\CDN::load('editor');
 
         View::push("<script>                        
-                        CKEDITOR.replace('editor');
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();
 
         return View::with('admin.email', compact('newsletterusers', 'activeusers', 'allusers'))->extend('admin.layouts.main');
@@ -291,11 +291,11 @@ class Dashboard {
 
         \Helpers\CDN::load('simpleeditor');    
         View::push("<script>
-                         CKEDITOR.replace('email.registration');
-                         CKEDITOR.replace('email.activation');
-                         CKEDITOR.replace('email.activated');
-                         CKEDITOR.replace('email.reset');
-                         CKEDITOR.replace('email.invitation');
+                         EditorAdapter.create('email.registration');
+                         EditorAdapter.create('email.activation');
+                         EditorAdapter.create('email.activated');
+                         EditorAdapter.create('email.reset');
+                         EditorAdapter.create('email.invitation');
                     </script>", "custom")->toFooter();  
 
         return View::with('admin.email_templates')->extend('admin.layouts.main');

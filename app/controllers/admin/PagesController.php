@@ -53,10 +53,7 @@ class Pages {
 
         CDN::load('editor');
         View::push("<script>                        
-                        CKEDITOR.replace('editor', {
-                            allowedContent: true,
-                            extraAllowedContent: 'section div',
-                        });
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();
 
         return View::with('admin.pages.new')->extend('admin.layouts.main');
@@ -108,10 +105,7 @@ class Pages {
 
         CDN::load('editor');    
         View::push("<script>                        
-                        CKEDITOR.replace('editor', {
-                            allowedContent: true,
-                            extraAllowedContent: 'section div',
-                        });
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();        
 
         return View::with('admin.pages.edit', compact('page'))->extend('admin.layouts.main');

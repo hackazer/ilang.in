@@ -21,29 +21,37 @@
 
 return [
     'editor' => [
-        'version' => '4.16.1',
+        'version' => '4.13.3',
         'js' => [
-            'https://cdn.ckeditor.com/[version]/standard/ckeditor.js'
+            assets('vendor/jodit/jodit.min.js'),
+            assets('editor-adapter.js')
+        ],
+        'css' => [
+            assets('vendor/jodit/jodit.min.css')
         ]
     ],
     'simpleeditor' => [
-        'version' => '4.16.1',
+        'version' => '4.13.3',
         'js' => [
-            'https://cdn.ckeditor.com/[version]/basic/ckeditor.js'
+            assets('vendor/jodit/jodit.min.js'),
+            assets('editor-adapter.js')
+        ],
+        'css' => [
+            assets('vendor/jodit/jodit.min.css')
         ]
     ],
     'datetimepicker' => [
-        'version' => '0.6.4',
+        'version' => '1.0.10',
         'js' => [
-            '//cdnjs.cloudflare.com/ajax/libs/datepicker/[version]/datepicker.min.js'
+            assets('frontend/libs/datepicker/datepicker.min.js')
         ],
         'css' => [
-            '//cdnjs.cloudflare.com/ajax/libs/datepicker/[version]/datepicker.min.css'
+            assets('frontend/libs/datepicker/datepicker.min.css')
         ]
     ],
     'codeeditor' => [
-        'version' => '1.4.12',
-        'js' => ['//cdnjs.cloudflare.com/ajax/libs/ace/[version]/ace.js']
+        'version' => '1.44.0',
+        'js' => [assets('frontend/libs/ace-builds/ace.js')]
     ],
     'spectrum' => [
         'version' => '1.8.1',        
@@ -51,21 +59,21 @@ return [
         'css'=> ['//cdnjs.cloudflare.com/ajax/libs/spectrum/[version]/spectrum.min.css']
     ],
     'autocomplete' => [
-        'version' => '1.4.11',
-        'js' => ['//cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/[version]/jquery.autocomplete.min.js']
+        'version' => '2.0.4',
+        'js' => [assets('frontend/libs/devbridge-autocomplete/jquery.autocomplete.min.js')]
     ],
     "daterangepicker" => [
-        "version" => "3.1",
-        "css" => ["//cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"],
+        "version" => "3.1.0",
+        "css" => [assets('frontend/libs/daterangepicker/daterangepicker.min.css')],
         "js" => [
-            "//cdn.jsdelivr.net/momentjs/latest/moment.min.js",
-            "//cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
+            assets('frontend/libs/moment/moment.min.js'),
+            assets('frontend/libs/daterangepicker/daterangepicker.min.js')
           ]
     ],
     "hljs" => [
-        "version" => "11.2.0",
-        "js" => ["//cdnjs.cloudflare.com/ajax/libs/highlight.js/[version]/highlight.min.js"],
-        "css" => ["//cdnjs.cloudflare.com/ajax/libs/highlight.js/[version]/styles/night-owl.min.css"]
+        "version" => "11.11.1",
+        "js" => [assets('frontend/libs/highlight.js/highlight.min.js')],
+        "css" => [assets('frontend/libs/highlight.js/night-owl.min.css')]
     ],
     'blockadblock' => [
         'version' => '3.2.1',

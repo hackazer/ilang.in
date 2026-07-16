@@ -72,7 +72,7 @@ class themeSettings {
         \Helpers\CDN::load('simpleeditor');
 
         \Core\View::push("<script>
-                            CKEDITOR.replace('homedescription');
+                            EditorAdapter.create('homedescription');
                         </script>", "custom")->toFooter();  
 
         

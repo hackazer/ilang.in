@@ -974,11 +974,20 @@ class Stats {
                             ->limit(10)
                             ->findArray();
         
-        $social = [];
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%facebook.%' OR domain LIKE '%fb.%')")->count();
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%twitter.%' OR domain LIKE '%t.co')")->count();
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%instagram.%')")->count();
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%linkedin.%')")->count();
+        $socialCounts = DB::stats()
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%facebook.%' OR domain LIKE '%fb.%' THEN 1 ELSE 0 END)", 'social_facebook')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%twitter.%' OR domain LIKE '%t.co%' THEN 1 ELSE 0 END)", 'social_twitter')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%instagram.%' THEN 1 ELSE 0 END)", 'social_instagram')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%linkedin.%' THEN 1 ELSE 0 END)", 'social_linkedin')
+                            ->where('urlid', $url->id)
+                            ->first();
+
+        $social = [
+            (int) ($socialCounts->social_facebook ?? 0),
+            (int) ($socialCounts->social_twitter ?? 0),
+            (int) ($socialCounts->social_instagram ?? 0),
+            (int) ($socialCounts->social_linkedin ?? 0),
+        ];
         
         if($url->qrid && $qr = DB::qrs()->where('id', $url->qrid)->first()){    
             View::set("title",e("Referrers Stats for")." ".$qr->name);

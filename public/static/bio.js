@@ -729,8 +729,7 @@ $(document).ready(function(){
 
             var text = $item.find('textarea').attr('id');
             if (typeof text != 'undefined') {
-                CKEDITOR.instances[text].destroy();
-                CKEDITOR.replace(text, {
+                EditorAdapter.recreate(text, {
                   height: 100
                 });
             }                
@@ -752,8 +751,13 @@ $(document).ready(function(){
 
     $(document).on('click','[data-trigger=removeCard]', function(e){
         e.preventDefault();
-        let id = $(this).parent('.card').data('id');
-        $(this).parent('.card').remove();
+        let card = $(this).parent('.card');
+        let id = card.data('id');
+        let editorId = card.find('textarea').attr('id');
+        if (typeof editorId != 'undefined') {
+            EditorAdapter.destroy(editorId);
+        }
+        card.remove();
         $("#preview").find('#'+id).remove();
     });
     
@@ -879,10 +883,9 @@ $(document).ready(function(){
         });
         
         if(valid == false) return false;
+        EditorAdapter.syncForm(this);
         let data = new FormData($(this)[0]);
         let text = $(this).find('button[type=submit]').text();
-        for(var instanceName in CKEDITOR.instances) 
-          CKEDITOR.instances[instanceName].updateElement();
           
         $.ajax({
             type: 'POST',
@@ -1026,7 +1029,7 @@ function fntext(el, content = null, did = null){
         var text = content['text'];
     } else {
         let eltext = el.parent("#modal-text").find('textarea[name=content]');
-        var text = texteditor.getData();
+        var text = EditorAdapter.value('editor');
         eltext.val('');
     }
     
@@ -1049,7 +1052,7 @@ function fntext(el, content = null, did = null){
 
             $('#content').append('<div class="item"><p id="'+did+'">'+text+'</p></div>');
             $("#linkcontent").append(html);  
-            CKEDITOR.replace(did+'_editor', {
+            EditorAdapter.create(did+'_editor', {
               height: 100
             });
 }

@@ -44,7 +44,7 @@ class Settings {
         \Helpers\CDN::load('simpleeditor');
 
         View::push("<script>
-                        CKEDITOR.replace('news');
+                        EditorAdapter.create('news');
                     </script>", "custom")->toFooter();        
 
         return View::with('admin.settings.index', compact('timezones'))->extend('admin.layouts.main');
