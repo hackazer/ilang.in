@@ -60,7 +60,7 @@
                                         <li><a class="dropdown-item" href="<?php echo route('campaigns.stats', [$campaign->id]) ?>"><i data-feather="bar-chart-2"></i> <?php ee('Statistics') ?></span></a></li>
                                         <li><hr class="dropdown-divider"></li>
                                         <?php if(user()->teamPermission('bundle.delete')): ?>
-                                        <li><a class="dropdown-item" href="<?php echo route('campaigns.delete', [$campaign->id, \Core\Helper::nonce('campaign.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                                        <li><form action="<?php echo route('campaigns.delete', [$campaign->id, \Core\Helper::nonce('campaign.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                         <?php endif ?>
                                     </ul> 
                                 </td>

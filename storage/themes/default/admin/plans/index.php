@@ -63,7 +63,7 @@
                                 <li><form action="<?php echo route('admin.plans.toggle', [$plan->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="toggle-right"></i> <?php echo $plan->status == '1' ? e('Disable') : e('Enable') ?></button></form></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.plans.edit', [$plan->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.plans.delete', [$plan->id, \Core\Helper::nonce('plan.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                <li><form action="<?php echo route('admin.plans.delete', [$plan->id, \Core\Helper::nonce('plan.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>

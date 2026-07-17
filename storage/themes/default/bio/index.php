@@ -30,12 +30,12 @@
                                         <?php endif ?>
                                         <?php if(user()->teamPermission('bio.edit')): ?>
                                             <li><a class="dropdown-item" href="#" data-id="<?php echo $bio->id ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#channelModal" data-toggle="addtochannel"><i data-feather="package"></i> <?php ee('Add to Channel') ?></a></li>                                            
-                                            <li><a class="dropdown-item" href="<?php echo route('links.reset', [$bio->urlid, \Core\Helper::nonce('link.reset')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#resetModal"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></a></li>
+                                            <li><form action="<?php echo route('links.reset', [$bio->urlid, \Core\Helper::nonce('link.reset')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></button></form></li>
                                             <li><form action="<?php echo route('bio.duplicate', [$bio->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="copy"></i> <?php ee('Duplicate') ?></button></form></li>
                                         <?php endif ?>
                                         <?php if(user()->teamPermission('bio.delete')): ?>
                                         <li class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('bio.delete', [$bio->id, \Core\Helper::nonce('bio.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('bio.delete', [$bio->id, \Core\Helper::nonce('bio.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                         <?php endif ?>
                                     </ul>
                                 </div>

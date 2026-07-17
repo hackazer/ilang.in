@@ -14,7 +14,7 @@
                     <li><a class="dropdown-item" href="<?php echo route('admin.users.view', [$url->userid]) ?>"><i data-feather="user"></i> <?php ee('View User') ?></span></a></li>
                 <?php endif ?>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                <li><form action="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
             </ul>                        
         </div>
         <div class="mb-2 d-block">

@@ -48,7 +48,7 @@
                                 <td>
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.testimonial.delete', [$id+1, \Core\Helper::nonce('testimonial.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('admin.testimonial.delete', [$id+1, \Core\Helper::nonce('testimonial.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>

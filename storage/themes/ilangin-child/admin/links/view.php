@@ -42,7 +42,7 @@
                     <?php else: ?>
                         <form action="<?php echo route('admin.links.approve', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Approve Link') ?></button></form>
                     <?php endif ?>
-                    <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><?php ee('Delete Link') ?></a>
+                    <form action="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Delete Link') ?></button></form>
                 </div>
             </div>
         </div>               

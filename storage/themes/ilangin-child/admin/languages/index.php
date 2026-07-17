@@ -48,7 +48,7 @@
                             <li><form action="<?php echo route('admin.languages.sync', [$language['code']]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="repeat"></i> <?php ee('Sync') ?></button></form></li>
                             <li><a class="dropdown-item" href="<?php echo route('admin.languages.edit', [$language["code"]]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.languages.delete', [$language["code"], \Core\Helper::nonce('language.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                            <li><form action="<?php echo route('admin.languages.delete', [$language["code"], \Core\Helper::nonce('language.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                         </ul>                 
                     </td>
                   </tr>      

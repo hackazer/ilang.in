@@ -13,15 +13,24 @@ use RecursiveIteratorIterator;
 final class UserMutationCsrfTest extends TestCase
 {
     private const POST_ROUTES = [
+        'links.delete' => "Gem::post('/links/{id}/delete/{token}', 'Link@delete')",
+        'links.reset' => "Gem::post('/links/{id}/reset/{token}', 'Link@reset')",
+        'campaigns.delete' => "Gem::post('/campaigns/{id}/delete/{token}', 'User\\Campaigns@delete')",
         'links.archive' => "Gem::post('/links/archiveselected', 'Link@archiveSelected')",
         'links.unarchive' => "Gem::post('/links/unarchiveselected', 'Link@unarchiveSelected')",
         'links.public' => "Gem::post('/links/publicselected', 'Link@publicSelected')",
         'links.private' => "Gem::post('/links/privateselected', 'Link@privateSelected')",
         'splash.toggle' => "Gem::post('/splash/{id}/toggle', 'User\\Splash@toggle')",
         'splash.delete' => "Gem::post('/splash/{id}/delete', 'User\\Splash@delete')",
+        'overlay.delete' => "Gem::post('/overlay/{id}/delete/{nonce}', 'User\\Overlay@delete')",
+        'pixel.delete' => "Gem::post('/pixels/{id}/delete/{nonce}', 'User\\Pixels@delete')",
+        'domain.delete' => "Gem::post('/domains/{id}/delete/{nonce}', 'User\\Domains@delete')",
+        'qr.delete' => "Gem::post('/qr/{id}/delete/{nonce}', 'User\\QR@delete')",
         'qr.duplicate' => "Gem::post('/qr/{id}/duplicate', 'User\\QR@duplicate')",
+        'bio.delete' => "Gem::post('/bio/{id}/delete/{nonce}', 'User\\Bio@delete')",
         'bio.default' => "Gem::post('/bio/{id}/default', 'User\\Bio@default')",
         'bio.duplicate' => "Gem::post('/bio/{id}/duplicate', 'User\\Bio@duplicate')",
+        'channel.delete' => "Gem::post('/channel/{id}/delete/{token}', 'User\\Channels@delete')",
         'channel.removefrom' => "Gem::post('/channel/{id}/remove/{type}/{item}', 'User\\Channels@removefrom')",
     ];
 
@@ -61,14 +70,18 @@ final class UserMutationCsrfTest extends TestCase
         );
     }
 
-    public function testReadOnlyLinkRefreshRoutesRemainGet(): void
+    public function testReadOnlyAndAccountLandingRoutesRemainGet(): void
     {
         $routes = $this->read('app/routes.php');
 
         foreach ([
+            "Gem::get('/login/reset/{token}', 'Users@reset')->middleware('CheckDomain')->name('reset')",
+            "Gem::get('/activate/{token}', 'Users@activate')->middleware('CheckDomain')->name('activate')",
+            "Gem::get('/links/archived', 'User\\Dashboard@archived')->name('archive')",
             "Gem::get('/links/fetch', 'User\\Dashboard@fetch')->name('links.fetch')",
             "Gem::get('/links/refresh', 'User\\Dashboard@refresh')->name('links.refresh')",
             "Gem::get('/links/refresh/archive', 'User\\Dashboard@refreshArchive')->name('links.refresh.archive')",
+            "Gem::get('/bookmark', 'Link@bookmark')",
         ] as $definition) {
             self::assertStringContainsString($definition, $routes);
         }

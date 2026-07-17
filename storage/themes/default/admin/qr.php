@@ -40,7 +40,7 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.view', [$qr->user->id]) ?>"><i data-feather="user"></i> <?php ee('View User') ?></span></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('stats', [$qr->url->id]) ?>"><i data-feather="bar-chart"></i> <?php ee('View Stats') ?></span></a></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.qr.delete', [$qr->id, \Core\Helper::nonce('qr.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                <li><form action="<?php echo route('admin.qr.delete', [$qr->id, \Core\Helper::nonce('qr.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>

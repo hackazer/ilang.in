@@ -36,7 +36,7 @@
                                 <li><a class="dropdown-item" href="<?php echo route('blog.post', [$post->slug]) ?>" target="_blank"><i data-feather="eye"></i> <?php ee('View') ?></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.blog.edit', [$post->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.blog.delete', [$post->id, \Core\Helper::nonce('blog.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                <li><form action="<?php echo route('admin.blog.delete', [$post->id, \Core\Helper::nonce('blog.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>

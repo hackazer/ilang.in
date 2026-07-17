@@ -58,7 +58,7 @@
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="<?php echo route('admin.coupons.update', [$coupon->id]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#updateModal" data-toggle="updateFormContent" data-content='<?php echo json_encode(['newname' => $coupon->name,'newdescription' => $coupon->description, 'newvaliduntil' => \Core\Helper::dtime($coupon->validuntil, 'Y-m-d')]) ?>'><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.coupons.delete', [$coupon->id, \Core\Helper::nonce('coupon.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('admin.coupons.delete', [$coupon->id, \Core\Helper::nonce('coupon.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>
