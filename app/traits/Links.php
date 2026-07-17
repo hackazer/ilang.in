@@ -428,14 +428,12 @@ trait Links {
             \Core\Plugin::dispatch('link.shorten.final', $link);
             
 			if($user && !empty($user->zapurl) && Helper::isURL($user->zapurl)){
-				\Core\Http::url($user->zapurl)
-                        ->with('content-type', 'application/json')
-                        ->body([
+				$this->sendLinkWebhook($user->zapurl, [
 								"type" 		=> "url",
 								"longurl" 	=> $link->url,
 								"shorturl" 	=> App::shortRoute($link->domain, $link->alias.$link->custom),
 								"date" 		=> date("d-m-Y H:i:s")
-                        ])->post();
+				]);
 			}
         }
         
@@ -935,9 +933,7 @@ trait Links {
         $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
 
         if($user && !empty($user->zapview) && Helper::isURL($user->zapview)){
-           \Core\Http::url($user->zapview)
-                        ->with('content-type', 'application/json')
-                        ->body([
+            $this->sendLinkWebhook($user->zapview, [
                             "type" 		=> "view",
                             "shorturl" 	=> \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom),
                             "country" 	=> $stats->country,
@@ -946,7 +942,24 @@ trait Links {
                             "os" 		=> $stats->os,
                             "browser" 	=> $stats->browser,
                             "date" 		=> Helper::dtime()
-                        ])->post();
+            ]);
+        }
+    }
+
+    protected function sendLinkWebhook(string $url, array $payload, ?callable $transport = null): void {
+        try {
+            $transport ??= static function (string $targetUrl, array $targetPayload, array $options): void {
+                Http::url($targetUrl)
+                    ->with('content-type', 'application/json')
+                    ->body($targetPayload)
+                    ->post($options);
+            };
+
+            $transport($url, $payload, [
+                'connect_timeout' => 1,
+                'timeout' => 2,
+            ]);
+        } catch (\Throwable) {
         }
     }
 
