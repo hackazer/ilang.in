@@ -125,9 +125,9 @@ class PaypalApi{
             if($coupon->maxuse > 0 && $coupon->used >= $coupon->maxuse) $valid = false;
 
 			if($valid) {	
-				$coupon->used++;
-				$coupon->save();
 				$coupon->data = json_decode($coupon->data);
+			} else {
+				$coupon = null;
 			}
 		}
         
@@ -183,6 +183,7 @@ class PaypalApi{
                 $sub->lastpayment = Helper::dtime();
                 $sub->data = json_encode([
                     'paymentmethod' => 'PaypalApi',
+                    'coupon_id' => $coupon ? (int) $coupon->id : null,
                     'intent' => [
                         'order_id' => (string) $order['id'],
                         'user_id' => (int) $user->id,
@@ -247,6 +248,7 @@ class PaypalApi{
                 $sub->data = json_encode([
                     'paymentmethod' => 'PaypalApi',
                     'expected_amount' => self::money($price),
+                    'coupon_id' => $coupon ? (int) $coupon->id : null,
                     'paypal' => $subscription,
                 ]);
                 $sub->uniqueid = $uniqueid;
@@ -809,6 +811,7 @@ class PaypalApi{
                     || (bool) DB::payment()->where('tid', $capture['capture_id'])->first(),
                 static function () use (&$dispatch, $capture, $intent, $order, $orderId): void {
                     $subscription = DB::subscription()->where('tid', $orderId)->first();
+                    $subscriptionData = json_decode((string) ($subscription->data ?? ''), true) ?: [];
                     $freshIntent = self::lifetimeIntentForCallback(
                         (object) ['token' => $orderId],
                         static fn(string $id) => $id === $orderId ? $subscription : null
@@ -843,15 +846,16 @@ class PaypalApi{
                     ], JSON_THROW_ON_ERROR);
                     $payment->save();
 
+                    self::consumeCoupon($subscriptionData);
+
                     $subscription->status = "Active";
                     $subscription->amount = $capture['amount'];
                     $subscription->expiry = $expiry;
                     $subscription->lastpayment = Helper::dtime();
-                    $subscription->data = json_encode([
-                        'paymentmethod' => 'PaypalApi',
-                        'intent' => $intent,
-                        'paypal' => $order,
-                    ], JSON_THROW_ON_ERROR);
+                    $subscription->data = json_encode(
+                        self::updatedSubscriptionData($subscriptionData, $order),
+                        JSON_THROW_ON_ERROR
+                    );
                     $subscription->save();
 
                     $user->last_payment = Helper::dtime();
@@ -1003,6 +1007,8 @@ class PaypalApi{
                         $payment->expiry = $expiry;
                         $payment->data = json_encode($event, JSON_THROW_ON_ERROR);
                         $payment->save();
+
+                        self::consumeCoupon($data);
 
                         $subscription->amount = (float) ($subscription->amount ?? 0) + (float) $action['amount'];
                         $subscription->expiry = $expiry;
@@ -1181,6 +1187,22 @@ class PaypalApi{
             $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
             $release->execute(['lock_name' => $lockName]);
         }
+    }
+
+    private static function consumeCoupon(array &$data): bool{
+        $couponId = (int) ($data['coupon_id'] ?? 0);
+
+        if($couponId < 1 || !empty($data['coupon_consumed_at'])) return false;
+
+        $coupon = DB::coupons()->where('id', $couponId)->first();
+
+        if(!$coupon) return false;
+
+        $coupon->set_expr('used', '`used` + 1');
+        $coupon->save();
+        $data['coupon_consumed_at'] = Helper::dtime();
+
+        return true;
     }
 
     private static function client(?string $clientId = null, ?string $clientSecret = null): Client{
