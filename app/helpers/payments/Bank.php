@@ -166,7 +166,7 @@ class Bank{
 
         }elseif($type == "lifetime"){
 
-            $new_expiry = date("Y-m-d H:i:s", strtotime("+10 year"));
+            $new_expiry = date("Y-m-d H:i:s", strtotime("+20 years"));
 
         }else{
 

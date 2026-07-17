@@ -827,33 +827,74 @@ final class Request {
 	 * @param [type] $ip
 	 * @return void
 	 */
-	public function country($ip = null){		
-		$ip = $ip ?? $this->ip();
+	public function country(
+		$ip = null,
+		?callable $apiFetcher = null,
+		?callable $cacheReader = null,
+		?callable $cacheWriter = null,
+		?array $geoConfig = null
+	){
+		$empty = ['city' => null, 'state' => null, 'country' => null];
+		$ip = $this->normalizeIp($ip ?? $this->ip());
 
-		if(appConfig('app.geodriver') == 'api'){
+		if($ip === null) return $empty;
 
-			$url = str_replace('{IP}', $ip, appConfig('app.geopath'));
-			$response = Http::url($url)->get()->bodyObject();
-			return ['city' => $response->city, 'country' => $response->country_name];
-		}
+		$geoConfig ??= [
+			'driver' => appConfig('app.geodriver'),
+			'path' => appConfig('app.geopath'),
+		];
+		$driver = (string) ($geoConfig['driver'] ?? '');
+		$path = $geoConfig['path'] ?? null;
+		$cacheKey = 'geoip.'.hash('sha256', $ip);
+		$cacheReader ??= static fn(string $key): mixed =>
+			defined('CACHE') && CACHE === true ? Helper::cacheGet($key) : null;
+		$cacheWriter ??= static fn(string $key, array $value, int $ttl): mixed =>
+			defined('CACHE') && CACHE === true ? Helper::cacheSet($key, $value, $ttl) : $value;
 
-		if(appConfig('app.geodriver') == 'maxmind'){
-			try{
-				$reader = new \MaxMind\Db\Reader(appConfig('app.geopath'));
+		$normalize = static function (mixed $value) use ($empty): array {
+			if(is_object($value)) $value = get_object_vars($value);
+			if(!is_array($value)) return $empty;
+
+			return [
+				'city' => isset($value['city']) && is_scalar($value['city']) ? (string) $value['city'] : null,
+				'state' => isset($value['state']) && is_scalar($value['state']) ? (string) $value['state'] : null,
+				'country' => isset($value['country']) && is_scalar($value['country'])
+					? (string) $value['country']
+					: (isset($value['country_name']) && is_scalar($value['country_name']) ? (string) $value['country_name'] : null),
+			];
+		};
+
+		$cached = $cacheReader($cacheKey);
+		if(is_array($cached)) return $normalize($cached);
+
+		try {
+			if($driver === 'api' && is_string($path) && $path !== ''){
+				$url = str_replace('{IP}', rawurlencode($ip), $path);
+				$apiFetcher ??= static fn(string $endpoint, int $timeout): mixed =>
+					Http::url($endpoint)->get(['timeout' => $timeout])->bodyObject();
+				$result = $normalize($apiFetcher($url, 2));
+			} elseif($driver === 'maxmind' && is_string($path) && $path !== ''){
+				$reader = new \MaxMind\Db\Reader($path);
 				$response = $reader->get($ip);
 				$reader->close();
-	
-				return ['city' => $response['city']['names']['en'] ?? '', 'state' => $response['subdivisions'][0]['names']['en'] ?? '', 'country' => $response['country']['names']['en'] ?? ''];				
-			
-			} catch(\Exception $e){
-				\GemError::log('IP Error: '.$e->getMessage(), ['ip' => $ip]);
-				return ['city' => null, 'state' => null, 'country' => null];
+				$result = [
+					'city' => $response['city']['names']['en'] ?? null,
+					'state' => $response['subdivisions'][0]['names']['en'] ?? null,
+					'country' => $response['country']['names']['en'] ?? null,
+				];
+			} elseif($driver === 'custom' && is_callable($path)){
+				$result = $normalize($path($ip));
+			} else {
+				$result = $empty;
 			}
+		} catch(\Throwable $e) {
+			$cacheWriter($cacheKey, $empty, 300);
+			return $empty;
 		}
 
-		if(appConfig('app.geodriver') == 'custom'){
-			return \call_user_func_array(appConfig('app.geopath'), [$ip]);
-		}
+		$cacheWriter($cacheKey, $result, $result['country'] === null ? 300 : 86400);
+
+		return $result;
 	}
 	/**
    * Read/Write Cookie

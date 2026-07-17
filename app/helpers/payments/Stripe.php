@@ -323,7 +323,7 @@ class Stripe{
 				if($charge->status == 'succeeded'){
 					$sub->status = 'Completed';
 					$sub->amount = $price;
-					$sub->expiry = Helper::dtime('+10 years');
+					$sub->expiry = Helper::dtime('+20 years');
 					$sub->tid = $charge->id;
 					$sub->data = json_encode($charge);
 					$sub->save();
@@ -386,7 +386,7 @@ class Stripe{
 		}	
 		
 		$user->last_payment = Helper::dtime();
-		$user->expiration = $type == "lifetime" ? Helper::dtime('+10 years') : Helper::dtime();
+		$user->expiration = $type == "lifetime" ? Helper::dtime('+20 years') : Helper::dtime();
 		$user->pro = 1;
 		$user->planid = $plan->id;
 		$user->address = json_encode([
@@ -563,7 +563,7 @@ class Stripe{
 
 				}elseif($subscription->plan == "lifetime"){
 
-					$new_expiry = date("Y-m-d H:i:s", strtotime("+10 year", $e->created));
+					$new_expiry = date("Y-m-d H:i:s", strtotime("+20 years", $e->created));
 
 				}else{
 
