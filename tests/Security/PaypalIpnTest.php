@@ -83,6 +83,109 @@ final class PaypalIpnTest extends TestCase
         self::assertSame('10.00', $amount);
     }
 
+    public function testCheckoutPricingContextAppliesCouponThenTax(): void
+    {
+        $this->assertPricingContextApiExists();
+
+        $context = Paypal::createPricingContext(
+            $this->plan(),
+            'Monthly',
+            (object) ['discount' => '10'],
+            (object) ['rate' => '11'],
+            'usd',
+            42,
+            false,
+            'checkout-secret'
+        );
+
+        self::assertSame('9.99', $context['amount']);
+        self::assertSame('USD', $context['currency']);
+        self::assertSame(42, $context['userid']);
+        self::assertSame(7, $context['planid']);
+        self::assertSame('Monthly', $context['period']);
+        self::assertSame(0, $context['renew']);
+        self::assertNotSame('', $context['signature']);
+        self::assertLessThanOrEqual(256, strlen(json_encode($context, JSON_THROW_ON_ERROR)));
+    }
+
+    public function testCompletedIpnUsesTheSignedCheckoutAmountAndCurrency(): void
+    {
+        $this->assertPricingContextApiExists();
+
+        $context = Paypal::createPricingContext(
+            $this->plan(),
+            'Monthly',
+            (object) ['discount' => '10'],
+            (object) ['rate' => '11'],
+            'USD',
+            42,
+            false,
+            'checkout-secret'
+        );
+        $plan = $this->plan();
+        $plan->price_monthly = '25.00';
+        $payload = array_replace($this->validPayload(), [
+            'mc_gross' => '9.99',
+            'mc_currency' => 'USD',
+        ]);
+
+        self::assertSame(
+            '9.99',
+            Paypal::validateCompletedIpn(
+                $payload,
+                $plan,
+                'merchant@example.com',
+                'EUR',
+                'Monthly',
+                $context,
+                'checkout-secret'
+            )
+        );
+    }
+
+    public function testTamperedCheckoutPricingContextIsRejected(): void
+    {
+        $this->assertPricingContextApiExists();
+
+        $context = Paypal::createPricingContext(
+            $this->plan(),
+            'Monthly',
+            null,
+            null,
+            'USD',
+            42,
+            false,
+            'checkout-secret'
+        );
+        $context['amount'] = '1.00';
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('pricing context');
+
+        Paypal::validateCompletedIpn(
+            array_replace($this->validPayload(), ['mc_gross' => '1.00']),
+            $this->plan(),
+            'merchant@example.com',
+            'USD',
+            'Monthly',
+            $context,
+            'checkout-secret'
+        );
+    }
+
+    public function testLifetimeEntitlementKeepsTheTwentyYearSentinel(): void
+    {
+        self::assertTrue(
+            method_exists(Paypal::class, 'entitlementWindow'),
+            'PayPal Basic must expose its entitlement window for sentinel verification.'
+        );
+
+        self::assertSame(
+            ['modifier' => '+ 20 years', 'duration' => '20 Years'],
+            Paypal::entitlementWindow('Lifetime')
+        );
+    }
+
     #[DataProvider('invalidPayloads')]
     public function testInvalidCompletedIpnIsRejected(array $overrides, string $message): void
     {
@@ -144,9 +247,18 @@ final class PaypalIpnTest extends TestCase
         ];
     }
 
+    private function assertPricingContextApiExists(): void
+    {
+        self::assertTrue(
+            method_exists(Paypal::class, 'createPricingContext'),
+            'PayPal Basic must derive an immutable checkout pricing context.'
+        );
+    }
+
     private function plan(): object
     {
         return (object) [
+            'id' => 7,
             'price_monthly' => '10.00',
             'price_yearly' => '100.00',
             'price_lifetime' => '300.00',

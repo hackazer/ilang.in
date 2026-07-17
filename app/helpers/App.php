@@ -926,14 +926,24 @@ final class App {
         if($feed === false || !isset($feed->channel->item)) return 'Invalid RSS';
 
         $items = [];
+        $safeHttpUrl = static function (mixed $value): ?string {
+            $value = trim((string) $value);
+            if($value === '' || !filter_var($value, FILTER_VALIDATE_URL)) return null;
+
+            $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+            return in_array($scheme, ['http', 'https'], true) ? $value : null;
+        };
 
         foreach($feed->channel->item as $item){
+            $description = (string) ($item->description ?? '');
+            $description = preg_replace('#<(script|style)\b[^>]*>.*?</\1>#is', '', $description) ?? '';
+
             $items[] = [
-                'title' => $item->title ?? null,
-                'link' => $item->link ?? null,
-                'image' => $item->image ?? null,
-                'description' => $item->description ? \Core\Helper::truncate(strip_tags($item->description), 150) : null,
-                'date' => $item->pubDate ?? null
+                'title' => trim(strip_tags((string) ($item->title ?? ''))) ?: null,
+                'link' => $safeHttpUrl($item->link ?? null),
+                'image' => $safeHttpUrl($item->image ?? null),
+                'description' => $description !== '' ? \Core\Helper::truncate(strip_tags($description), 150) : null,
+                'date' => trim(strip_tags((string) ($item->pubDate ?? ''))) ?: null,
             ];
         }
 

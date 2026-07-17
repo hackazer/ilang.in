@@ -89,46 +89,68 @@ class Paypal{
     public static function payment(Request $request, int $id, string $type){
 
         if(!config('paypal') || !config('paypal')->enabled || !config('paypal')->email) {
-            
             \GemError::log('Payment system "PayPal" not enabled or configured.');
-
             return back()->with('danger', e('An error ocurred, please try again. You have not been charged.'));
         }
 
         if(!$plan = DB::plans()->first($id)){
-			return back()->with('danger', e('An error ocurred, please try again. You have not been charged.'));
-	  	}			
+            return back()->with('danger', e('An error ocurred, please try again. You have not been charged.'));
+        }
 
-        if($type == "yearly"){
-			$fee = $plan->price_yearly;
-			$period = "Yearly";	
-		}elseif($type == "lifetime"){
-			$fee = $plan->price_lifetime;
-			$period = "Lifetime";	
-		}else{
-			$fee = $plan->price_monthly;
-			$period = "Monthly";
-		}
-        
+        if($type == 'yearly'){
+            $period = 'Yearly';
+        }elseif($type == 'lifetime'){
+            $period = 'Lifetime';
+        }else{
+            $period = 'Monthly';
+        }
+
         $renew = $request->session('renew') ? 1 : 0;
 
+        try {
+            $coupon = self::validCoupon($request->coupon ?? null);
+            $country = clean($request->country ?? '');
+            $tax = $country === '' ? null : DB::taxrates()->whereRaw('countries LIKE ?', ["%{$country}%"])->first();
+            $pricing = self::createPricingContext(
+                $plan,
+                $period,
+                $coupon,
+                $tax ?: null,
+                (string) config('currency'),
+                (int) Auth::id(),
+                (bool) $renew,
+                self::pricingSecret()
+            );
+            $custom = json_encode($pricing, JSON_THROW_ON_ERROR);
+
+            if(strlen($custom) > 256){
+                throw new \RuntimeException('Paypal pricing context exceeds the custom field limit.');
+            }
+        } catch (\Throwable $e) {
+            \GemError::log('Paypal Error: '.$e->getMessage());
+            return back()->with('danger', e('An error ocurred, please try again. You have not been charged.'));
+        }
+
+        if($coupon){
+            $coupon->used++;
+            $coupon->save();
+        }
+
         $options = [
-            "cmd" => "_xclick",
-            "business" => config('paypal')->email,
-            "currency_code" => config('currency'),
-            "item_name" => "{$plan->name} $type Membership (Pro)",
-            "custom"  =>  json_encode(["userid" => Auth::id(), "period" => $period, "renew" => $renew, "planid" => $plan->id]),
-            "amount" => $fee,
-            "return" => route('dashboard'),
-            "notify_url" => url("ipn"),
-            "cancel_return" => route('dashboard')
+            'cmd' => '_xclick',
+            'business' => config('paypal')->email,
+            'currency_code' => $pricing['currency'],
+            'item_name' => "{$plan->name} $type Membership (Pro)",
+            'custom' => $custom,
+            'amount' => $pricing['amount'],
+            'return' => route('dashboard'),
+            'notify_url' => url('ipn'),
+            'cancel_return' => route('dashboard'),
         ];
 
-        if(DEBUG){
-			$payurl = "https://www.sandbox.paypal.com/cgi-bin/webscr?";
-		}else{
-			$payurl = "https://www.paypal.com/cgi-bin/webscr?";
-		}
+        $payurl = DEBUG
+            ? 'https://www.sandbox.paypal.com/cgi-bin/webscr?'
+            : 'https://www.paypal.com/cgi-bin/webscr?';
 
         return Helper::redirect()->to($payurl.http_build_query($options));
     }
@@ -191,55 +213,34 @@ class Paypal{
                 $plan,
                 is_object($paypalConfig) ? (string) ($paypalConfig->email ?? '') : '',
                 (string) config('currency'),
-                (string) $data->period
+                (string) $data->period,
+                (array) $data
             );
         } catch (\InvalidArgumentException $e) {
             http_response_code(400);
             return \GemError::log('Paypal Error: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            return \GemError::log('Paypal Error: '.$e->getMessage());
         }
 
+        $entitlement = self::entitlementWindow((string) $data->period);
+
         try {
-            self::applyProviderTransactionOnce((string) $request->txn_id, function() use ($request, $data, $plan, $expectedAmount, &$info){
+            self::applyProviderTransactionOnce((string) $request->txn_id, function() use ($request, $data, $plan, $expectedAmount, $entitlement, &$info){
 
                 if(!$user = DB::user()->first((int) $data->userid)){
                     throw new \RuntimeException('Paypal user does not exist.');
                 }
 
                 if((string) $data->renew === "1"){
-
-                    if($data->period === "Yearly"){
-
-                        $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 1 year"));
-                        $info["duration"] = "1 Year";
-
-                    }elseif($data->period === "Lifetime"){
-
-                        $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 20 years"));
-                        $info["duration"] = "20 Years";
-
-                    }else{
-                        $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)) . " + 1 month"));
-                        $info["duration"] = "1 Month";
-                    }
+                    $expires = date("Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s", strtotime($user->expiration)).' '.$entitlement['modifier']));
 
                 } else {
-
-                    if($data->period === "Yearly"){
-
-                        $expires = date("Y-m-d H:i:s", strtotime("+ 1 year"));
-                        $info["duration"] = "1 Year";
-
-                    }elseif($data->period === "Lifetime"){
-
-                        $expires = date("Y-m-d H:i:s", strtotime("+ 20 years"));
-                        $info["duration"] = "20 Years";
-
-                    }else{
-                        $expires = date("Y-m-d H:i:s", strtotime("+ 1 month"));
-                        $info["duration"] = "1 Month";
-                    }
-
+                    $expires = date("Y-m-d H:i:s", strtotime($entitlement['modifier']));
                 }
+
+                $info["duration"] = $entitlement['duration'];
 
                 $info["payer_email"] = $request->payer_email;
                 $info["payer_id"] = $request->payer_id;
@@ -275,7 +276,7 @@ class Paypal{
      * Validate the PayPal fields that authorize entitlement and return the
      * matching server-side plan amount.
      */
-    public static function validateCompletedIpn(array $payload, object $plan, string $receiverEmail, string $currency, string $period): string {
+    public static function validateCompletedIpn(array $payload, object $plan, string $receiverEmail, string $currency, string $period, ?array $pricingContext = null, ?string $pricingSecret = null): string {
 
         if(($payload['payment_status'] ?? null) !== 'Completed'){
             throw new \InvalidArgumentException('Paypal payment is not completed.');
@@ -292,14 +293,15 @@ class Paypal{
             throw new \InvalidArgumentException('Paypal receiver does not match the configured account.');
         }
 
+        $signedPricing = self::validatedPricingContext($pricingContext, $plan, $period, $pricingSecret);
         $actualCurrency = strtoupper(trim((string) ($payload['mc_currency'] ?? '')));
-        $expectedCurrency = strtoupper(trim($currency));
+        $expectedCurrency = $signedPricing['currency'] ?? strtoupper(trim($currency));
 
         if($expectedCurrency === '' || $actualCurrency === '' || $actualCurrency !== $expectedCurrency){
             throw new \InvalidArgumentException('Paypal currency does not match the configured currency.');
         }
 
-        $expectedAmount = self::planAmount($plan, $period);
+        $expectedAmount = $signedPricing['amount'] ?? self::planAmount($plan, $period);
         $expectedCanonical = self::canonicalAmount($expectedAmount);
         $actualCanonical = self::canonicalAmount($payload['mc_gross'] ?? null);
 
@@ -308,6 +310,154 @@ class Paypal{
         }
 
         return (string) $expectedAmount;
+    }
+
+    /**
+     * Derive and sign the exact amount and currency sent to PayPal Basic.
+     */
+    public static function createPricingContext(object $plan, string $period, ?object $coupon, ?object $tax, string $currency, int $userId, bool $renew, string $secret): array {
+        $baseAmount = self::canonicalAmount(self::planAmount($plan, $period));
+        $planId = (int) ($plan->id ?? 0);
+        $currency = strtoupper(trim($currency));
+        $secret = trim($secret);
+
+        if($baseAmount === null || $planId < 1 || $userId < 1 || !preg_match('/^[A-Z]{3}$/D', $currency) || $secret === ''){
+            throw new \InvalidArgumentException('Paypal checkout pricing context is invalid.');
+        }
+
+        $amount = (float) $baseAmount;
+
+        if($coupon){
+            $discount = (float) ($coupon->discount ?? -1);
+
+            if($discount < 0 || $discount > 100){
+                throw new \InvalidArgumentException('Paypal coupon discount is invalid.');
+            }
+
+            $amount = round((1 - ($discount / 100)) * $amount, 2);
+        }
+
+        if($tax){
+            $rate = (float) ($tax->rate ?? -1);
+
+            if($rate < 0){
+                throw new \InvalidArgumentException('Paypal tax rate is invalid.');
+            }
+
+            $amount = round($amount * (1 + ($rate / 100)), 2);
+        }
+
+        $context = [
+            'userid' => $userId,
+            'period' => $period,
+            'renew' => $renew ? 1 : 0,
+            'planid' => $planId,
+            'amount' => number_format($amount, 2, '.', ''),
+            'currency' => $currency,
+        ];
+        $context['signature'] = self::pricingSignature($context, $secret);
+
+        return $context;
+    }
+
+    /**
+     * Keep the legacy lifetime entitlement represented by a 20-year window.
+     */
+    public static function entitlementWindow(string $period): array {
+        if($period === 'Yearly') return ['modifier' => '+ 1 year', 'duration' => '1 Year'];
+        if($period === 'Lifetime') return ['modifier' => '+ 20 years', 'duration' => '20 Years'];
+        if($period === 'Monthly') return ['modifier' => '+ 1 month', 'duration' => '1 Month'];
+
+        throw new \InvalidArgumentException('Paypal billing period is invalid.');
+    }
+
+    private static function validatedPricingContext(?array $context, object $plan, string $period, ?string $secret): ?array {
+        if(!$context || !self::hasSignedPricingContext($context)) return null;
+
+        foreach(['userid', 'period', 'renew', 'planid', 'amount', 'currency', 'signature'] as $field){
+            if(!array_key_exists($field, $context)){
+                throw new \InvalidArgumentException('Paypal pricing context is incomplete.');
+            }
+        }
+
+        if(!in_array($context['renew'], [0, 1, '0', '1'], true)){
+            throw new \InvalidArgumentException('Paypal pricing context is invalid.');
+        }
+
+        $normalized = [
+            'userid' => (int) $context['userid'],
+            'period' => (string) $context['period'],
+            'renew' => (int) $context['renew'],
+            'planid' => (int) $context['planid'],
+            'amount' => (string) $context['amount'],
+            'currency' => strtoupper(trim((string) $context['currency'])),
+        ];
+        self::planAmount($plan, $period);
+        $secret ??= self::pricingSecret();
+        $secret = trim($secret);
+        $expectedSignature = self::pricingSignature($normalized, $secret);
+        $actualSignature = trim((string) $context['signature']);
+
+        if(
+            $secret === ''
+            || $normalized['userid'] < 1
+            || $normalized['planid'] !== (int) ($plan->id ?? 0)
+            || $normalized['period'] !== $period
+            || self::canonicalAmount($normalized['amount']) === null
+            || !preg_match('/^[A-Z]{3}$/D', $normalized['currency'])
+            || strlen($actualSignature) !== strlen($expectedSignature)
+            || !hash_equals($expectedSignature, $actualSignature)
+        ){
+            throw new \InvalidArgumentException('Paypal pricing context is invalid.');
+        }
+
+        return $normalized;
+    }
+
+    private static function hasSignedPricingContext(array $context): bool {
+        return array_key_exists('amount', $context)
+            || array_key_exists('currency', $context)
+            || array_key_exists('signature', $context);
+    }
+
+    private static function pricingSignature(array $context, string $secret): string {
+        $payload = implode('|', [
+            (int) ($context['userid'] ?? 0),
+            (int) ($context['planid'] ?? 0),
+            (string) ($context['period'] ?? ''),
+            (int) ($context['renew'] ?? 0),
+            (string) ($context['amount'] ?? ''),
+            strtoupper(trim((string) ($context['currency'] ?? ''))),
+        ]);
+
+        return hash_hmac('sha256', $payload, trim($secret));
+    }
+
+    private static function pricingSecret(): string {
+        foreach([
+            defined('AuthToken') ? (string) AuthToken : '',
+            defined('EncryptionToken') ? (string) EncryptionToken : '',
+        ] as $secret){
+            $secret = trim($secret);
+
+            if($secret !== '' && !in_array($secret, ['__KEY__', '__ENC__'], true)) return $secret;
+        }
+
+        throw new \RuntimeException('Paypal checkout pricing secret is not configured.');
+    }
+
+    private static function validCoupon($code): ?object {
+        $code = trim((string) $code);
+
+        if($code === '') return null;
+
+        $coupon = DB::coupons()->where('code', clean($code))->first();
+
+        if(!$coupon) return null;
+        if(strtotime('now') > strtotime(date('Y-m-d 11:59:00', strtotime($coupon->validuntil)))) return null;
+        if($coupon->maxuse > 0 && $coupon->used >= $coupon->maxuse) return null;
+
+        return $coupon;
     }
 
     private static function planAmount(object $plan, string $period): string {

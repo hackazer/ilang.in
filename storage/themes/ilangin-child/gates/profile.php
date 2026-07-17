@@ -47,11 +47,11 @@
                                     <?php foreach($items as $item): ?>
                                         <div class="media mb-3">
                                             <?php if($item['image']): ?>
-                                                <img class="mr-3" src="<?php echo $item['image'] ?>" alt="<?php echo $item['title'] ?>">
+                                                <img class="mr-3" src="<?php echo htmlspecialchars((string) $item['image'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?php echo htmlspecialchars((string) $item['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                                             <?php endif ?>
                                             <div class="media-body">
-                                                <h6 class="mt-3"><a href="<?php echo $item['link'] ?>" target="_blank"><?php echo $item['title'] ?></a></h6>
-                                                <?php echo $item['description'] ?>
+                                                <h6 class="mt-3"><a href="<?php echo htmlspecialchars((string) $item['link'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars((string) $item['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a></h6>
+                                                <?php echo htmlspecialchars((string) $item['description'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                                             </div>
                                         </div>
                                     <?php endforeach ?>

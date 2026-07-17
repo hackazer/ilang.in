@@ -72,4 +72,29 @@ final class RssSsrfTest extends TestCase
 
         self::assertSame('Invalid RSS', $result);
     }
+
+    public function testRssRemovesActiveFeedContentAndUnsafeUrls(): void
+    {
+        $xml = '<rss version="2.0"><channel><item>'
+            .'<title><![CDATA[<img src=x onerror=alert(1)>Release]]></title>'
+            .'<link>javascript:alert(1)</link><image>data:text/html,payload</image>'
+            .'<description><![CDATA[<script>alert(1)</script><b>Summary</b>]]></description>'
+            .'</item></channel></rss>';
+
+        $items = App::rss(
+            'https://feeds.example/latest.xml',
+            static fn (string $host): array => ['93.184.216.34'],
+            static function (string $url, array $options) use ($xml): bool {
+                $writer = $options[CURLOPT_WRITEFUNCTION];
+                $writer(null, $xml);
+                return true;
+            }
+        );
+
+        self::assertIsArray($items);
+        self::assertSame('Release', $items[0]['title']);
+        self::assertNull($items[0]['link']);
+        self::assertNull($items[0]['image']);
+        self::assertSame('Summary', $items[0]['description']);
+    }
 }
