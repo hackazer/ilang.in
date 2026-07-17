@@ -1,6 +1,6 @@
 <h1 class="h3 mb-5"><?php ee('Affiliate') ?></h1>
 <div class="row">
-    <div class="col-md-9">        
+    <div class="col-md-9">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title"><?php ee('Referral History') ?></h5>
@@ -22,7 +22,7 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $sale->user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $sale->user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <a href="<?php echo route('admin.user.edit', [$sale->user->id]) ?>"><?php echo $sale->user->email ?></a>
                                         </div>
@@ -31,7 +31,7 @@
                                 <td>
                                     <?php if($sale->referred): ?>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $sale->referred->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $sale->referred->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <a href="<?php echo route('admin.user.edit', [$sale->referred->id]) ?>"><?php echo $sale->referred->email ?></a>
                                         </div>
@@ -45,21 +45,21 @@
                                     <?php if($sale->status == "1"): ?>
                                         <span class="badge bg-success"><?php ee('Approved') ?></span>
                                     <?php elseif($sale->status == "3"): ?>
-                                        <span class="badge bg-success"><?php ee('Paid') ?></span>                                  
+                                        <span class="badge bg-success"><?php ee('Paid') ?></span>
                                     <?php elseif($sale->status == "2"): ?>
                                         <span class="badge bg-danger"><?php ee('Rejected') ?></span>
                                     <?php else: ?>
                                         <span class="badge bg-warning"><?php ee('Pending') ?></span>
                                     <?php endif ?>
-                                </td>                                    
+                                </td>
                                 <td><?php echo \Core\Helper::dtime($sale->referred_on, 'Y-m-d') ?></td>
                                 <td><?php echo $sale->paid_on ? \Core\Helper::dtime($sale->paid_on, 'Y-m-d') : e('Pending') ?></td>
                                 <td>
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
                                         <?php if($sale->status != "1" && $sale->status != "3"): ?>
-                                            <li><a class="dropdown-item" href="<?php echo route('admin.affiliate.update', [$sale->id, 'approve']) ?>"><i data-feather="check"></i> <?php ee('Approve Referral') ?></a></li>
-                                            <li><a class="dropdown-item" href="<?php echo route('admin.affiliate.update', [$sale->id, 'reject']) ?>"><i data-feather="x"></i> <?php ee('Reject Referral') ?></a></li>
+                                            <li><form action="<?php echo route('admin.affiliate.update', [$sale->id, 'approve']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check"></i> <?php ee('Approve Referral') ?></button></form></li>
+                                            <li><form action="<?php echo route('admin.affiliate.update', [$sale->id, 'reject']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x"></i> <?php ee('Reject Referral') ?></button></form></li>
                                         <?php endif ?>
                                         <li><a class="dropdown-item" href="<?php echo  route('admin.email', ['email'=> $sale->user->email])  ?>"><i data-feather="send"></i> <?php ee('Email User') ?></a></li>
                                     </ul>
@@ -67,7 +67,7 @@
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table>   
+                </table>
             </div>
         </div>
     </div>
@@ -78,35 +78,35 @@
             </div>
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.settings.save') ?>" enctype="multipart/form-data">
-                    <?php echo csrf() ?>       
-                    <div class="form-group">
+                    <?php echo csrf() ?>
+                    <div class="mb-3">
                         <label for="affiliate[enabled]" class="form-label"><?php ee('Enable Affiliates') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="affiliate[enabled]" name="affiliate[enabled]" value="1" <?php echo config("affiliate")->enabled ? 'checked':'' ?>>
                             <label class="form-check-label" for="homepage_stats"><?php ee('Enable') ?></label>
                         </div>
                         <p class="form-text"><?php ee('Enable customers to earn commission on qualifying sales.') ?></p>
-                    </div>                                  
-                    <div class="form-group">
+                    </div>
+                    <div class="mb-3">
                         <label for="affiliate[rate]" class="form-label"><?php ee('Commission Rate') ?></label>
                         <input type="text" class="form-control" name="affiliate[rate]" id="affiliate[rate]" value="<?php echo config('affiliate')->rate ?>">
                         <p class="form-text"><?php ee('Enter the commission you want to give to users.') ?></p>
-                    </div>   
-                    <div class="form-group">
+                    </div>
+                    <div class="mb-3">
                         <label for="affiliate[payout]" class="form-label"><?php ee('Minimum Payout') ?></label>
                         <input type="text" class="form-control" name="affiliate[payout]" id="affiliate[payout]" value="<?php echo config('affiliate')->payout ?>">
                         <p class="form-text"><?php ee('Enter the minimum amount of commission to qualify for a payout.') ?></p>
-                    </div> 
-                    <div class="form-group">
+                    </div>
+                    <div class="mb-3">
                         <label for="affiliate[terms]" class="form-label"><?php ee('Terms') ?></label>
                         <textarea id="affiliate[terms]" class="form-control" name="affiliate[terms]"><?php echo config('affiliate')->terms ?></textarea>
                         <p class="form-text"><?php ee('Add your custom terms for affiliate.') ?></p>
-                    </div>  
+                    </div>
                     <button type="submit" class="btn btn-primary"><?php ee('Save Settings') ?></button>
                 </form>
             </div>
         </div>
-    </div>   
+    </div>
 </div>
 <div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
   <div class="modal-dialog">

@@ -19,7 +19,7 @@
                     <div class="card-body px-4">
                         <ul id="top-referrers" class="list-unstyled d-block">
                             <?php foreach($topReferrer as $referrer): ?>
-                                <li class="d-block mb-2 w-100 border-bottom pb-2 fw-bold"><img src="<?php echo !empty($referrer['domain']) ? "https://icons.duckduckgo.com/ip3/".\Core\Helper::parseUrl($referrer['domain'], 'host').".ico" : assets('images/unknown.svg') ?>" width="16" class="mr-2"><?php echo empty($referrer['domain']) ? e('Direct, email and others') : $referrer['domain'] ?> <small class="badge bg-primary text-white float-right"><?php echo $referrer['count'] ?></small></li>
+                                <li class="d-block mb-2 w-100 border-bottom pb-2 fw-bold"><img src="<?php echo !empty($referrer['domain']) ? "https://icons.duckduckgo.com/ip3/".\Core\Helper::parseUrl($referrer['domain'], 'host').".ico" : assets('images/unknown.svg') ?>" width="16" class="me-2"><?php echo empty($referrer['domain']) ? e('Direct, email and others') : $referrer['domain'] ?> <small class="badge bg-primary text-white float-end"><?php echo $referrer['count'] ?></small></li>
                             <?php endforeach ?>
                         </ul>
                     </div>

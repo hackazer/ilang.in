@@ -40,13 +40,9 @@ class Dashboard {
 
         if($request->success && $request->success == 'true') return Helper::redirect()->to(route('dashboard'))->with("info", e("Your payment was successfully made. Thank you."));
 
-        $urls = [];
-        foreach(Url::recent()->where("userid", Auth::user()->rID())->orderByDesc('date')->limit(10)->findMany() as $url){
-            if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                $url->bundlename = $bundle ? $bundle->name : 'na';
-            }
-            $urls[] = $url;
-        }
+        $urls = self::withBundleNames(
+            Url::recent()->where("userid", Auth::user()->rID())->orderByDesc('date')->limit(10)->findMany()
+        );
                     
         $count = new \stdClass;
 
@@ -58,27 +54,13 @@ class Dashboard {
 
         $count->clicksToday = DB::stats()->whereRaw('date >= CURDATE()')->where('urluserid', Auth::user()->rID())->count();
 
-        $recentActivity = DB::stats()->where('urluserid', Auth::user()->rID())->limit(10)->orderByDesc('date')->find(); 
-        
-        foreach($recentActivity as $id => $stats){
-            if(!$url = DB::url()->first($stats->urlid)){
-                unset($recentActivity[$id]);
-            } else {
-                if($url->qrid && $qr = DB::qrs()->select('name')->where('urlid', $url->id)->first()){
-                    $recentActivity[$id]->qr = $qr->name;    
-                }
-
-                if($url->profileid && $profile = DB::profiles()->select('name')->where('urlid', $url->id)->first()){
-                    $recentActivity[$id]->profile = $profile->name;    
-                }
-
-                $recentActivity[$id]->url = $url;
-            }
-        }
+        $recentActivity = self::withActivityRelations(
+            DB::stats()->where('urluserid', Auth::user()->rID())->limit(10)->orderByDesc('date')->find()
+        );
                 
         View::set('title', e('Dashboard'));
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
         CDN::load('autocomplete');
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
@@ -127,9 +109,7 @@ class Dashboard {
             $query->whereLike('pixels', '%'.clean($request->pixel).'%');
         }
 
-        if($request->date && $date = date('Y-m-d 00:00:00', strtotime($request->date))){
-            $query->whereRaw("DATE(date) < DATE('{$date}')");
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
         $limit = 15;
 
         if($request->perpage && is_numeric($request->perpage) && $request->perpage > 15 && $request->perpage <= 100){
@@ -139,17 +119,12 @@ class Dashboard {
 
         if($request->page > 1 && !$results) stop(404);
 
-        foreach($results as $url){
-            if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                $url->bundlename = $bundle ? $bundle->name : 'na';
-            }
-            $urls[] = $url;
-        }
+        $urls = self::withBundleNames($results);
 
         View::set('title', $title);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
         
         return View::with('user.links', compact('urls', 'title'))->extend('layouts.dashboard');
     }
@@ -161,13 +136,9 @@ class Dashboard {
      * @return void
      */
     public function archived(){
-        $urls = [];
-        foreach(Url::archived()->where("userid", Auth::user()->rID())->orderByDesc('date')->paginate(15, true) as $url){
-            if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                $url->bundlename = $bundle ? $bundle->name : 'na';
-            }
-            $urls[] = $url;
-        }
+        $urls = self::withBundleNames(
+            Url::archived()->where("userid", Auth::user()->rID())->orderByDesc('date')->paginate(15, true)
+        );
 
         $title = e('Archived Links');
 
@@ -184,13 +155,9 @@ class Dashboard {
      * @return void
      */
     public function expired(){
-        $urls = [];
-        foreach(Url::expired()->where("userid", Auth::user()->rID())->orderByDesc('date')->paginate(15, true) as $url){
-            if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                $url->bundlename = $bundle ? $bundle->name : 'na';
-            }
-            $urls[] = $url;
-        }
+        $urls = self::withBundleNames(
+            Url::expired()->where("userid", Auth::user()->rID())->orderByDesc('date')->paginate(15, true)
+        );
 
             
         $title = e('Expired Links');
@@ -220,10 +187,12 @@ class Dashboard {
         }
             
 
+        $statsStart = date('Y-m-d 00:00:00', strtotime('-14 days'));
+
         $results = DB::stats()
                     ->selectExpr('COUNT(DATE(date))', 'count')
                     ->selectExpr('DATE(date)', 'date')
-                    ->whereRaw('date >= \''.date('Y-m-d', strtotime('-14 days')).'\'')
+                    ->whereGte('date', $statsStart)
                     ->where('urluserid',Auth::user()->rID())
                     ->orderByDesc('date')
                     ->groupByExpr('DATE(date)')
@@ -243,13 +212,9 @@ class Dashboard {
      * @return void
      */
     public function refresh(){
-        $urls = [];
-        foreach(Url::recent()->where("userid", Auth::user()->rID())->orderByDesc('date')->paginate(15, true) as $url){
-            if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                $url->bundlename = $bundle ? $bundle->name : 'na';
-            }
-            $urls[] = $url;
-        }
+        $urls = self::withBundleNames(
+            Url::recent()->where("userid", Auth::user()->rID())->orderByDesc('date')->paginate(15, true)
+        );
 
         foreach($urls as $url){
             view('partials.links', compact('url'));
@@ -263,13 +228,9 @@ class Dashboard {
      * @return void
      */
     public function refreshArchive(){
-        $urls = [];
-        foreach(DB::url()->where("userid", Auth::user()->rID())->where('archived', 1)->orderByDesc('date')->paginate(15, true) as $url){
-            if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                $url->bundlename = $bundle ? $bundle->name : 'na';
-            }
-            $urls[] = $url;
-        }
+        $urls = self::withBundleNames(
+            DB::url()->where("userid", Auth::user()->rID())->where('archived', 1)->orderByDesc('date')->paginate(15, true)
+        );
 
         foreach($urls as $url){
             view('partials.links', compact('url'));
@@ -291,18 +252,15 @@ class Dashboard {
         echo "<script>$('#search button[type=submit]').addClass('d-none'); $('#search button[type=button]').removeClass('d-none');</script>";
 
         if(strlen($request->q) >= 3) {
-            
-            foreach(Url::whereAnyIs([
+
+            $urls = self::withBundleNames(Url::whereAnyIs([
                 ['url' => "%{$request->q}%"],
                 ['custom' => "%{$request->q}%"],
                 ['alias' => "%{$request->q}%"],
                 ['meta_title' => "%{$request->q}%"],
-            ], 'LIKE ')->where('userid', Auth::user()->rID())->limit(10)->findMany() as $url){
-                
-                if($url->bundle && $bundle = DB::bundle()->where('id', $url->bundle)->first()){
-                    $url->bundlename = $bundle ? $bundle->name : 'na';
-                }
+            ], 'LIKE ')->where('userid', Auth::user()->rID())->limit(10)->findMany());
 
+            foreach($urls as $url){
                 view('partials.links', compact('url'));
             }
        
@@ -349,5 +307,118 @@ class Dashboard {
             }
             view('partials.links', compact('url'));
         }
+    }
+
+    private static function applyDateCutoff($query, ?string $value)
+    {
+        $value = trim((string) $value);
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if(
+            !$date ||
+            ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+            $date->format('Y-m-d') !== $value
+        ){
+            return $query;
+        }
+
+        return $query->whereLt('date', $date->format('Y-m-d H:i:s'));
+    }
+
+    private static function withBundleNames(array $urls, ?callable $loadBundles = null): array
+    {
+        $bundleIds = [];
+
+        foreach($urls as $url){
+            if($url->bundle){
+                $bundleIds[(string) $url->bundle] = $url->bundle;
+            }
+        }
+
+        if(!$bundleIds) return $urls;
+
+        $bundles = $loadBundles
+            ? $loadBundles(array_values($bundleIds))
+            : DB::bundle()->whereIn('id', array_values($bundleIds))->findMany();
+        $bundlesById = [];
+
+        foreach($bundles as $bundle){
+            $bundlesById[(string) $bundle->id] = $bundle;
+        }
+
+        foreach($urls as $url){
+            if($url->bundle && isset($bundlesById[(string) $url->bundle])){
+                $url->bundlename = $bundlesById[(string) $url->bundle]->name;
+            }
+        }
+
+        return $urls;
+    }
+
+    private static function withActivityRelations(
+        array $recentActivity,
+        ?callable $loadUrls = null,
+        ?callable $loadQrs = null,
+        ?callable $loadProfiles = null
+    ): array {
+        $urlIds = [];
+
+        foreach($recentActivity as $stats){
+            $urlIds[(string) $stats->urlid] = $stats->urlid;
+        }
+
+        if(!$urlIds) return $recentActivity;
+
+        $urls = $loadUrls
+            ? $loadUrls(array_values($urlIds))
+            : DB::url()->whereIn('id', array_values($urlIds))->findMany();
+        $urlsById = [];
+        $qrUrlIds = [];
+        $profileUrlIds = [];
+
+        foreach($urls as $url){
+            $urlsById[(string) $url->id] = $url;
+            if($url->qrid) $qrUrlIds[(string) $url->id] = $url->id;
+            if($url->profileid) $profileUrlIds[(string) $url->id] = $url->id;
+        }
+
+        $qrsByUrlId = [];
+        if($qrUrlIds){
+            $qrs = $loadQrs
+                ? $loadQrs(array_values($qrUrlIds))
+                : DB::qrs()->select('urlid')->select('name')->whereIn('urlid', array_values($qrUrlIds))->findMany();
+            foreach($qrs as $qr){
+                if(!isset($qrsByUrlId[(string) $qr->urlid])){
+                    $qrsByUrlId[(string) $qr->urlid] = $qr;
+                }
+            }
+        }
+
+        $profilesByUrlId = [];
+        if($profileUrlIds){
+            $profiles = $loadProfiles
+                ? $loadProfiles(array_values($profileUrlIds))
+                : DB::profiles()->select('urlid')->select('name')->whereIn('urlid', array_values($profileUrlIds))->findMany();
+            foreach($profiles as $profile){
+                if(!isset($profilesByUrlId[(string) $profile->urlid])){
+                    $profilesByUrlId[(string) $profile->urlid] = $profile;
+                }
+            }
+        }
+
+        foreach($recentActivity as $id => $stats){
+            $urlId = (string) $stats->urlid;
+            if(!isset($urlsById[$urlId])){
+                unset($recentActivity[$id]);
+                continue;
+            }
+
+            if(isset($qrsByUrlId[$urlId])) $stats->qr = $qrsByUrlId[$urlId]->name;
+            if(isset($profilesByUrlId[$urlId])) $stats->profile = $profilesByUrlId[$urlId]->name;
+            $stats->url = $urlsById[$urlId];
+        }
+
+        return $recentActivity;
     }
 }

@@ -10,7 +10,7 @@
         <table class="table table-hover my-0">
             <thead>
                 <tr>
-                    <th><?php ee('User') ?></th>                
+                    <th><?php ee('User') ?></th>
                     <th><?php ee('Transaction ID') ?></th>
                     <th><?php ee('Payment Provider TID') ?></th>
                     <th><?php ee('Status') ?></th>
@@ -25,7 +25,7 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $subscription->useravatar ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $subscription->useravatar ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <a href="<?php echo route('admin.users.view', [$subscription->userid]) ?>"><?php echo $subscription->user ?></a>
                                     <?php if($subscription->user): ?>
@@ -36,24 +36,24 @@
                             </div>
                         </td>
                         <td><?php echo $subscription->uniqueid ?></td>
-                        <td><?php echo $subscription->tid?:'NA' ?></td>                        
+                        <td><?php echo $subscription->tid?:'NA' ?></td>
                         <td><?php echo $subscription->status ?></td>
                         <td><?php echo \Helpers\App::currency(config('currency'), $subscription->amount) ?></td>
                         <td><?php echo $subscription->date ?></td>
-                        <td><?php echo $subscription->expiry ?></td>                        
+                        <td><?php echo $subscription->expiry ?></td>
                         <td>
                             <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                             <ul class="dropdown-menu">
                                 <?php if($subscription->status !== 'Active'): ?>
                                     <li><a class="dropdown-item" href="<?php echo route('admin.users.edit', [$subscription->userid]) ?>"><i data-feather="edit"></i> <?php ee('Edit User') ?></a></li>
-                                <?php endif ?>                        
+                                <?php endif ?>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.edit', [$subscription->userid]) ?>"><i data-feather="edit"></i> <?php ee('Edit User') ?></a></li>
                             </ul>
                         </td>
                     </tr>
                 <?php endforeach ?>
             </tbody>
-        </table>    
+        </table>
     </div>
     <?php echo pagination('pagination') ?>
 </div>

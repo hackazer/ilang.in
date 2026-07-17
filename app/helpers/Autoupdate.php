@@ -32,6 +32,7 @@ class AutoUpdate {
 	private $endpoint = NULL;	
 	private $purchaseKey = NULL;
 	private $error = NULL;
+	private $archivePath = NULL;
 
 	/**
 	 * [__construct description]
@@ -134,16 +135,21 @@ class AutoUpdate {
 	 * @return  [type] [description]
 	 */
 	protected function download($link){
-		$this->endpoint = $link;
-		
-		$content = $this->http();
-
-		if(!file_put_contents(ROOT."/main-auto.zip", $content)){
-			$this->error = "The file cannot be downloaded due to server permission. Please change directory permission or update manually.";
-			throw new \Exception($this->error);		
-			return false;			    
+		if(!$this->isHttpsEndpoint($link)){
+			throw new \Exception('The update download URL is invalid.');
 		}
-		
+
+		$this->endpoint = $link;
+		$content = $this->http();
+		$this->archivePath = tempnam(ROOT, '.ilang-update-');
+
+		if(!is_string($this->archivePath) || file_put_contents($this->archivePath, $content, LOCK_EX) === false){
+			$this->error = "The file cannot be downloaded due to server permission. Please change directory permission or update manually.";
+			throw new \Exception($this->error);
+		}
+
+		chmod($this->archivePath, 0600);
+
 		return $this->extract();
 	}
 
@@ -154,50 +160,17 @@ class AutoUpdate {
 	 * @return  [type] [description]
 	 */
 	protected function extract(){
-	
-		$zip = new \ZipArchive();
-		$file = $zip->open(ROOT."/main-auto.zip");
-
-		if($file === true) {
-      
-			if(!$zip->extractTo(ROOT."/")){
-					$this->error = "The file was downloaded but cannot be extracted due to server permission. Please extract it manually.";
-					throw new \Exception($this->error);		
-					return false;	
-			}
-
-			$zip->close();
-      
-    	} else {
-			$this->error = "The file cannot be extracted due to server permission. Please extract it manually.";
-			throw new \Exception($this->error);		
-			return false;	    	
-	  	}
-
-	 	 return $this->update();
-	}
-	/**
-	 * [update description]
-	 * @author KBRmedia <https://gempixel.com>
-	 * @version 1.0
-	 * @return  [type] [description]
-	 */
-	protected function update(){
-		$this->endpoint = \url()."update?update=true&privatekey=".md5('update.'.AuthToken);
-		$this->http();
-		return $this->clean();
-	}
-
-	/**
-	 * [clean description]
-	 * @author KBRmedia <https://gempixel.com>
-	 * @version 1.0
-	 * @return  [type] [description]
-	 */
-	protected function clean(){
-		if(file_exists(ROOT."/main-auto.zip")){
-			unlink(ROOT."/main-auto.zip");
+		try {
+			(new ArchiveValidator())->extract($this->archivePath, ROOT, ArchiveValidator::TYPE_APPLICATION);
 			return true;
+		} catch (\Throwable $exception) {
+			$this->error = "The downloaded update package is invalid or cannot be extracted safely.";
+			throw new \Exception($this->error, 0, $exception);
+		} finally {
+			if(is_string($this->archivePath) && is_file($this->archivePath)){
+				unlink($this->archivePath);
+			}
+			$this->archivePath = null;
 		}
 	}
 	/**
@@ -208,32 +181,54 @@ class AutoUpdate {
 	 * @param   array  $option [description]
 	 * @return  [type]         [description]
 	 */
-	protected function http($option = []){  
-
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, $this->endpoint);
-
-		if(isset($option["data"]) && is_array($option["data"])){
-			
-			$fields = "";
-			foreach($option["data"] as $key => $value) { $fields .= $key.'='.$value.'&'; }
-			rtrim($fields, '&');       
-
-			curl_setopt($curl, CURLOPT_POST, count($option["data"]));
-			curl_setopt($curl, CURLOPT_POSTFIELDS, $fields);
+	protected function http($option = []){
+		if(!$this->isHttpsEndpoint($this->endpoint)){
+			throw new \Exception('The update endpoint is invalid.');
 		}
 
-		curl_setopt($curl, CURLOPT_HTTPHEADER, [
-			"X-Authorization: TOKEN ".$this->purchaseKey,
-			"X-Script: Premium URL Shortener",
-			"X-Version: ".config('version')
-		]);
+		$curl = curl_init();
+		$options = [
+			CURLOPT_URL => $this->endpoint,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_SSL_VERIFYPEER => true,
+			CURLOPT_SSL_VERIFYHOST => 2,
+			CURLOPT_CONNECTTIMEOUT => 10,
+			CURLOPT_TIMEOUT => 60,
+			CURLOPT_FOLLOWLOCATION => false,
+			CURLOPT_HTTPHEADER => [
+				"X-Authorization: TOKEN ".$this->purchaseKey,
+				"X-Script: Premium URL Shortener",
+				"X-Version: ".config('version')
+			],
+		];
 
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		if(isset($option["data"]) && is_array($option["data"])){
+			$options[CURLOPT_POST] = true;
+			$options[CURLOPT_POSTFIELDS] = http_build_query($option["data"], '', '&', PHP_QUERY_RFC3986);
+		}
+
+		curl_setopt_array($curl, $options);
 		$response = curl_exec($curl);
-		curl_close($curl);
+		$status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+		$error = curl_error($curl);
+		unset($curl);
+
+		if(!is_string($response) || $status < 200 || $status >= 300){
+			throw new \Exception($error ?: 'The update server returned an invalid response.');
+		}
 
 		return $response;
-	}  	
+	}
+
+	private function isHttpsEndpoint($endpoint){
+		if(!is_string($endpoint) || filter_var($endpoint, FILTER_VALIDATE_URL) === false){
+			return false;
+		}
+
+		$parts = parse_url($endpoint);
+
+		return is_array($parts)
+			&& strtolower((string) ($parts['scheme'] ?? '')) === 'https'
+			&& !isset($parts['user'], $parts['pass']);
+	}
 }

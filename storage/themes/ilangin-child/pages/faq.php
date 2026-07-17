@@ -14,7 +14,7 @@
         <div class="row row-grid">
             <div class="col-lg-3">
                 <div class="card p-2">
-                    <h6 class="ml-2"><?php ee('Quick Search') ?></h6>
+                    <h6 class="ms-2"><?php ee('Quick Search') ?></h6>
                     <input type="text" class="form-control" data-trigger="faqsearchbox" placeholder="<?php ee('Quick Search') ?>">
                 </div>                                
                 <div data-toggle="sticky" data-sticky-offset="50">
@@ -32,7 +32,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-8 ml-lg-auto">
+            <div class="col-lg-8 ms-lg-auto">
                 <div class="mb-5">
                     <?php foreach($categories as $id => $category): ?>
                         <?php if(isset($faqs[$id])): ?>
@@ -42,10 +42,10 @@
                                 <?php foreach($faqs[$id] as $faq): ?>
                                     <div id="<?php echo $id.'-'.$faq->slug ?>" class="accordion accordion-spaced">
                                         <div class="card">
-                                            <div class="card-header py-4" id="<?php echo $faq->slug ?>" data-toggle="collapse" role="button" data-target="#faq-<?php echo $id ?>-<?php echo $faq->id ?>" aria-expanded="false" aria-controls="faq-<?php echo $id ?>-<?php echo $faq->id ?>">
-                                                <h6 class="mb-0"><i data-feather="help-circle" class="mr-3"></i><?php ee($faq->question) ?></h6>
+                                            <div class="card-header py-4" id="<?php echo $faq->slug ?>" data-bs-toggle="collapse" role="button" data-bs-target="#faq-<?php echo $id ?>-<?php echo $faq->id ?>" aria-expanded="false" aria-controls="faq-<?php echo $id ?>-<?php echo $faq->id ?>">
+                                                <h6 class="mb-0"><i data-feather="help-circle" class="me-3"></i><?php ee($faq->question) ?></h6>
                                             </div>
-                                            <div id="faq-<?php echo $id ?>-<?php echo $faq->id ?>" class="collapse" aria-labelledby="<?php echo $faq->slug ?>" data-parent="#<?php echo $id.'-'.$faq->slug ?>">
+                                            <div id="faq-<?php echo $id ?>-<?php echo $faq->id ?>" class="collapse" aria-labelledby="<?php echo $faq->slug ?>" data-bs-parent="#<?php echo $id.'-'.$faq->slug ?>">
                                                 <div class="card-body">
                                                     <?php ee($faq->answer) ?>
                                                 </div>
@@ -53,8 +53,8 @@
                                         </div>
                                     </div>
                                 <?php endforeach ?>
-                                <div class="text-right py-4">
-                                    <a href="#<?php echo $id ?>" data-scroll-to data-scroll-to-offset="50" class="text-sm font-weight-bold"><?php ee("Back to top") ?><i data-feather="chevron-up" class="ml-2"></i></a>
+                                <div class="text-end py-4">
+                                    <a href="#<?php echo $id ?>" data-scroll-to data-scroll-to-offset="50" class="text-sm fw-bold"><?php ee("Back to top") ?><i data-feather="chevron-up" class="ms-2"></i></a>
                                 </div>
                             </div>
                         <?php endif ?>

@@ -27,12 +27,12 @@
                             <h1 class="h5 mt-2 text-white"><?php echo config('title') ?></h1>
                         <?php endif ?>
                     </a>                    
-                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>                    
                     <div class="collapse navbar-collapse navbar-collapse-overlay" id="navbar-main-collapse">                        
                         <div class="position-relative">
-                            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
                                 <i data-feather="x"></i>
                             </button>
                         </div>

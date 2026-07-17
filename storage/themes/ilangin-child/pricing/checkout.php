@@ -11,12 +11,11 @@
                     <div class="card">
                         <div class="card-body">
                             <h6 class="card-title"><?php ee('Payment Method') ?></h6>
-                            <div class="btn-group btn-group-toggle mb-4" data-toggle="buttons">
+                            <div class="btn-group mb-4" role="group" aria-label="<?php echo e('Payment Method') ?>">
                                 <?php $i = 0; foreach($processors as $name => $processor): ?>
                                     <?php if(!config($name) || !config($name)->enabled) continue ?>
-                                    <label class="btn btn-outline-light text-dark border <?php echo ($i == 0 ? 'active':'') ?>">
-                                        <input type="radio" name="payment" value="<?php echo $name ?>" autocomplete="off" <?php echo ($i == 0 ? 'checked':'') ?>> <?php echo $processor['name'] ?>
-                                    </label>
+                                    <input type="radio" class="btn-check" name="payment" id="payment-<?php echo e($name) ?>" value="<?php echo e($name) ?>" autocomplete="off" <?php echo ($i == 0 ? 'checked':'') ?>>
+                                    <label class="btn btn-outline-light text-dark border" for="payment-<?php echo e($name) ?>"><?php echo $processor['name'] ?></label>
                                 <?php $i++; endforeach ?>
                             </div>
                             <?php foreach($processors as $name => $processor): ?>
@@ -26,23 +25,23 @@
                                 <?php endif ?>
                             <?php endforeach ?>
                             <h6 class="card-title mt-5"><?php ee('Billing Address') ?></h6>
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="name"><?php echo e("Full Name") ?></label>
                                 <input type="text" class="form-control" id="name" name="name" value="<?php echo $user->name ?>" required>
                             </div>							
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="address"><?php echo e("Address") ?></label>
                                 <input type="text" class="form-control" id="address" name="address" value="<?php echo (isset($user->address->address) ? $user->address->address : "" ) ?>" required>
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-group">
+                                    <div class="mb-3">
                                         <label for="city"><?php echo e("City") ?></label>
                                         <input type="text" class="form-control" id="city" name="city" placeholder="e.g. New York" value="<?php echo (isset($user->address->city) ? $user->address->city : "" ) ?>" required>
                                     </div>									
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-group">
+                                    <div class="mb-3">
                                         <label for="state"><?php echo e("State/Province") ?></label>
                                         <input type="text" class="form-control" id="state" name="state" placeholder="e.g. NY" value="<?php echo (isset($user->address->state) ? $user->address->state : "" ) ?>" required>
                                     </div>										
@@ -50,7 +49,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-group">
+                                    <div class="mb-3">
                                         <label for="country"><?php echo e("Country") ?></label>
                                         <select name="country" id="country" class="form-control" data-toggle="select" required>
                                             <?php echo \Core\Helper::Country($user->address->country ?? request()->country()['country'], true, true) ?>
@@ -58,7 +57,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-group">
+                                    <div class="mb-3">
                                         <label for="zip"><?php echo e("Zip/Postal code") ?></label>
                                         <input type="text" class="form-control" id="zip" name="zip" placeholder="e.g. 44205" value="<?php echo (isset($user->address->zip) ? $user->address->zip : "" ) ?>" required>
                                     </div>										
@@ -68,7 +67,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card bg-section-dark border-0 rounded-lg">
+                    <div class="card bg-section-dark border-0 rounded-3">
                         <div class="card-header">
                             <h6 class="card-title text-white"><?php ee('Summary') ?></h6>
                         </div>
@@ -90,7 +89,7 @@
                                     <?php echo \Helpers\App::currency(config('currency'), $plan->price) ?>
                                 </div>
                             </div>
-                            <div class="form-group mt-4 collapse" id="promocode">
+                            <div class="mb-3 mt-4 collapse" id="promocode">
                                 <label for="coupon"><?php echo e("Promo Code") ?></label>
                                 <div class="row">
                                     <div class="col">
@@ -101,8 +100,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="#promocode" data-toggle="collapse"><?php ee('Apply promo code') ?></a>
-                            <div class="form-group mt-4 collapse">
+                            <a href="#promocode" data-bs-toggle="collapse"><?php ee('Apply promo code') ?></a>
+                            <div class="mb-3 mt-4 collapse">
                                 <div class="row">
                                     <div class="col">
                                         <?php ee('Discount') ?>
@@ -112,7 +111,7 @@
                             </div>
                             <div id="taxrate" data-url="<?php echo route('checkout.tax', [$plan->id, $type]) ?>" >
                                 <?php if($tax): ?>
-                                    <div class="form-group mt-4">
+                                    <div class="mb-3 mt-4">
                                         <div class="row">
                                             <div class="col">
                                                 <?php echo "{$tax->name} ({$tax->rate}%)" ?>
@@ -129,13 +128,13 @@
                                 <div class="col">
                                     <strong><?php ee('Total') ?></strong>                                    
                                 </div>
-                                <div class="col-auto text-right">
+                                <div class="col-auto text-end">
                                     <span id="total"><?php echo \Helpers\App::currency(config('currency'), $plan->price) ?></span>
                                     <p class="text-sm"><?php echo $type == 'lifetime' ? e('One-time payment') : e('Billed').' '.e($type) ?></p>
                                 </div>
                             </div>    
                             <div class="d-flex mt-5">
-                                <div class="ml-auto">
+                                <div class="ms-auto">
                                     <button type="submit" class="btn btn-primary btn-sm"><?php ee('Checkout') ?></button>
                                 </div>
                             </div>

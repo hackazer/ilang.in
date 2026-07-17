@@ -33,7 +33,7 @@
                                     <li><a class="dropdown-item" href="<?php echo route($item['type'].'.edit', [$item['id']]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>    
                                 <?php endif ?>
                                 <?php if(user()->teamPermission('bundles.edit')): ?>
-                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('channel.removefrom', [$channel->id, $item['type'], $item['id']]) ?>"><i data-feather="trash"></i> <?php ee('Remove from channel') ?></a></li>
+                                    <li><form action="<?php echo route('channel.removefrom', [$channel->id, $item['type'], $item['id']]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Remove from channel') ?></button></form></li>
                                 <?php endif ?>
                                 </ul>
                             </div>
@@ -83,15 +83,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="newname" id="newname" class="form-control">
                 </div> 
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Description") ?></label>			
                     <input type="text" value="" name="newdescription" id="newdescription" class="form-control">
                 </div>   
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
                     <input type="color" value="" name="newcolor" id="newcolor" class="form-control" data-trigger="colorpicker">
                 </div>

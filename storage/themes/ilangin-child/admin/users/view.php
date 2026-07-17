@@ -53,7 +53,7 @@
                                 <a href="<?php echo $url->url ?>" target="_blank" rel="nofollow"><strong><?php echo \Core\Helper::empty($url->meta_title, $url->url) ?></strong></a><br />
                             <?php endif ?>
                             <small class="text-muted"><?php echo Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?></small> - 
-                            <a href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>"><small class="text-danger"><?php ee('Delete') ?></span></small></a>
+                            <form action="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="btn btn-link p-0"><small class="text-danger"><?php ee('Delete') ?></small></button></form>
                         </div>
                     </div>          
                 <hr>          

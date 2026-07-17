@@ -1,0 +1,84 @@
+{
+  "name": "ilang-in-browser-assets",
+  "private": true,
+  "scripts": {
+    "test": "npm run check:browser && npm run test:browser",
+    "sync:browser": "node scripts/sync-browser-assets.mjs",
+    "check:browser": "node scripts/sync-browser-assets.mjs --check",
+    "test:browser": "node --test tests/Compatibility/*.test.js"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "7.3.1",
+    "@highlightjs/cdn-assets": "11.11.1",
+    "@melloware/coloris": "0.25.0",
+    "@yaireo/tagify": "4.38.0",
+    "ace-builds": "1.44.0",
+    "air-datepicker": "3.6.0",
+    "blockadblock": "3.2.1",
+    "bootstrap": "5.3.8",
+    "chart.js": "4.5.1",
+    "clipboard": "2.0.11",
+    "cookieconsent": "3.1.1",
+    "devbridge-autocomplete": "2.0.4",
+    "feather-icons": "4.29.2",
+    "imask": "7.6.1",
+    "jodit": "4.13.5",
+    "jquery": "4.0.0",
+    "jsvectormap": "1.7.0",
+    "select2": "4.1.0",
+    "svg-injector": "1.1.3"
+  },
+  "devDependencies": {
+    "clean-css": "5.3.3",
+    "sass": "1.101.0",
+    "terser": "5.49.0"
+  },
+  "browserCompatibility": {
+    "holds": {}
+  },
+  "dependencyReleasePolicy": {
+    "managedFirstPartyAssets": [
+      "asset:animate",
+      "asset:bio",
+      "asset:bookmarklet",
+      "asset:bundle.pack",
+    "asset:chart-compat",
+    "asset:charts",
+    "asset:color-picker",
+    "asset:custom",
+    "asset:date-picker",
+    "asset:detect.app",
+    "asset:editor-adapter",
+    "asset:font-selector",
+    "asset:icon-picker",
+    "asset:input-mask",
+    "asset:server"
+    ],
+    "allowedParallelRepresentations": [
+      "asset:animate",
+      "asset:bio",
+    "asset:charts",
+    "asset:color-picker",
+    "asset:custom",
+    "asset:date-picker",
+    "asset:font-selector",
+    "asset:icon-picker",
+    "asset:input-mask",
+      "asset:server",
+      "bootstrap",
+      "clipboard",
+      "feather-icons",
+      "@fortawesome/fontawesome-free",
+      "jquery",
+      "jsvectormap",
+      "select2"
+    ],
+    "allowedDuplicatePackages": [
+      "jquery"
+    ],
+    "compatibilityHolds": {},
+    "runtimeMatrix": {
+      "phpunit": "PHPUnit 12.5.31 is the latest actively supported runner compatible with PHP 8.3; PHP 8.5 additionally runs PHPUnit 13.2.4."
+    }
+  }
+}

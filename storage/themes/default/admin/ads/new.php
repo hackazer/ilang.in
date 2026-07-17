@@ -11,15 +11,15 @@
             <?php echo csrf() ?>
             <div class="row">
                 <div class="col-md-6">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="name" class="form-label"><?php ee('Name') ?></label>
                         <input type="text" class="form-control p-2" name="name" id="name" value="<?php echo old('name') ?>" placeholder="My Sample Ad">
-                    </div>	
+                    </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group mb-4 input-select rounded">
+                    <div class="mb-4 input-select rounded">
                         <label for="type" class="form-label"><?php ee('Ad Type/Placement') ?></label>
-                        <select name="type" id="type" class="form-control" data-toggle="select">
+                        <select name="type" id="type" class="form-select" data-toggle="select">
                             <?php foreach(\Helpers\App::adType() as $id => $type): ?>
                                 <option value="<?php echo $id ?>"><?php echo $type["name"] ?></option>
                             <?php endforeach ?>
@@ -27,13 +27,13 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group mb-4">
+            <div class="mb-4">
                 <label for="code" class="form-label"><?php ee('Ad Code') ?></label>
                 <div id="code-editor"><?php echo old('code') ?></div>
                 <textarea class="d-none" id="code" name="code"></textarea>
-            </div>	        		            		
-            <hr>			              					  			
-            <div class="form-group">
+            </div>
+            <hr>
+            <div class="mb-3">
                 <div class="form-check form-switch">
                     <input class="form-check-input" type="checkbox" data-binary="true" id="enabled" name="enabled" value="1" checked>
                     <label class="form-check-label" for="enabled"><?php ee('Enabled') ?></label>

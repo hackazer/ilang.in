@@ -7,7 +7,7 @@
 
         <?php meta() ?>
         <link rel="stylesheet" type="text/css" href="<?php echo assets('cookieconsent.min.css') ?>">
-        <link rel="stylesheet" href="<?php echo assets('frontend/css/style'.(request()->cookie('darkmode') || \Helpers\App::themeConfig('homestyle', 'darkmode', true) ? '-dark' : '').'.min.css') ?>" id="stylesheet">        
+        <link rel="stylesheet" href="<?php echo assets('frontend/css/style'.(request()->cookie('darkmode') || \Helpers\App::themeConfig('homestyle', 'darkmode', true) ? '-dark' : '').'.min.css') ?>" id="stylesheet">
         <?php block('header') ?>
         <?php if(config('font')): ?>
             <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -17,22 +17,22 @@
         <?php echo html_entity_decode(config('customheader')) ?>
     </head>
     <body>
-        <header id="header-main">            
+        <header id="header-main">
             <nav class="navbar navbar-main navbar-expand-lg <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'navbar-light bg-white border-bottom', 'navbar-dark bg-dark') ?>" id="navbar-main" <?php echo themeSettings::config('homecolor') ?>>
-                <div class="container-fluid">                    
+                <div class="container-fluid">
                     <a class="navbar-brand" href="<?php echo route('home') ?>">
                         <?php if(config('logo')): ?>
                             <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" id="navbar-logo">
                         <?php else: ?>
                             <h1 class="h5 mt-2 text-white"><?php echo config('title') ?></h1>
                         <?php endif ?>
-                    </a>                    
-                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
-                    </button>                    
-                    <div class="collapse navbar-collapse navbar-collapse-overlay" id="navbar-main-collapse">                        
+                    </button>
+                    <div class="collapse navbar-collapse navbar-collapse-overlay" id="navbar-main-collapse">
                         <div class="position-relative">
-                            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
                                 <i data-feather="x"></i>
                             </button>
                         </div>
@@ -43,20 +43,20 @@
         </header>
         <?php section() ?>
         <?php view('partials.footer') ?>
-        
+
         <a href="#top" data-scroll-to data-scroll-to-offset="50" class="btn btn-white btn-icon-only rounded-circle position-fixed zindex-101 right-4 bottom-4 d-none d-lg-inline-flex">
             <span class="btn-inner--icon">
                 <i data-feather="arrow-up"></i>
             </span>
         </a>
-        
-        <script src="<?php echo assets('bundle.pack.js') ?>"></script>   
+
+        <script src="<?php echo assets('bundle.pack.js') ?>"></script>
         <?php if(config('cookieconsent')->enabled): ?>
             <script src="<?php echo assets('cookieconsent.min.js') ?>"></script>
         <?php endif ?>
         <?php block('footer') ?>
         <script type="text/javascript">
-            var lang = <?php echo json_encode([       
+            var lang = <?php echo json_encode([
                 "error" => e('Please enter a valid URL.'),
                 "cookie" => !empty(config('cookieconsent')->message) ? e(config('cookieconsent')->message) : e("This website uses cookies to ensure you get the best experience on our website."),
                 "cookieok" => e("Got it!"),
@@ -70,11 +70,11 @@
                     '7d' => 'Last 7 Days',
                     '3d' => 'Last 30 Days',
                     'tm' => 'This Month',
-                    'lm' => 'Last Month',                    
+                    'lm' => 'Last Month',
                 ]]) ?>
-        </script> 
+        </script>
         <script src="<?php echo assets('frontend/js/app.js') ?>"></script>
-        <script src="<?php echo assets('server.min.js') ?>"></script>  
+        <script src="<?php echo assets('server.min.js') ?>"></script>
         <script>
             feather.replace({
                 'width': '1em',

@@ -37,14 +37,14 @@
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#loginModal" href="<?php echo route('admin.users.login', [$user->id, \Core\Helper::nonce('user.login.'.$user->id)]) ?>" target="_blank"><i data-feather="log-in"></i> <?php ee('Login as User') ?></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.view', [$user->id]) ?>"><i data-feather="user"></i> <?php ee('User Profile') ?></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
-                                <li><a class="dropdown-item" href="<?php echo route('admin.users.ban', [$user->id]) ?>"><i data-feather="x-circle"></i> <?php echo $user->banned ? e('Unban') : e('Ban') ?></a></li>
+                                <li><form action="<?php echo route('admin.users.ban', [$user->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x-circle"></i> <?php echo $user->banned ? e('Unban') : e('Ban') ?></button></form></li>
                                 <?php if(!$user->verified): ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>"><i data-feather="check-circle" class="text-primary"></i> <?php ee('Verify User') ?></a></li>
+                                <li><form action="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle" class="text-primary"></i> <?php ee('Verify User') ?></button></form></li>
                                 <?php endif ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.users.delete', [$user->id, \Core\Helper::nonce('user.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete User') ?></a></li>                                
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.users.delete.all', [$user->id, \Core\Helper::nonce('user.delete')]) ?>"><i data-feather="trash-2"></i> <?php ee('Delete User + Data') ?></a></li>
+                                <li><form action="<?php echo route('admin.users.delete', [$user->id, \Core\Helper::nonce('user.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete User') ?></button></form></li>
+                                <li><form action="<?php echo route('admin.users.delete.all', [$user->id, \Core\Helper::nonce('user.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash-2"></i> <?php ee('Delete User + Data') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>
@@ -119,12 +119,12 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="<?php echo route('admin.invoice', [$payment->id]) ?>"><i data-feather="file-text"></i> <?php ee('View Invoice') ?></a></li>
                                 <?php if($payment->status == "Completed"): ?>
-                                    <li><a class="dropdown-item" href="<?php echo route('admin.payments.markas', [$payment->id, 'refunded']) ?>"><i data-feather="delete"></i> <?php ee('Mark as Refunded') ?></a></li>
+                                    <li><form action="<?php echo route('admin.payments.markas', [$payment->id, 'refunded']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="delete"></i> <?php ee('Mark as Refunded') ?></button></form></li>
                                 <?php else: ?>
-                                    <li><a class="dropdown-item" href="<?php echo route('admin.payments.markas', [$payment->id, 'paid']) ?>"><i data-feather="check-circle"></i> <?php ee('Mark as Paid') ?></a></li>
+                                    <li><form action="<?php echo route('admin.payments.markas', [$payment->id, 'paid']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Mark as Paid') ?></button></form></li>
                                 <?php endif ?>
                                 <li><hr class="dropdown-divider"></li>   
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.payments.delete', [$payment->id, \Core\Helper::nonce('payment.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                <li><form action="<?php echo route('admin.payments.delete', [$payment->id, \Core\Helper::nonce('payment.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>

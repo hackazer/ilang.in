@@ -23,6 +23,8 @@ use Core\DB;
 use Core\Auth;
 use Core\Helper;
 use Core\View;
+use Helpers\HtmlSanitizer;
+use Helpers\LinkPassword;
 use Models\User;
 
 class Bio {
@@ -113,7 +115,7 @@ class Bio {
         
         View::set('title', e('Create Bio'));
 
-        \Helpers\CDN::load('spectrum');
+        \Helpers\CDN::load('coloris');
         
         View::push('<script>var biolang = '.json_encode([
                 'icon' => e('Icon'),
@@ -153,11 +155,12 @@ class Bio {
         ]).';
         </script>', 'custom')->toHeader();
         
-        View::push(assets('frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css'))->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js'), 'script')->toFooter();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.css'))->toHeader();
+        View::push(assets('frontend/libs/fontawesome-free/css/all.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.js'), 'script')->toFooter();
+        View::push('<script>window.appIconPickerOptions = {catalogUrl: '.json_encode(assets('frontend/libs/fontawesome-free/metadata/icons.json')).'};</script>', 'custom')->toHeader();
         View::push(assets('animate.min.css'))->toHeader();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.js'), 'script')->toFooter();
+        View::push(assets('font-selector.min.js'), 'script')->toFooter();
 
         View::push(assets('bio.min.js'), 'script')->toFooter();
 
@@ -176,8 +179,8 @@ class Bio {
         \Helpers\CDN::load('simpleeditor');
 
         View::push("<script>                        
-                        var texteditor = CKEDITOR.replace('editor');
-                        $('input[name=icon]').iconpicker();
+                        EditorAdapter.create('editor');
+                        IconPicker.init('input[name=icon]', window.appIconPickerOptions);
                     </script>", "custom")->toFooter();
 
         return View::with('bio.new', compact('domains'))->extend('layouts.dashboard');
@@ -296,9 +299,9 @@ class Bio {
                 $value['image'] = $filename;
             }
 
-            $data['links'][$key] = in_array($value['type'], ['html', 'text']) ? array_map(function($value){
-                return Helper::clean($value, 3, false, '<strong><i><a><b><u><img><iframe><ul><ol><li><p>');
-            }, $value) :  array_map('clean', $value);
+            $data['links'][$key] = in_array($value['type'], ['html', 'text'], true)
+                ? HtmlSanitizer::sanitizeBioBlock($value)
+                : array_map('clean', $value);
         }
         
         foreach($request->social as $key => $value){
@@ -330,7 +333,7 @@ class Bio {
         $url->date = Helper::dtime();
 
         if($request->pass){
-            $url->pass = clean($request->pass);
+            $url->pass = LinkPassword::hash($request->pass);
         }
                 
         $url->save();
@@ -412,7 +415,9 @@ class Bio {
 
         $url = DB::url()->first($bio->urlid);
 
-        $bio->data = json_decode($bio->data);
+        $bioData = json_decode($bio->data, true);
+        $bioData = HtmlSanitizer::sanitizeBioProfileData(is_array($bioData) ? $bioData : []);
+        $bio->data = json_decode((string) json_encode($bioData));
         $bio->responses = json_decode($bio->responses);
 
         if($request->downloadqr){
@@ -439,7 +444,7 @@ class Bio {
 
         View::set('title', e('Update Bio').' '.$bio->name);
 
-        \Helpers\CDN::load('spectrum');
+        \Helpers\CDN::load('coloris');
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
         View::push('<script>
             
@@ -485,20 +490,24 @@ class Bio {
         </script>', 'custom')->toHeader();
         \Helpers\CDN::load('simpleeditor');
         
-        View::push(assets('frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css'))->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js'), 'script')->toFooter();
+        View::push(assets('frontend/libs/fontawesome-free/css/all.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.js'), 'script')->toFooter();
+        View::push('<script>window.appIconPickerOptions = {catalogUrl: '.json_encode(assets('frontend/libs/fontawesome-free/metadata/icons.json')).'};</script>', 'custom')->toHeader();
         View::push(assets('animate.min.css'))->toHeader();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.css'))->toHeader();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.js'), 'script')->toFooter();
+        View::push(assets('font-selector.min.js'), 'script')->toFooter();
 
         View::push("<script>                        
-                        var texteditor = CKEDITOR.replace('editor');
-                        $('input[name=icon]').iconpicker();                        
+                        EditorAdapter.create('editor');
+                        IconPicker.init('input[name=icon]', window.appIconPickerOptions);
                     </script>", "custom")->toFooter();
 
         View::push(assets('bio.min.js'), 'script')->toFooter();
 
-        View::push('<script> var biodata = '.json_encode($bio->data->links).'; bioupdate();</script>', 'custom')->toFooter();
+        View::push('<script> var biodata = '.json_encode(
+            $bio->data->links,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        ).'; bioupdate();</script>', 'custom')->toFooter();
         View::push('<script>$(document).ready(function() { changeTheme("'.$bio->data->style->bg.'","'.($bio->data->style->gradient->start ?? '').'","'.($bio->data->style->gradient->stop ?? '').'","'.$bio->data->style->buttoncolor.'","'.$bio->data->style->buttontextcolor.'","'.$bio->data->style->textcolor.'") } ); </script>', 'custom')->toFooter();
         
 
@@ -582,7 +591,7 @@ class Bio {
             $url->alias = $profile->alias;
         }
 
-        $url->pass = clean($request->pass);
+        $url->pass = LinkPassword::hash($request->pass ?: null);
 
         if($request->pixels){            
             $url->pixels = $request->pixels && $user && $user->has('pixels') ? clean(implode(",", $request->pixels)) : null;
@@ -686,9 +695,9 @@ class Bio {
             }
 
 
-            $data['links'][$key] = in_array($value['type'], ['html', 'text']) ? array_map(function($value){
-                return Helper::clean($value, 3, false, '<strong><i><a><b><u><img><iframe><ul><ol><li><p>');
-            }, $value) :  array_map('clean', $value);
+            $data['links'][$key] = in_array($value['type'], ['html', 'text'], true)
+                ? HtmlSanitizer::sanitizeBioBlock($value)
+                : array_map('clean', $value);
         }
 
         foreach($request->social as $key => $value){
@@ -853,7 +862,10 @@ class Bio {
         $newurl->save();
 
         $new->urlid = $newurl->id;
-        $new->data = $profile->data;
+        $profileData = json_decode($profile->data, true);
+        $new->data = is_array($profileData)
+            ? json_encode(HtmlSanitizer::sanitizeBioProfileData($profileData))
+            : $profile->data;
         $new->created_at = Helper::dtime();
 
         $new->save();

@@ -1,5 +1,5 @@
 <section>
-    <a href="<?php echo route('login') ?>" class="btn btn-white btn-icon-only rounded-circle position-absolute zindex-101 left-4 top-4 d-none d-lg-inline-flex" data-toggle="tooltip" data-placement="right" title="Login">
+    <a href="<?php echo route('login') ?>" class="btn btn-white btn-icon-only rounded-circle position-absolute zindex-101 left-4 top-4 d-none d-lg-inline-flex" data-bs-toggle="tooltip" data-bs-placement="right" title="Login">
         <span class="btn-inner--icon">
             <i data-feather="key"></i>
         </span>

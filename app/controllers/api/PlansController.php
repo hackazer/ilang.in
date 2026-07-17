@@ -105,7 +105,7 @@ class Plans {
             $user->expiration = Helper::dtime($data->expiration);
         } else {
             if($data->type == 'lifetime'){
-                $user->expiration = Helper::dtime('+10 years');
+                $user->expiration = Helper::dtime('+20 years');
             } elseif($data->type == 'yearly'){
                 $user->expiration = Helper::dtime('+1 year');
             } else {

@@ -28,7 +28,7 @@
                         <div><i data-feather="chevron-right"></i></div>
                     </a> 
                     <?php foreach($menu as $id => $el): ?>
-                        <h6 class="px-3 pt-3"><i data-feather="plus-circle" class="mr-1"></i> <a href="#<?php echo $id ?>" data-target="#holder-<?php echo $id ?>" data-toggle="collapse"><?php echo $el['title'] ?></a> <?php echo ($el['admin']) ? '<small class="badge badge-warning text-xs float-right">'.e('Admin').'</small>' : '' ?></h6>                    
+                        <h6 class="px-3 pt-3"><i data-feather="plus-circle" class="me-1"></i> <a href="#<?php echo $id ?>" data-bs-target="#holder-<?php echo $id ?>" data-bs-toggle="collapse"><?php echo $el['title'] ?></a> <?php echo ($el['admin']) ? '<small class="badge bg-warning text-xs float-end">'.e('Admin').'</small>' : '' ?></h6>
                         <div class="collapse" id="holder-<?php echo $id ?>">
                             <?php foreach($el['endpoints'] as $anchor => $title): ?>
                                 <a href="#<?php echo $anchor ?>" data-scroll-to data-scroll-to-offset="50" class="list-group-item list-group-item-action d-flex justify-content-between">
@@ -42,13 +42,13 @@
                     <?php endforeach ?>
                 </div>
             </div>
-            <div class="col-md-9 col-lg-10 ml-lg-auto py-5 border-left">
+            <div class="col-md-9 col-lg-10 ms-lg-auto py-5 border-start">
                 <div class="mb-5" id="getting-started">
                     <div class="row mb-5">
                         <div class="col-lg-7">
-                            <h4 class="mb-5 px-4"><?php ee('API Reference for Developers') ?> <span class="badge badge-success text-sm align-middle">v3</span></h4>
+                            <h4 class="mb-5 px-4"><?php ee('API Reference for Developers') ?> <span class="badge bg-success text-sm align-middle">v3</span></h4>
                             <div class="card-header py-4">
-                                <h6 class="mb-0" id="started"><i data-feather="terminal" class="mr-3"></i><?php ee('Getting Started') ?></h6>
+                                <h6 class="mb-0" id="started"><i data-feather="terminal" class="me-3"></i><?php ee('Getting Started') ?></h6>
                             </div>
                             <div class="card-body">
                                 <p><?php ee("An API key is required for requests to be processed by the system. Once a user registers, an API key is automatically generated for this user. The API key must be sent with each request (see full example below). If the API key is not sent or is expired, there will be an error. Please make sure to keep your API key secret to prevent abuse.") ?></p>                                                                                    
@@ -69,7 +69,7 @@
                     <div class="row mb-5">
                         <div class="col-lg-7">                     
                             <div class="card-header py-4">
-                                <h6 class="mb-0" id="auth"><i data-feather="terminal" class="mr-3"></i><?php ee('Authentication') ?></h6>
+                                <h6 class="mb-0" id="auth"><i data-feather="terminal" class="me-3"></i><?php ee('Authentication') ?></h6>
                             </div>
                             <div class="card-body">
                                 <p><?php ee("To authenticate with the API system, you need to send your API key as an authorization token with each request. You can see sample code below.") ?></p>                                   
@@ -78,8 +78,8 @@
                         <div class="col-lg-5">
                             <div class="mt-8 p-3 bg-secondary rounded">
                                 <div class="btn-group code-lang mb-3">
-                                    <a href="#curl" class="btn btn-dark btn-xs active">cURL</a>
-                                    <a href="#php" class="btn btn-dark btn-xs">PHP</a>
+                                    <a href="#curl" class="btn btn-dark btn-sm active">cURL</a>
+                                    <a href="#php" class="btn btn-dark btn-sm">PHP</a>
                                 </div>
                                 <div class="code-selector" data-id="curl">
                                     <pre><code class="rounded bash"><?php echo str_replace("                  ","", "curl --location --request POST '".route('api.url.create')."' \ 
@@ -111,7 +111,7 @@
                 <div id="ratelimit" class="row mb-5">
                     <div class="col-lg-7">
                         <div class="card-header py-4">
-                            <h6 class="mb-0" id="rate"><i data-feather="terminal" class="mr-3"></i><?php ee('Rate Limit') ?></h6>
+                            <h6 class="mb-0" id="rate"><i data-feather="terminal" class="me-3"></i><?php ee('Rate Limit') ?></h6>
                         </div>
                         <div class="card-body">
                             <p><?php ee("Our API has a rate limiter to safeguard against spike in requests to maximize its stability. Our rate limiter is currently caped at {x} requests per {y} minute.", null, ['x' => $rate[0], 'y' => $rate[1]]) ?></p>    
@@ -128,7 +128,7 @@
                 <div id="responsehandling" class="row mb-5">
                     <div class="col-lg-7">
                         <div class="card-header py-4">
-                            <h6 class="mb-0" id="response"><i data-feather="terminal" class="mr-3"></i><?php ee('Response Handling') ?></h6>
+                            <h6 class="mb-0" id="response"><i data-feather="terminal" class="me-3"></i><?php ee('Response Handling') ?></h6>
                         </div>
                         <div class="card-body">
                             <p><?php ee('All API response are returned in JSON format by default. To convert this into usable data, the appropriate function will need to be used according to the language. In PHP, the function json_decode() can be used to convert the data to either an object (default) or an array (set the second parameter to true). It is very important to check the error key as that provides information on whether there was an error or not. You can also check the header code.') ?></p>                            
@@ -145,16 +145,16 @@
                 </div>                
                 <?php foreach($api as $id => $el): ?>
                     <hr id="<?php echo $id ?>">
-                    <h4 class="mb-5 px-4"><a href="#<?php echo $id ?>"><i data-feather="bookmark" class="mr-3"></i></a>  <?php echo $el['title'] ?></h4>   
-                    <?php if($el['description']):?><p class="mt-2 ml-4"><?php echo $el['description'] ?></p><?php endif ?>
+                    <h4 class="mb-5 px-4"><a href="#<?php echo $id ?>"><i data-feather="bookmark" class="me-3"></i></a>  <?php echo $el['title'] ?></h4>
+                    <?php if($el['description']):?><p class="mt-2 ms-4"><?php echo $el['description'] ?></p><?php endif ?>
                     <?php foreach($el['endpoints'] as $key => $data): ?>
                         <div id="<?php echo $id.'-'.$key ?>" class="row mb-5">
                             <div class="col-lg-7">                                                 
                                 <div class="card-header">
-                                    <h6 class="mb-0" id="<?php echo \Core\Helper::slug($data['title']) ?>"><i data-feather="terminal" class="mr-3"></i><?php echo $data['title'] ?></h6>
+                                    <h6 class="mb-0" id="<?php echo \Core\Helper::slug($data['title']) ?>"><i data-feather="terminal" class="me-3"></i><?php echo $data['title'] ?></h6>
                                 </div>
                                 <div class="card-body">
-                                    <span class="badge badge-<?php echo \Helpers\App::apiMethodColor($data['method']) ?> mr-2 align-middle text-xs"><?php echo $data['method'] ?></span> <code><?php echo $data['route'] ?></code>
+                                    <span class="badge bg-<?php echo \Helpers\App::apiMethodColor($data['method']) ?> me-2 align-middle text-xs"><?php echo $data['method'] ?></span> <code><?php echo $data['route'] ?></code>
                                     <p class="mt-3"><?php echo $data['description'] ?></p>    
                                     <?php if($data['parameters']): ?>
                                         <div class="table-responsive mt-4">
@@ -176,8 +176,8 @@
                             <div class="col-lg-5">
                                 <div class="mt-3 p-3 bg-secondary rounded">
                                     <div class="btn-group code-lang mb-3">
-                                        <a href="#curl" class="btn btn-dark btn-xs active">cURL</a>
-                                        <a href="#php" class="btn btn-dark btn-xs">PHP</a>
+                                        <a href="#curl" class="btn btn-dark btn-sm active">cURL</a>
+                                        <a href="#php" class="btn btn-dark btn-sm">PHP</a>
                                     </div>
                                     <div class="code-selector" data-id="curl">
                                         <pre><code class="rounded bash"><?php echo str_replace("                                        ","", "curl --location --request ".$data['method']." '".$data['route']."' \

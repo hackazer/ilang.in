@@ -16,7 +16,7 @@
             <div id="content" class="mt-5">
                 <?php foreach($urls as $url): ?>
                     <div class="item mb-3">
-                        <a href="<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>" class="btn btn-block d-block p-3 btn-custom"><?php echo !empty($url->meta_title) ? $url->meta_title : $url->url ?></a>
+                        <a href="<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>" class="btn w-100 d-block p-3 btn-custom"><?php echo !empty($url->meta_title) ? $url->meta_title : $url->url ?></a>
                     </div>
                 <?php endforeach ?>
                 <?php echo simplePagination('btn-custom') ?>
@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="text-center mt-8 opacity-8">
-        <a class="navbar-brand mr-0" href="<?php echo route('home') ?>">
+        <a class="navbar-brand me-0" href="<?php echo route('home') ?>">
             <?php if(config('logo')): ?>
                 <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" width="80" id="navbar-logo">
             <?php else: ?>                

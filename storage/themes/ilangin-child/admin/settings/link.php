@@ -10,7 +10,7 @@
                     <?php echo csrf() ?>
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="form-group input-select">
+                            <div class="mb-3 input-select">
                                 <label for="frame" class="form-label"><?php ee('Default Redirection') ?></label>
                                 <select name="frame" id="frame" class="form-control" data-toggle="select">
                                     <option <?php echo (config("frame") == '0' ? "selected":"") ?> value="0"><?php ee('None') ?></option>	
@@ -22,7 +22,7 @@
                             </div>                            
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="timer" class="form-label"><?php ee('Splash Page Timer') ?></label>
                                 <input class="form-control p-2" name="timer" id="timer" value="<?php echo config('timer') ?>">
                                 <p class="form-text"><?php ee('Timer for the splash page.') ?></p>
@@ -30,18 +30,18 @@
                         </div>
                     </div>
 
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
 					    <label for="alias_length" class="form-label"><?php ee('Shortener Alias Length') ?></label>
 					    <input class="form-control" name="alias_length" id="alias_length" value="<?php echo config('alias_length') ?>">
 					    <p class="form-text"><?php ee('This field is used to generate a random alias of X length. Minimum value 2.') ?></p>
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
 					    <label for="schemes" class="form-label"><?php ee('Allowed Schemes') ?></label>
 					    <input type="text" class="form-control" name="schemes" id="schemes" value="<?php echo config('schemes') ?>" data-toggle="tags" placeholder="Enter text">
 					    <p class="form-text"><?php ee('Add or remove allowed url schemes.') ?></p>
                     </div>
                     <hr>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="" class="form-label"><?php ee('Anonymous Links Stats') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="tracking" name="tracking" value="1" <?php echo config("tracking") ? 'checked':'' ?>>
@@ -49,7 +49,7 @@
                         </div>
                         <p class="form-text"><?php ee('Disable this if you do not want to store data for anonymous links. Clicks will still be counted but not anything else. This is good if you want to save on database space.') ?></p>
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="" class="form-label"><?php ee('Manual Link Approval') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="manualapproval" name="manualapproval" value="1" <?php echo config("manualapproval") ? 'checked':'' ?>>
@@ -57,7 +57,7 @@
                         </div>
                         <p class="form-text"><?php ee('Enable this to manually approve all links shortened.') ?></p>
                     </div>                  
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="" class="form-label"><?php ee('Media Gateway') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="show_media" name="show_media" value="1" <?php echo config("show_media") ? 'checked':'' ?>>
@@ -65,7 +65,7 @@
                         </div>
                         <p class="form-text"><?php ee('Enabling this will create automatically media pages for URLs such as Youtube, Vine, Dailymotion. Registered users can override this option from user settings.') ?></p>
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="" class="form-label"><?php ee('Geo Targeting') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="geotarget" name="geotarget" value="1" <?php echo config("geotarget") ? 'checked':'' ?>>
@@ -73,7 +73,7 @@
                         </div>
                         <p class="form-text"><?php ee('Redirects user according to their country (if set by user). This is a global feature. Disabling this will disable it across the app.') ?></p>
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="" class="form-label"><?php ee('Device Targeting') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="devicetarget" name="devicetarget" value="1" <?php echo config("devicetarget") ? 'checked':'' ?>>

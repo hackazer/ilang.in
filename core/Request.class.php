@@ -23,6 +23,8 @@ namespace Core;
 use Core\Helper;
 
 final class Request {
+	public const MAX_UPLOAD_BYTES = 52_428_800;
+
 	/**
 	 * Sessions
 	 *
@@ -70,27 +72,26 @@ final class Request {
 	 * @var array
 	 */
 	private $_FILEcommon	= [
-								"js" => ["application/javascript"],
-								"json" => ["application/json"],
-								"xml"  => ["application/xml"],
+								"js" => ["application/javascript", "text/javascript", "text/plain"],
+								"json" => ["application/json", "text/plain"],
+								"xml"  => ["application/xml", "text/xml", "text/plain"],
 								"zip"  => ["application/zip", "application/x-zip-compressed"],
 								"pdf"  => ["application/pdf"],
-								"sql"  => ["application/sql"],
+								"sql"  => ["application/sql", "text/plain"],
 								"doc"  => ["application/msword"],
 								"mpeg" => ["audio/mpeg"],
 								"mp4" => ["video/mp4"],
 								"ogg"  => ["audio/ogg"],
-								"css"  => ["text/css"],
+								"css"  => ["text/css", "text/plain"],
 								"html" => ["text/html"],
-								"xml"  => ["text/xml"],
-								"csv"  => ["text/csv"],
+								"csv"  => ["text/csv", "text/plain"],
 								"txt"	=> ["text/plain"],
 								"png"  => ["image/png"],
 								"jpeg" => ["image/jpeg"],
 								"jpg" => ["image/jpeg"],
 								"gif"  => ["image/gif"],
-								"ico" => ["image/x-icon"],
-								"svg" => ['image/svg+xml']
+								"ico" => ["image/x-icon", "image/vnd.microsoft.icon"],
+								"svg" => ["image/svg+xml", "application/xml", "text/xml", "text/plain"]
 							];
 	/**
 	 * File Object
@@ -112,7 +113,7 @@ final class Request {
 	public function __construct(){
 		
 		
-		$this->_HTTPmethod = Helper::clean($_SERVER['REQUEST_METHOD'], 3, TRUE);
+		$this->_HTTPmethod = Helper::clean($_SERVER['REQUEST_METHOD'] ?? 'GET', 3, TRUE);
 
 		if(!in_array($this->_HTTPmethod, ["GET", "POST", "PUT", "DELETE","PATCH"])) return false;
 
@@ -187,23 +188,49 @@ final class Request {
 			$this->_HTTPfiles = new \stdClass;
 			foreach ($_FILES as $key => $file) {
 				
-				if(empty($file["type"]) || empty($file["name"])) continue;
+				if(empty($file["name"]) || empty($file["tmp_name"])) continue;
 				if(isset($this->_HTTPfiles->{$key})) continue;
 
+				$location = (string) $file["tmp_name"];
+				$type = $this->uploadedFileMime($location);
+				$size = $this->uploadedFileSize($location);
+				$extension = strtolower((string) Helper::extension($file["name"]));
+				$mimematch = isset($this->_FILEcommon[$extension]) && in_array($type, $this->_FILEcommon[$extension], true);
+				$sizevalid = $size > 0 && $size <= self::MAX_UPLOAD_BYTES;
+				$uploadvalid = (int) ($file["error"] ?? UPLOAD_ERR_OK) === UPLOAD_ERR_OK;
+
 				$this->_HTTPfiles->{$key} = new \stdCLass;
-				$this->_HTTPfiles->{$key}->allowed = in_array($file["type"], $this->_FILEacceptable) ? true : false;
 				$this->_HTTPfiles->{$key}->name = Helper::clean($file["name"]);
-				$this->_HTTPfiles->{$key}->ext = Helper::extension($file["name"]);
-				$this->_HTTPfiles->{$key}->type = Helper::clean($file["type"]);
-				$this->_HTTPfiles->{$key}->location = Helper::clean($file["tmp_name"]);
-				$this->_HTTPfiles->{$key}->size = $file["size"];
-				$this->_HTTPfiles->{$key}->sizekb = round($file["size"] / 1024, 2);
+				$this->_HTTPfiles->{$key}->ext = $extension;
+				$this->_HTTPfiles->{$key}->type = $type;
+				$this->_HTTPfiles->{$key}->location = Helper::clean($location);
+				$this->_HTTPfiles->{$key}->size = $size;
+				$this->_HTTPfiles->{$key}->sizekb = round($size / 1024, 2);
 				$this->_HTTPfiles->{$key}->sizemb = round($this->_HTTPfiles->{$key}->sizekb / 1024, 3);
-				$this->_HTTPfiles->{$key}->mimematch = (isset($this->_FILEcommon[Helper::extension($file["name"])]) && in_array($file["type"], $this->_FILEcommon[Helper::extension($file["name"])])) ? true : false;
-				$this->_HTTPfiles->{$key}->isvalid = $this->_HTTPfiles->{$key}->mimematch;
+				$this->_HTTPfiles->{$key}->mimematch = $mimematch;
+				$this->_HTTPfiles->{$key}->sizevalid = $sizevalid;
+				$this->_HTTPfiles->{$key}->isvalid = $uploadvalid && $mimematch && $sizevalid;
+				$this->_HTTPfiles->{$key}->allowed = $this->_HTTPfiles->{$key}->isvalid && in_array($type, $this->_FILEacceptable, true);
 			}
 		}
 
+	}
+
+	private function uploadedFileMime(string $location): string {
+		if(!is_file($location) || !is_readable($location)) return 'application/octet-stream';
+
+		$finfo = new \finfo(FILEINFO_MIME_TYPE);
+		$type = $finfo->file($location);
+
+		return is_string($type) && $type !== '' ? strtolower($type) : 'application/octet-stream';
+	}
+
+	private function uploadedFileSize(string $location): int {
+		if(!is_file($location)) return 0;
+
+		$size = filesize($location);
+
+		return is_int($size) && $size >= 0 ? $size : 0;
 	}
 	/**
 	 * Return File Object
@@ -253,7 +280,15 @@ final class Request {
 			
 			if(!isset($this->_FILEcommon[$type])) continue;
 
-			$this->_FILEacceptable[] = $this->_FILEcommon[$type];
+			$this->_FILEacceptable = array_merge($this->_FILEacceptable, $this->_FILEcommon[$type]);
+		}
+
+		$this->_FILEacceptable = array_values(array_unique($this->_FILEacceptable));
+
+		if($this->_HTTPfiles){
+			foreach($this->_HTTPfiles as $file){
+				$file->allowed = $file->isvalid && in_array($file->type, $this->_FILEacceptable, true);
+			}
 		}
 
 	}
@@ -325,6 +360,16 @@ final class Request {
 		return null;
 	}
 	/**
+	 * Get server information as a string
+	 * @param string $name
+	 * @param string $default
+	 */
+	public function serverString(string $name, string $default = ''): string {
+		$value = $this->server($name);
+
+		return is_scalar($value) ? (string) $value : $default;
+	}
+	/**
 	 * Full URI
 	 * @author GemPixel <https://gempixel.com>
 	 * @version 1.0
@@ -391,7 +436,7 @@ final class Request {
 	 * @param   int    $segment [description]
 	 * @return  [type]          [description]
 	 */
-	public function segment(int $segment = null){
+	public function segment(?int $segment = null){
 
 		$uri = explode("/", $this->path());
 
@@ -414,17 +459,95 @@ final class Request {
 	 * @return  boolean [description]
 	 */
 	public function isSecure(){
+		$https = $_SERVER['HTTPS'] ?? null;
 
-		if($this->server('HTTPS') == 'on' || $this->server('SERVER_PORT') == 443 || $this->server('HTTP_X_FORWARDED_PROTO') == 'https'){
-			return true;
+		if(!empty($https) && is_scalar($https) && strtolower(trim((string) $https)) !== 'off') return true;
+		if((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443) return true;
+		if(!$this->isTrustedProxyPeer()) return false;
+
+		$schemes = [];
+
+		foreach([$this->forwardedHeaderScheme(), $this->xForwardedProtoScheme()] as $scheme){
+			if($scheme !== null) $schemes[] = $scheme;
 		}
 
-		if($this->server('HTTP_CF_VISITOR')){
-			$visitor = json_decode($this->server('HTTP_CF_VISITOR'));
-			if(isset($visitor) && $visitor->scheme == 'https') return true;
+		if($this->isTrustedCloudflarePeer()){
+			$cloudflareScheme = $this->cloudflareVisitorScheme();
+
+			if($cloudflareScheme !== null) $schemes[] = $cloudflareScheme;
 		}
 
-		return false;
+		$schemes = array_values(array_unique($schemes));
+
+		return count($schemes) === 1 && $schemes[0] === 'https';
+	}
+
+	/**
+	 * Check whether the immediate peer is explicitly trusted to set proxy headers.
+	 */
+	private function isTrustedProxyPeer(): bool {
+		$remoteAddress = $this->normalizeIp($_SERVER['REMOTE_ADDR'] ?? null);
+
+		if($remoteAddress === null) return false;
+		if($this->ipMatchesAnyCidr($remoteAddress, $this->trustedProxyCidrs())) return true;
+
+		return $this->isTrustedCloudflarePeer($remoteAddress);
+	}
+
+	/**
+	 * Return the scheme from the nearest RFC 7239 Forwarded element.
+	 */
+	private function forwardedHeaderScheme(): ?string {
+		$header = $_SERVER['HTTP_FORWARDED'] ?? null;
+
+		if(!is_string($header) || trim($header) === '') return null;
+
+		$elements = explode(',', $header);
+		$nearestElement = trim((string) end($elements));
+
+		foreach(explode(';', $nearestElement) as $parameter){
+			$parts = explode('=', $parameter, 2);
+
+			if(count($parts) !== 2 || strtolower(trim($parts[0])) !== 'proto') continue;
+
+			return $this->normalizeForwardedScheme(trim($parts[1], " \t\n\r\0\x0B\""));
+		}
+
+		return null;
+	}
+
+	/**
+	 * Return the scheme reported by the nearest X-Forwarded-Proto hop.
+	 */
+	private function xForwardedProtoScheme(): ?string {
+		$header = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null;
+
+		if(!is_string($header) || trim($header) === '') return null;
+
+		$schemes = explode(',', $header);
+
+		return $this->normalizeForwardedScheme((string) end($schemes));
+	}
+
+	/**
+	 * Return Cloudflare's visitor scheme only for an opted-in official edge.
+	 */
+	private function cloudflareVisitorScheme(): ?string {
+		$header = $_SERVER['HTTP_CF_VISITOR'] ?? null;
+
+		if(!is_string($header) || trim($header) === '') return null;
+
+		$visitor = json_decode($header);
+
+		return isset($visitor->scheme) && is_string($visitor->scheme)
+			? $this->normalizeForwardedScheme($visitor->scheme)
+			: null;
+	}
+
+	private function normalizeForwardedScheme(string $scheme): ?string {
+		$scheme = strtolower(trim($scheme));
+
+		return in_array($scheme, ['http', 'https'], true) ? $scheme : null;
 	}
 	/**
 	 * Is Ajax
@@ -441,26 +564,168 @@ final class Request {
 	 * @version 6.2.1
 	 */
 	public function ip(){
+		$remoteAddress = $this->normalizeIp($_SERVER['REMOTE_ADDR'] ?? null);
 
-		if(isset($_SERVER['HTTP_CF_CONNECTING_IP'])) $ipaddress =  $_SERVER['HTTP_CF_CONNECTING_IP'];
-		elseif (isset($_SERVER['HTTP_X_REAL_IP'])) 	 	$ipaddress = $_SERVER['HTTP_X_REAL_IP'];
-		elseif (isset($_SERVER['HTTP_CLIENT_IP']))	 		$ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-		elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']))		$ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-		elseif (isset($_SERVER['HTTP_X_FORWARDED']))		$ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-		elseif (isset($_SERVER['HTTP_FORWARDED_FOR'])) $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-		elseif (isset($_SERVER['HTTP_FORWARDED']))	$ipaddress = $_SERVER['HTTP_FORWARDED'];
-		elseif (isset($_SERVER['REMOTE_ADDR']))	$ipaddress = $_SERVER['REMOTE_ADDR'];
+		if($remoteAddress === null) return '';
 
-		$ipaddress = Helper::clean($ipaddress, 3, true);
+		if($this->trustsCloudflare() && $this->ipMatchesAnyCidr($remoteAddress, self::cloudflareCidrs())){
+			if(!isset($_SERVER['HTTP_CF_CONNECTING_IP'])) return $remoteAddress;
 
-		if(substr($ipaddress, 0, 7) == "::ffff:"){
-		    $ipaddress = str_replace("::ffff:", "", $ipaddress);
+			return $this->normalizeIp($_SERVER['HTTP_CF_CONNECTING_IP']) ?? $remoteAddress;
 		}
-		
-		$ip = explode(",", $ipaddress);
-		if(is_array($ip) && count($ip) > 1) return $ip[0];
 
-		return $ipaddress;
+		$trustedProxyCidrs = $this->trustedProxyCidrs();
+
+		if(!$trustedProxyCidrs || !$this->ipMatchesAnyCidr($remoteAddress, $trustedProxyCidrs)) return $remoteAddress;
+		if(!isset($_SERVER['HTTP_X_FORWARDED_FOR']) || !is_string($_SERVER['HTTP_X_FORWARDED_FOR'])) return $remoteAddress;
+
+		$forwardedAddresses = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+		$validatedAddresses = [];
+
+		foreach($forwardedAddresses as $forwardedAddress){
+			$validatedAddress = $this->normalizeIp($forwardedAddress);
+
+			if($validatedAddress === null) return $remoteAddress;
+
+			$validatedAddresses[] = $validatedAddress;
+		}
+
+		$currentAddress = $remoteAddress;
+
+		for($index = count($validatedAddresses) - 1; $index >= 0; $index--){
+			if(!$this->ipMatchesAnyCidr($currentAddress, $trustedProxyCidrs)) return $currentAddress;
+
+			$currentAddress = $validatedAddresses[$index];
+		}
+
+		return $currentAddress;
+	}
+
+	/**
+	 * Return explicitly configured trusted proxy networks.
+	 */
+	private function trustedProxyCidrs(): array {
+		$configuredCidrs = getenv('TRUSTED_PROXY_CIDRS');
+
+		if(!is_string($configuredCidrs) || trim($configuredCidrs) === '') return [];
+
+		return preg_split('/[\s,]+/', trim($configuredCidrs), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+	}
+
+	/**
+	 * Cloudflare proxy trust is disabled unless explicitly enabled.
+	 */
+	private function trustsCloudflare(): bool {
+		$value = getenv('TRUST_CLOUDFLARE');
+
+		if(!is_string($value)) return false;
+
+		return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+	}
+
+	/**
+	 * Check whether the immediate peer is an explicitly trusted Cloudflare edge.
+	 */
+	private function isTrustedCloudflarePeer(?string $remoteAddress = null): bool {
+		if(!$this->trustsCloudflare()) return false;
+
+		$remoteAddress = $remoteAddress ?? $this->normalizeIp($_SERVER['REMOTE_ADDR'] ?? null);
+
+		return $remoteAddress !== null && $this->ipMatchesAnyCidr($remoteAddress, self::cloudflareCidrs());
+	}
+
+	/**
+	 * Official Cloudflare edge ranges from https://www.cloudflare.com/ips/.
+	 */
+	private static function cloudflareCidrs(): array {
+		return [
+			'173.245.48.0/20',
+			'103.21.244.0/22',
+			'103.22.200.0/22',
+			'103.31.4.0/22',
+			'141.101.64.0/18',
+			'108.162.192.0/18',
+			'190.93.240.0/20',
+			'188.114.96.0/20',
+			'197.234.240.0/22',
+			'198.41.128.0/17',
+			'162.158.0.0/15',
+			'104.16.0.0/13',
+			'104.24.0.0/14',
+			'172.64.0.0/13',
+			'131.0.72.0/22',
+			'2400:cb00::/32',
+			'2606:4700::/32',
+			'2803:f800::/32',
+			'2405:b500::/32',
+			'2405:8100::/32',
+			'2a06:98c0::/29',
+			'2c0f:f248::/32',
+		];
+	}
+
+	/**
+	 * Normalize and validate an IPv4 or IPv6 address.
+	 */
+	private function normalizeIp(mixed $address): ?string {
+		if(!is_string($address)) return null;
+
+		$address = trim($address);
+
+		if(strncasecmp($address, '::ffff:', 7) === 0){
+			$mappedAddress = substr($address, 7);
+
+			if(filter_var($mappedAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) return $mappedAddress;
+		}
+
+		if(filter_var($address, FILTER_VALIDATE_IP) === false) return null;
+
+		$packedAddress = inet_pton($address);
+
+		return $packedAddress === false ? null : inet_ntop($packedAddress);
+	}
+
+	/**
+	 * Check whether an address belongs to any valid configured CIDR.
+	 */
+	private function ipMatchesAnyCidr(string $address, array $cidrs): bool {
+		foreach($cidrs as $cidr){
+			if($this->ipMatchesCidr($address, $cidr)) return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Compare IPv4 and IPv6 addresses using their packed binary form.
+	 */
+	private function ipMatchesCidr(string $address, mixed $cidr): bool {
+		if(!is_string($cidr)) return false;
+
+		$parts = explode('/', trim($cidr), 2);
+		$network = $this->normalizeIp($parts[0]);
+
+		if($network === null) return false;
+
+		$packedAddress = inet_pton($address);
+		$packedNetwork = inet_pton($network);
+
+		if($packedAddress === false || $packedNetwork === false || strlen($packedAddress) !== strlen($packedNetwork)) return false;
+
+		$totalBits = strlen($packedAddress) * 8;
+		$prefixLength = count($parts) === 2 && ctype_digit($parts[1]) ? (int) $parts[1] : $totalBits;
+
+		if($prefixLength < 0 || $prefixLength > $totalBits) return false;
+
+		$fullBytes = intdiv($prefixLength, 8);
+		$remainingBits = $prefixLength % 8;
+
+		if($fullBytes > 0 && substr($packedAddress, 0, $fullBytes) !== substr($packedNetwork, 0, $fullBytes)) return false;
+		if($remainingBits === 0) return true;
+
+		$mask = (0xff << (8 - $remainingBits)) & 0xff;
+
+		return (ord($packedAddress[$fullBytes]) & $mask) === (ord($packedNetwork[$fullBytes]) & $mask);
 	}
 	/**
 	 * Current User Agent
@@ -562,33 +827,74 @@ final class Request {
 	 * @param [type] $ip
 	 * @return void
 	 */
-	public function country($ip = null){		
-		$ip = $ip ?? $this->ip();
+	public function country(
+		$ip = null,
+		?callable $apiFetcher = null,
+		?callable $cacheReader = null,
+		?callable $cacheWriter = null,
+		?array $geoConfig = null
+	){
+		$empty = ['city' => null, 'state' => null, 'country' => null];
+		$ip = $this->normalizeIp($ip ?? $this->ip());
 
-		if(appConfig('app.geodriver') == 'api'){
+		if($ip === null) return $empty;
 
-			$url = str_replace('{IP}', $ip, appConfig('app.geopath'));
-			$response = Http::url($url)->get()->bodyObject();
-			return ['city' => $response->city, 'country' => $response->country_name];
-		}
+		$geoConfig ??= [
+			'driver' => appConfig('app.geodriver'),
+			'path' => appConfig('app.geopath'),
+		];
+		$driver = (string) ($geoConfig['driver'] ?? '');
+		$path = $geoConfig['path'] ?? null;
+		$cacheKey = 'geoip.'.hash('sha256', $ip);
+		$cacheReader ??= static fn(string $key): mixed =>
+			defined('CACHE') && CACHE === true ? Helper::cacheGet($key) : null;
+		$cacheWriter ??= static fn(string $key, array $value, int $ttl): mixed =>
+			defined('CACHE') && CACHE === true ? Helper::cacheSet($key, $value, $ttl) : $value;
 
-		if(appConfig('app.geodriver') == 'maxmind'){
-			try{
-				$reader = new \MaxMind\Db\Reader(appConfig('app.geopath'));
+		$normalize = static function (mixed $value) use ($empty): array {
+			if(is_object($value)) $value = get_object_vars($value);
+			if(!is_array($value)) return $empty;
+
+			return [
+				'city' => isset($value['city']) && is_scalar($value['city']) ? (string) $value['city'] : null,
+				'state' => isset($value['state']) && is_scalar($value['state']) ? (string) $value['state'] : null,
+				'country' => isset($value['country']) && is_scalar($value['country'])
+					? (string) $value['country']
+					: (isset($value['country_name']) && is_scalar($value['country_name']) ? (string) $value['country_name'] : null),
+			];
+		};
+
+		$cached = $cacheReader($cacheKey);
+		if(is_array($cached)) return $normalize($cached);
+
+		try {
+			if($driver === 'api' && is_string($path) && $path !== ''){
+				$url = str_replace('{IP}', rawurlencode($ip), $path);
+				$apiFetcher ??= static fn(string $endpoint, int $timeout): mixed =>
+					Http::url($endpoint)->get(['timeout' => $timeout])->bodyObject();
+				$result = $normalize($apiFetcher($url, 2));
+			} elseif($driver === 'maxmind' && is_string($path) && $path !== ''){
+				$reader = new \MaxMind\Db\Reader($path);
 				$response = $reader->get($ip);
 				$reader->close();
-	
-				return ['city' => $response['city']['names']['en'] ?? '', 'state' => $response['subdivisions'][0]['names']['en'] ?? '', 'country' => $response['country']['names']['en'] ?? ''];				
-			
-			} catch(\Exception $e){
-				\GemError::log('IP Error: '.$e->getMessage(), ['ip' => $ip]);
-				return ['city' => null, 'state' => null, 'country' => null];
+				$result = [
+					'city' => $response['city']['names']['en'] ?? null,
+					'state' => $response['subdivisions'][0]['names']['en'] ?? null,
+					'country' => $response['country']['names']['en'] ?? null,
+				];
+			} elseif($driver === 'custom' && is_callable($path)){
+				$result = $normalize($path($ip));
+			} else {
+				$result = $empty;
 			}
+		} catch(\Throwable $e) {
+			$cacheWriter($cacheKey, $empty, 300);
+			return $empty;
 		}
 
-		if(appConfig('app.geodriver') == 'custom'){
-			return \call_user_func_array(appConfig('app.geopath'), [$ip]);
-		}
+		$cacheWriter($cacheKey, $result, $result['country'] === null ? 300 : 86400);
+
+		return $result;
 	}
 	/**
    * Read/Write Cookie
@@ -606,8 +912,23 @@ final class Request {
 			return FALSE;
 		}
 		}
-		setcookie($name, $value, time()+($time*60), "/", "", FALSE, TRUE);
+		setcookie($name, $value, self::cookieOptions(time()+($time*60), $this->isSecure()));
 	}	
+
+	public static function cookieOptions(int $expires, ?bool $secure = null): array {
+		if($secure === null){
+			$secure = (new self())->isSecure();
+		}
+
+		return [
+			'expires' => $expires,
+			'path' => '/',
+			'domain' => '',
+			'secure' => $secure,
+			'httponly' => true,
+			'samesite' => 'Lax',
+		];
+	}
   /**
    * Read/Write Session
    * @author GemPixel <https://gempixel.com>

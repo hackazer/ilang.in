@@ -26,6 +26,7 @@ use Helpers\Payments\Paypal;
 use Helpers\Payments\Stripe;
 use Helpers\Payments\PaypalApi;
 use Helpers\Payments\CoinPayments;
+use Helpers\Payments\NowPayments;
 
 trait Payments {
 
@@ -109,7 +110,25 @@ trait Payments {
 				'cancel' => null,
 				'createcoupon' => null,
 				'createtax' => null
-            ]
+			],
+			'nowpayments' => [
+				'provider' => 'NOWPayments',
+				'name' => e('Cryptocurrency'),
+				'description' => e('Prepaid and recurring cryptocurrency payments'),
+				'config' => ['single' => true, 'subscription' => true],
+				'settings' => [NowPayments::class, 'settings'],
+				'save' => [NowPayments::class, 'save'],
+				'checkout' => [NowPayments::class, 'checkout'],
+				'payment' => [NowPayments::class, 'payment'],
+				'subscription' => null,
+				'webhook' => [NowPayments::class, 'webhook'],
+				'createplan' => null,
+				'updateplan' => null,
+				'syncplan' => null,
+				'cancel' => [NowPayments::class, 'cancel'],
+				'createcoupon' => null,
+				'createtax' => null
+			]
 		];
 
 		if($extended = \Core\Plugin::dispatch('payment.extend')){

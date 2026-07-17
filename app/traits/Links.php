@@ -25,6 +25,7 @@ use Core\Helper;
 use Core\Response;
 use Core\Request;
 use Helpers\App;
+use Helpers\LinkPassword;
 
 trait Links {    
 
@@ -394,7 +395,7 @@ trait Links {
         $link->location = $countries;
         $link->devices = $devices;
         $link->date = Helper::dtime();
-        $link->pass = $request->pass ? clean($request->pass) : null;
+        $link->pass = LinkPassword::hash($request->pass ?: null);
         $link->userid = $user ? $user->rID() : 0;
         $link->domain = $request->domain ? trim($request->domain) : null;
         $link->pixels = $pixels;
@@ -427,14 +428,12 @@ trait Links {
             \Core\Plugin::dispatch('link.shorten.final', $link);
             
 			if($user && !empty($user->zapurl) && Helper::isURL($user->zapurl)){
-				\Core\Http::url($user->zapurl)
-                        ->with('content-type', 'application/json')
-                        ->body([
+				$this->sendLinkWebhook($user->zapurl, [
 								"type" 		=> "url",
 								"longurl" 	=> $link->url,
 								"shorturl" 	=> App::shortRoute($link->domain, $link->alias.$link->custom),
 								"date" 		=> date("d-m-Y H:i:s")
-                        ])->post();
+				]);
 			}
         }
         
@@ -669,7 +668,7 @@ trait Links {
         $link->description = $request->description ? clean($request->description) : '';
         $link->location = $countries;
         $link->devices = $devices;
-        $link->pass = $request->pass ? clean($request->pass) : null;
+        $link->pass = LinkPassword::hash($request->pass ?: null);
         $link->domain = $request->domain ? trim($request->domain) : null;
         $link->pixels = $pixels;
         $link->parameters = $parameters;
@@ -696,9 +695,134 @@ trait Links {
 
     }
     /**
+     * Build a cache key that cannot leak a previous calendar month's count.
+     */
+    public static function monthlyClickQuotaKey(int|string $userId, ?\DateTimeInterface $now = null): string {
+        $now ??= new \DateTimeImmutable('now');
+
+        return 'monthlyclicks.'.$userId.'.'.$now->format('Ym');
+    }
+
+    /**
+     * Return half-open month bounds so the stats date index remains usable.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function monthlyClickQuotaRange(?\DateTimeInterface $now = null): array {
+        $now ??= new \DateTimeImmutable('now');
+        $start = \DateTimeImmutable::createFromInterface($now)
+            ->modify('first day of this month')
+            ->setTime(0, 0);
+
+        return [
+            $start->format('Y-m-d H:i:s'),
+            $start->modify('first day of next month')->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Run an accepted-click mutation only when the monthly quota allows it.
+     */
+    public static function applyMonthlyClickQuota(
+        int|string $userId,
+        int $limit,
+        callable $countLoader,
+        callable $accept,
+        ?callable $cacheReader = null,
+        ?callable $cacheWriter = null,
+        ?callable $cacheInvalidator = null,
+        ?\DateTimeInterface $now = null,
+        ?callable $withReservation = null
+    ): bool {
+        if($limit <= 0){
+            $accept();
+
+            return true;
+        }
+
+        $key = self::monthlyClickQuotaKey($userId, $now);
+        $cacheReader ??= static fn(string $cacheKey): mixed => Helper::cacheGet($cacheKey);
+        $cacheWriter ??= static fn(string $cacheKey, int $count, int $ttl): mixed => Helper::cacheSet($cacheKey, $count, $ttl);
+        $cacheInvalidator ??= static function(string $cacheKey): void {
+            if(defined('CACHE') && CACHE === true){
+                Helper::cacheDelete($cacheKey);
+            }
+        };
+        $withReservation ??= static fn(string $reservationKey, callable $reservation): mixed =>
+            self::withMonthlyClickQuotaReservation($reservationKey, $reservation);
+
+        $cachedCount = $cacheReader($key);
+        $authoritativeCount = null;
+        $mutationStarted = false;
+
+        try {
+            $accepted = (bool) $withReservation(
+                $key,
+                static function () use (
+                    $limit,
+                    $countLoader,
+                    $accept,
+                    &$authoritativeCount,
+                    &$mutationStarted
+                ): bool {
+                    $authoritativeCount = (int) $countLoader();
+
+                    if($authoritativeCount >= $limit) return false;
+
+                    $mutationStarted = true;
+                    $accept();
+
+                    return true;
+                }
+            );
+        } finally {
+            if($mutationStarted) $cacheInvalidator($key);
+        }
+
+        if(!$accepted && ($cachedCount === null || (int) $cachedCount !== $authoritativeCount)){
+            $cacheWriter($key, (int) $authoritativeCount, 60 * 60 * 24);
+        }
+
+        return $accepted;
+    }
+
+    /**
+     * Serialize a user's monthly quota decision and commit its click record atomically.
+     */
+    private static function withMonthlyClickQuotaReservation(string $key, callable $reservation): mixed {
+        $pdo = DB::get_db();
+
+        if($pdo->inTransaction()){
+            throw new \RuntimeException('Monthly click quota reservation cannot join an existing transaction.');
+        }
+
+        $lockName = 'monthly-clicks:'.substr(hash('sha256', $key), 0, 48);
+        $lock = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $lock->execute(['lock_name' => $lockName]);
+
+        if((int) $lock->fetchColumn() !== 1){
+            throw new \RuntimeException('Unable to acquire monthly click quota lock.');
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $result = $reservation();
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
+    }
+
+    /**
      * Update Statistics
      *
-     * @author GemPixel <https://gempixel.com> 
+     * @author GemPixel <https://gempixel.com>
      * @version 6.4
      * @param \Core\Request $request
      * @param object $url
@@ -708,43 +832,59 @@ trait Links {
     private function updateStats($request, $url, $user){
 
 		// Prevents Bots
-		if(\Helpers\App::bot()) return false;    
+		if(\Helpers\App::bot()) return false;
 
         if(\Core\Auth::logged() && ($url->userid == \Core\Auth::id() || \Core\Auth::user()->admin)) return false;
 
         // @group Plugin
         if(\Core\Plugin::dispatch('link.update.stats', $url) === false) return false;
 
-        $url->click++;
-        $url->save();
-        
 		// Check user visited recently
 		if($request->cookie("short_{$url->id}")) return false;
 
-		// Check Limit	
+		// Check Limit before changing URL totals or analytics rows.
 		if($url->userid && $user){
-            
-            $count = Helper::cacheGet('monthlyclicks'.$user->id);
-
-			if($count === null){
-                $count = DB::stats()->whereRaw("MONTH(date) = MONTH(NOW()) AND YEAR(date) = YEAR(NOW()) AND urluserid = ?", $url->userid)->count();
-                Helper::cacheSet('monthlyclicks'.$user->id, $count, 60*60*24);
-            }
-
 			$plan = DB::plans()->where('id', $user->planid)->first();
-			if($plan && $plan->numclicks > 0 && $count >= $plan->numclicks) return false;
+            $limit = $plan ? (int) $plan->numclicks : 0;
+            $now = new \DateTimeImmutable('now');
+            [$monthStart, $nextMonthStart] = self::monthlyClickQuotaRange($now);
+
+            if(!self::applyMonthlyClickQuota(
+                $user->id,
+                $limit,
+                static fn(): int => DB::stats()
+                    ->where('urluserid', $url->userid)
+                    ->whereGte('date', $monthStart)
+                    ->whereLt('date', $nextMonthStart)
+                    ->count(),
+                fn(): mixed => $this->recordAcceptedClick($request, $url, $user),
+                now: $now
+            )) return false;
+
+            return;
 		}
 
-		// Update clicks
-        $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
+        $this->recordAcceptedClick($request, $url, $user);
+    }
 
-        // Update unique clicks
-		if(!DB::stats()->where("urlid", $url->id)->where("ip", $request->ip())->first()){
-            $url->uniqueclick++;
-            $url->save();
-		}		
+    /**
+     * Persist an accepted click without changing redirect behavior.
+     */
+    private function recordAcceptedClick($request, $url, $user){
+        if(config("tracking") != "1" && $url->userid == "0"){
+            self::withUrlClickReservation((int) $url->id, static function () use ($request, $url): void {
+                $isUnique = !DB::stats()
+                    ->where('urlid', $url->id)
+                    ->where('ip', $request->ip())
+                    ->first();
 
-        if(config("tracking") != "1" && $url->userid == "0") return false;
+                self::incrementUrlClick((int) $url->id, $isUnique);
+            });
+
+            $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
+
+            return false;
+        }
 
         // System Analytics
         if($request->referer()){
@@ -753,13 +893,13 @@ trait Links {
                 $domain = $domain["scheme"]."://".$domain["host"];
             }else{
                 $domain = "";
-            }            
-            $referer = $request->referer();            
+            }
+            $referer = $request->referer();
         }else{
             $referer = "direct";
             $domain = "";
         }
-        
+
         $stats = DB::stats()->create();
 
         $stats->short = $url->alias.$url->custom;
@@ -768,7 +908,7 @@ trait Links {
         $stats->date = Helper::dtime();
 
         $location = $request->country();
-        
+
         $stats->country = $location['country'];
         $stats->city = $location['city'];
 
@@ -777,22 +917,89 @@ trait Links {
         $stats->ip = $request->ip();
         $stats->os = $request->device();
         $stats->browser = $request->browser();
-        $stats->language = substr($request->server('http_accept_language'), 0, 2);
-        $stats->save();
+        $stats->language = substr($request->server('http_accept_language') ?? '', 0, 2);
+
+        self::withUrlClickReservation((int) $url->id, static function () use ($request, $stats, $url): void {
+            $isUnique = !DB::stats()
+                ->where('urlid', $url->id)
+                ->where('ip', $request->ip())
+                ->first();
+
+            self::incrementUrlClick((int) $url->id, $isUnique);
+
+            $stats->save();
+        });
+
+        $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
 
         if($user && !empty($user->zapview) && Helper::isURL($user->zapview)){
-           \Core\Http::url($user->zapview)
-                        ->with('content-type', 'application/json')
-                        ->body([
+            $this->sendLinkWebhook($user->zapview, [
                             "type" 		=> "view",
                             "shorturl" 	=> \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom),
                             "country" 	=> $stats->country,
                             "city"      => $stats->city,
                             "referer" 	=> $stats->referer,
                             "os" 		=> $stats->os,
-                            "browser" 	=> $stats->browser,							
+                            "browser" 	=> $stats->browser,
                             "date" 		=> Helper::dtime()
-                        ])->post();
+            ]);
+        }
+    }
+
+    protected function sendLinkWebhook(string $url, array $payload, ?callable $transport = null): void {
+        try {
+            $transport ??= static function (string $targetUrl, array $targetPayload, array $options): void {
+                Http::url($targetUrl)
+                    ->with('content-type', 'application/json')
+                    ->body($targetPayload)
+                    ->post($options);
+            };
+
+            $transport($url, $payload, [
+                'connect_timeout' => 1,
+                'timeout' => 2,
+            ]);
+        } catch (\Throwable) {
+        }
+    }
+
+    private static function incrementUrlClick(int $urlId, bool $isUnique): void {
+        $table = (defined('DBprefix') ? DBprefix : '').'url';
+        DB::raw_execute(
+            "UPDATE `{$table}` SET `click` = `click` + 1, `uniqueclick` = `uniqueclick` + ? WHERE `id` = ?",
+            [$isUnique ? 1 : 0, $urlId]
+        );
+    }
+
+    /**
+     * Serialize counter and analytics writes for a URL when no outer quota
+     * transaction already owns the write sequence.
+     */
+    private static function withUrlClickReservation(int $urlId, callable $reservation): mixed {
+        $pdo = DB::get_db();
+
+        if($pdo->inTransaction()) return $reservation();
+
+        $lockName = 'url-clicks:'.substr(hash('sha256', (string) $urlId), 0, 48);
+        $lock = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $lock->execute(['lock_name' => $lockName]);
+
+        if((int) $lock->fetchColumn() !== 1){
+            throw new \RuntimeException('Unable to acquire URL click lock.');
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $result = $reservation();
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
         }
     }
     /**

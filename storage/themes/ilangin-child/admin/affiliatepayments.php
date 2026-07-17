@@ -20,7 +20,7 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <?php echo $user->email ?>
                                         </div>
@@ -36,7 +36,7 @@
                                 <td>
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="<?php echo route('admin.affiliate.pay', [$user->id]) ?>"><i data-feather="check"></i> <?php ee('Mark as Paid') ?></a></li>
+                                        <li><form action="<?php echo route('admin.affiliate.pay', [$user->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check"></i> <?php ee('Mark as Paid') ?></button></form></li>
                                         <li><a class="dropdown-item" href="<?php echo  route('admin.email', ['email'=> $user->email])  ?>"><i data-feather="send"></i> <?php ee('Email User') ?></a></li>
                                     </ul>
                                 </td>

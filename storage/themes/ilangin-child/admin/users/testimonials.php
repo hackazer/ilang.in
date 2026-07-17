@@ -5,21 +5,21 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.testimonial.save') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="name" class="form-label"><?php ee('Name') ?></label>
                         <input type="text" class="form-control p-2" name="name" id="name" value="<?php echo old('name') ?>" placeholder="E.g John Doe" required>
                     </div>  
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="email" class="form-label"><?php ee('Email') ?></label>
                         <input type="text" class="form-control p-2" name="email" id="email" value="<?php echo old('email') ?>" placeholder="E.g johndoe@apple.com">
                         <p class="form-text"><?php ee("If the email is provided, gravatar will be used to display the user's avatar.") ?></p>
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="job" class="form-label"><?php ee('Job Title') ?></label>
                         <input type="text" class="form-control p-2" name="job" id="job" value="<?php echo old('job') ?>" placeholder="E.g Web Developer">
                         <p class="form-text"><?php ee("User's title or company") ?></p>
                     </div>                    
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="testimonial" class="form-label"><?php ee('Testimonial') ?></label>
                         <textarea name="testimonial" id="testimonial" class="form-control"><?php echo old('testimonial') ?></textarea>
                     </div>		                                         
@@ -48,7 +48,7 @@
                                 <td>
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.testimonial.delete', [$id+1, \Core\Helper::nonce('testimonial.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('admin.testimonial.delete', [$id+1, \Core\Helper::nonce('testimonial.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>

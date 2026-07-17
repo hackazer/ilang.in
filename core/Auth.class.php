@@ -236,7 +236,7 @@ final class Auth extends Gem {
   public static function logout(){
     unset($_SESSION[Auth::COOKIE]);
     unset($_SESSION['logged_as']);
-    setcookie(Auth::COOKIE, NULL, -3600, "/", "", false, true);
+    setcookie(Auth::COOKIE, '', Request::cookieOptions(time() - 3600));
     return true;
   }
 }

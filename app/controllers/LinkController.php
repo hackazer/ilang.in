@@ -24,6 +24,8 @@ use Core\View;
 use Core\Plugin;
 use Core\Auth;
 use Helpers\Gate;
+use Helpers\LinkPassword;
+use Helpers\LinkTargeting;
 use Models\User;
 
 class Link {
@@ -133,11 +135,8 @@ class Link {
 
 		// Password check is stored in a session. User will have access until the browser is closed.
 		if($request->isPost() && $request->password){
-			// if encrypted Password (old version)
-			if(strlen($url->pass) == 32) $request->password = md5($request->password);
-
 			// Check Password
-			if($request->password != $url->pass){
+			if(!LinkPassword::verifyAndUpgrade($request->password, $url)){
 				return back()->with("danger", e("The password is invalid or does not match."));
 			}
 
@@ -224,12 +223,7 @@ class Link {
 
 
 		if(!empty($url->options)){
-			$browser_language = substr($request->server('http_accept_language'), 0, 2);
-			if(strpos($browser_language, ' ') !== false){
-				$language = strtolower(implode(' ', explode(' ',$browser_language, -1)));
-			} else {
-				$language = strtolower($browser_language);
-			}
+			$language = LinkTargeting::browserLanguage($request);
 			
 			$options = json_decode($url->options, true);
 			if(isset($options['languages'][$language]) && $language) {
@@ -237,7 +231,7 @@ class Link {
 			}
 		}
 
-		if(DB::reports()->whereRaw('bannedlink LIKE ?', ['%'.$url->url.'%'])->first()){
+		if($this->domainBlacklisted($url->url)){
 			return Gate::disabled();		    
 		}
 
@@ -288,7 +282,8 @@ class Link {
 		}
 		
 		// Check if overlay
-		if(preg_match("~overlay-(.*)~", $url->type) && $overlay = DB::overlay()->where("id",  str_replace("overlay-", "", $url->type))->where("userid", $user->id)->first()){
+		$overlayId = LinkTargeting::overlayId($url->type ?? null);
+		if($overlayId !== null && $overlay = DB::overlay()->where("id", $overlayId)->where("userid", $user->id)->first()){
 			return Gate::overlay($url, $overlay);	
 		}	
 
@@ -503,7 +498,7 @@ class Link {
 	public function archiveSelected(Request $request){
 
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -511,7 +506,7 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['archived' => 1]);
@@ -519,7 +514,7 @@ class Link {
 		}
 		
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been archived.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been archived.'), 'token' => csrf_token()])->json();
 	}
 	/**
 	 * UnArchive Selected
@@ -532,7 +527,7 @@ class Link {
 	public function unarchiveSelected(Request $request){
 		
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -540,14 +535,14 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['archived' => 0]);
 			}
 		}
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been removed from archive.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been removed from archive.'), 'token' => csrf_token()])->json();
 	}
 	/**
 	 * Public Selected
@@ -559,7 +554,7 @@ class Link {
 	public function publicSelected(Request $request){
 
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -567,7 +562,7 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['public' => 1]);
@@ -575,7 +570,7 @@ class Link {
 		}
 		
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been set to public.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been set to public.'), 'token' => csrf_token()])->json();
 	}
 	/**
 	 * Private Selected
@@ -588,7 +583,7 @@ class Link {
 	public function privateSelected(Request $request){
 		
 		if(Auth::user()->teamPermission('links.edit') == false){
-			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.')]);
+			return Response::factory(['error' => true, 'message' => e('You do not have this permission. Please contact your team administrator.'), 'token' => csrf_token()])->json();
         }
 
 		if($request->link){
@@ -596,14 +591,14 @@ class Link {
 		} else {
 			$ids = json_decode(html_entity_decode($request->selected));
 			if(!$ids){
-				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.')])->json();
+				return Response::factory(['error' => true, 'message' => e('You need to select at least 1 link.'), 'token' => csrf_token()])->json();
 			}
 			foreach($ids as $id){
 				DB::url()->where('id', $id)->where('userid', Auth::user()->rID())->update(['public' => 0]);
 			}
 		}
 
-		return Response::factory(['error' => false, 'message' => e('Selected links have been set to private.')])->json();
+		return Response::factory(['error' => false, 'message' => e('Selected links have been set to private.'), 'token' => csrf_token()])->json();
 	}
 	 /**
      * Edit Link
@@ -655,7 +650,7 @@ class Link {
 
 		View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
 		
-        \Helpers\CDN::load('datetimepicker');
+        \Helpers\CDN::load('airdatepicker');
 
         return View::with('user.edit', compact('url', 'locations', 'channels'))->extend('layouts.dashboard');
     }

@@ -22,7 +22,7 @@
                     <div class="col-12 col-md-6 col-xl-7 order-md-2">
                         <img alt="Error 404" src="<?php echo assets('images/404.svg') ?>" class="img-fluid">
                     </div>
-                    <div class="col-12 col-md-6 col-xl-5 order-md-1 text-center text-md-left">
+                    <div class="col-12 col-md-6 col-xl-5 order-md-1 text-center text-md-start">
                         <h6 class="display-1 mb-3 font-weight-600 text-warning"><?php ee('Error') ?></h6>
                         <p class="lead text-lg mb-5">
                             <?php ee('The page you are looking for could not be found.') ?>

@@ -5,11 +5,11 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.faq.categories.save') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="title" class="form-label"><?php ee('Title') ?></label>
                         <input type="text" class="form-control p-2" name="title" id="title" value="<?php echo old('title') ?>" placeholder="My Sample Category" required>
                     </div>                    
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="description" class="form-label"><?php ee('Short Description') ?></label>
                         <textarea name="description" id="description" class="form-control"><?php echo old('description') ?></textarea>
                     </div>		                                         
@@ -40,7 +40,7 @@
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="<?php echo route('admin.faq.categories.update', [$id]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#updateModal" data-toggle="updateFormContent" data-content='<?php echo json_encode(['newtitle' => $category->title, 'newdescription' => $category->description]) ?>'><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.faq.categories.delete', [$id, \Core\Helper::nonce('category.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('admin.faq.categories.delete', [$id, \Core\Helper::nonce('category.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>
@@ -62,11 +62,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newtitle" class="form-label"><?php ee('Title') ?></label>
                     <input type="text" class="form-control p-2" name="newtitle" id="newtitle" value="" placeholder="My Sample Category" required>
                 </div>                    
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newdescription" class="form-label"><?php ee('Short Description') ?></label>
                     <textarea name="newdescription" id="newdescription" class="form-control"></textarea>
                 </div>

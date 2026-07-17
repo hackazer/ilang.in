@@ -694,13 +694,9 @@
 
 $(document).ready(function(){
     
-    $('input#fonts').fontselect().on('change', function(){
-      var font = this.value.replace(/\+/g, ' ');
-      font = font.split(':');
-      var fontFamily = font[0];
-      var fontWeight = font[1] || 400;
-      $('#preview').css({fontFamily:"'"+fontFamily+"'", fontWeight:fontWeight});
-   });
+    FontSelector.init('input#fonts', {onChange: function(selection){
+      $('#preview').css({fontFamily:"'"+selection.family+"'", fontWeight:selection.weight});
+    }});
 
     $('#linkcontent').sortable({
         containerSelector: "#linkcontent",
@@ -718,8 +714,8 @@ $(document).ready(function(){
             $item.removeClass(container.group.options.draggedClass).removeAttr("style")
             $("body").removeClass(container.group.options.bodyClass)
             after = $item.index();
-            lafter = $('#preview #content .item:eq('+after+')');
-            lebefore = $('#preview #content .item:eq('+before+')');
+            lafter = $('#preview #content .item').eq(after);
+            lebefore = $('#preview #content .item').eq(before);
 
             lafter.replaceWith(lebefore);
             if(before > after)
@@ -729,8 +725,7 @@ $(document).ready(function(){
 
             var text = $item.find('textarea').attr('id');
             if (typeof text != 'undefined') {
-                CKEDITOR.instances[text].destroy();
-                CKEDITOR.replace(text, {
+                EditorAdapter.recreate(text, {
                   height: 100
                 });
             }                
@@ -752,14 +747,19 @@ $(document).ready(function(){
 
     $(document).on('click','[data-trigger=removeCard]', function(e){
         e.preventDefault();
-        let id = $(this).parent('.card').data('id');
-        $(this).parent('.card').remove();
+        let card = $(this).parent('.card');
+        let id = card.data('id');
+        let editorId = card.find('textarea').attr('id');
+        if (typeof editorId != 'undefined') {
+            EditorAdapter.destroy(editorId);
+        }
+        card.remove();
         $("#preview").find('#'+id).remove();
     });
     
     changeTheme("#fffff", "#fffff", "#fffff", "#000000", "#ffffff", "#0000000");
 
-    $("#dividercolor").spectrum({
+    $("#dividercolor").appColorPicker({
       color: "#000000",
       showInput: true,
       preferredFormat: "hex"
@@ -865,24 +865,15 @@ $(document).ready(function(){
                 valid = false;
                 $(this).addClass('is-invalid');
                 if($(this).data('error')) {
-                    $.notify({
-                        message: $(this).data('error')
-                    },{
-                        type: 'danger',
-                        placement: {
-                            from: "bottom",
-                            align: "right"
-                        },
-                    });
+                    AppNotify.error($(this).data('error'));
                 }
             }
         });
         
         if(valid == false) return false;
+        EditorAdapter.syncForm(this);
         let data = new FormData($(this)[0]);
         let text = $(this).find('button[type=submit]').text();
-        for(var instanceName in CKEDITOR.instances) 
-          CKEDITOR.instances[instanceName].updateElement();
           
         $.ajax({
             type: 'POST',
@@ -900,25 +891,9 @@ $(document).ready(function(){
             success: function(response){
                 $('input[name=_token]').val(response.token);
                 if(response.error){
-                    $.notify({
-                        message: response.message
-                    },{
-                        type: 'danger',
-                        placement: {
-                            from: "top",
-                            align: "right"
-                        },
-                    });
+                    AppNotify.error(response.message);
                 } else {
-                    $.notify({
-                        message: response.message
-                    },{
-                        type: 'success',
-                        placement: {
-                            from: "top",
-                            align: "right"
-                        },
-                    });
+                    AppNotify.show(response.message, 'success');
                     if(response.html){
                         $('body').append(response.html);
                     }
@@ -935,7 +910,7 @@ $("[data-trigger=color]").each(function(){
 
   if($(this).data('default')) bg = $(this).data('default');
 
-  $(this).spectrum({
+  $(this).appColorPicker({
     color: bg,
     showInput: true,
     preferredFormat: "hex",
@@ -976,35 +951,35 @@ function changeTheme(bg, bgst, bgsp, buttoncolor, buttontextcolor, textcolor){
     $("#bgst").val(bgst);
     $("#bgsp").val(bgsp);
 
-    $("#bg").spectrum({
+    $("#bg").appColorPicker({
         color: bg,
         showInput: true,
         preferredFormat: "hex",                
         move: function (color) { bgColor("#preview .card", color, $(this)); },
         hide: function (color) { bgColor("#preview .card", color, $(this)); }                                
     });	
-    $("#bgst").spectrum({
+    $("#bgst").appColorPicker({
         color: bgst,
         showInput: true,
         preferredFormat: "hex",                
         move: function (color) { gradient("#preview .card", color, $(this)); },
         hide: function (color) { gradient("#preview .card", color, $(this)); }            
     });
-    $("#bgsp").spectrum({
+    $("#bgsp").appColorPicker({
         color: bgsp,
         showInput: true,
         preferredFormat: "hex",                
         move: function (color) { gradient("#preview .card", color, $(this)); },
         hide: function (color) { gradient("#preview .card", color, $(this)); }            
     });
-    $("#buttontextcolor").spectrum({
+    $("#buttontextcolor").appColorPicker({
         color: buttontextcolor,
         showInput: true,
         preferredFormat: "hex",                
         move: function (color) { Color("#preview .btn-custom", color, $(this)); },
         hide: function (color) { Color("#preview .btn-custom", color, $(this)); }   
     });     
-    $("#buttoncolor").spectrum({
+    $("#buttoncolor").appColorPicker({
         color: buttoncolor,
         showInput: true,
         allowEmpty: true,
@@ -1012,7 +987,7 @@ function changeTheme(bg, bgst, bgsp, buttoncolor, buttontextcolor, textcolor){
         move: function (color) { bgColor("#preview .btn-custom", color, $(this)); },
         hide: function (color) { bgColor("#preview .btn-custom", color, $(this)); }   
     });
-    $("#textcolor").spectrum({
+    $("#textcolor").appColorPicker({
         color: textcolor,
         showInput: true,
         preferredFormat: "hex",        
@@ -1026,7 +1001,7 @@ function fntext(el, content = null, did = null){
         var text = content['text'];
     } else {
         let eltext = el.parent("#modal-text").find('textarea[name=content]');
-        var text = texteditor.getData();
+        var text = EditorAdapter.value('editor');
         eltext.val('');
     }
     
@@ -1049,7 +1024,7 @@ function fntext(el, content = null, did = null){
 
             $('#content').append('<div class="item"><p id="'+did+'">'+text+'</p></div>');
             $("#linkcontent").append(html);  
-            CKEDITOR.replace(did+'_editor', {
+            EditorAdapter.create(did+'_editor', {
               height: 100
             });
 }
@@ -1170,14 +1145,14 @@ function fnlink(el, content = null, did = null){
 
             $("#linkcontent").append(html);  
 
-            $("[data-id="+did+"] .color").spectrum({
+            $("[data-id="+did+"] .color").appColorPicker({
                 color: color,
                 showInput: true,
                 preferredFormat: "hex",
                 move: function (color) { Color("#"+did, color, $(this)); },
                 hide: function (color) { Color("#"+did, color, $(this)); }    
             });
-            $("[data-id="+did+"] .bg").spectrum({
+            $("[data-id="+did+"] .bg").appColorPicker({
                 color: bg,
                 showInput: true,
                 preferredFormat: "hex",
@@ -1210,7 +1185,7 @@ function fnlink(el, content = null, did = null){
               $("#"+did).html(($(this).val() != '' ? '<i class="'+$(this).val()+' me-2"></i>' : '')+' <span>'+$('[data-id='+did+'] .text').val()+'</span>');
             }); 
 
-            $('#'+did+'_icon').iconpicker();
+            IconPicker.init(document.getElementById(did+'_icon'), window.appIconPickerOptions || {});
             $("#"+did).addClass('animate_'+animation);
 }
 function fnyoutube(el, content = null, did = null){
@@ -1522,7 +1497,7 @@ function fnheading(el, content = null, did = null){
 
           $('#content').append('<div class="item"><'+type+' id="'+did+'" style="color:'+color+' !important">'+text+'</'+type+'></div>');
           $("#linkcontent").append(html);    
-          $("[data-id="+did+"] [data-trigger=color]").spectrum({
+          $("[data-id="+did+"] [data-trigger=color]").appColorPicker({
               color: color,
               showInput: true,
               preferredFormat: "hex",
@@ -1593,7 +1568,7 @@ function fndivider(el, content = null, did = null){
 
           $('#content').append('<div class="item"><hr id="'+did+'" style="background:transparent;border-top-style:'+style+';border-top-width:'+height+'px;border-top-color:'+color+'"></div>');
           $("#linkcontent").append(html);    
-          $("[data-id="+did+"] input[data-trigger=color]").spectrum({
+          $("[data-id="+did+"] input[data-trigger=color]").appColorPicker({
               color: color,
               showInput: true,
               preferredFormat: "hex",

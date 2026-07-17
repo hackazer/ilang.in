@@ -12,11 +12,11 @@
     <div class="row">
         <div class="col-md-8" id="generator">
             <div class="card card-body">
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Bio Page Name') ?></label>
                     <input type="text" class="form-control p-2" name="name" placeholder="e.g. For Instagram" value="<?php echo $bio->name ?>" data-required>
                 </div>
-                <div class="form-group mt-4">
+                <div class="mb-3 mt-4">
                     <label class="form-label"><?php ee('Bio Page Alias') ?></label>
                     <div class="d-flex">                        
                         <div>
@@ -33,7 +33,7 @@
                         </div>
                     </div>
                 <div class="card-body">
-                    <div class="form-group mb-4 d-flex align-items-center">                    
+                    <div class="mb-4 d-flex align-items-center">
                         <div class="me-3">
                             <?php if(isset($bio->data->avatar)): ?>
                                 <img src="<?php echo uploads($bio->data->avatar, 'profile') ?>" width="100" class="rounded" id="useravatar">
@@ -76,59 +76,59 @@
                     <h5 class="card-title fw-bold"><i class="me-2" data-feather="link"></i> <?php ee('Social Links') ?></h5>
                 </div>                
                 <div class="card-body">
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Facebook') ?></label>
                         <input type="text" class="form-control p-2" name="social[facebook]" value="<?php echo $bio->data->social->facebook ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Twitter') ?></label>
                         <input type="text" class="form-control p-2" name="social[twitter]" value="<?php echo $bio->data->social->twitter ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Instagram') ?></label>
                         <input type="text" class="form-control p-2" name="social[instagram]" value="<?php echo $bio->data->social->instagram ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Tiktok') ?></label>
                         <input type="text" class="form-control p-2" name="social[tiktok]" value="<?php echo $bio->data->social->tiktok ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Linkedin') ?></label>
                         <input type="text" class="form-control p-2" name="social[linkedin]" value="<?php echo $bio->data->social->linkedin ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div> 
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Youtube') ?></label>
                         <input type="text" class="form-control p-2" name="social[youtube]" placeholder="https://" value="<?php echo $bio->data->social->youtube ?? '' ?>" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>  
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Telegram') ?></label>
                         <input type="text" class="form-control p-2" name="social[telegram]" placeholder="https://" value="<?php echo $bio->data->social->telegram ?? '' ?>" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>  
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Snapchat') ?></label>
                         <input type="text" class="form-control p-2" name="social[snapchat]" placeholder="https://" value="<?php echo $bio->data->social->snapchat ?? '' ?>" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Discord') ?></label>
                         <input type="text" class="form-control p-2" name="social[discord]"  value="<?php echo $bio->data->social->discord ?? '' ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Twitch') ?></label>
                         <input type="text" class="form-control p-2" name="social[twitch]"  value="<?php echo $bio->data->social->twitch ?? '' ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Pinterest') ?></label>
                         <input type="text" class="form-control p-2" name="social[pinterest]"  value="<?php echo $bio->data->social->pinterest ?? '' ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Shopify') ?></label>
                         <input type="text" class="form-control p-2" name="social[shopify]"  value="<?php echo $bio->data->social->shopify ?? '' ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Amazon') ?></label>
                         <input type="text" class="form-control p-2" name="social[amazon]"  value="<?php echo $bio->data->social->amazon ?? '' ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label class="form-label"><?php ee('Line Messenger') ?></label>
                         <input type="text" class="form-control p-2" name="social[line]"  value="<?php echo $bio->data->social->line ?? '' ?>" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                     </div>
@@ -210,7 +210,7 @@
                     <div id="singlecolor" class="collapse show">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="bg"><?php ee("Background") ?></label><br>
                                     <input type="text" name="bg" id="bg" value="<?php echo $bio->data->style->bg ?>">
                                 </div>
@@ -220,13 +220,13 @@
                     <div id="gradient" class="collapse">                        
                         <div class="row">                            
                             <div class="col-sm-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="fg"><?php ee("Gradient Start") ?></label><br>
                                     <input type="text" name="gradient[start]" id="bgst" value="<?php echo $bio->data->style->gradient->start ?? '' ?>">
                                 </div>	
                             </div>
                             <div class="col-sm-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="fgs"><?php ee("Gradient Stop") ?></label><br>
                                     <input type="text" name="gradient[stop]" id="bgsp" value="<?php echo $bio->data->style->gradient->stop ?? '' ?>">
                                 </div>                                
@@ -237,15 +237,15 @@
                         <input type="file" class="form-control mb-4" name="bgimage" id="bgimage">
                     </div>
                     <h5><?php ee('Text Color') ?></h5>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <input type="text" name="textcolor" id="textcolor" value="<?php echo $bio->data->style->textcolor ?? '' ?>">
                     </div>                       
                     <h5><?php ee('Button Color') ?></h5>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <input type="text" name="buttoncolor" id="buttoncolor" value="<?php echo $bio->data->style->buttoncolor ?? '' ?>">
                     </div>
                     <h5><?php ee('Button text Color') ?></h5>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <input type="text" name="buttontextcolor" id="buttontextcolor" value="<?php echo $bio->data->style->buttontextcolor ?? '' ?>">
                     </div>
 				</div>
@@ -255,15 +255,15 @@
                     <h5 class="card-title fw-bold"><i class="me-2" data-feather="settings"></i> <?php ee('Advanced') ?></h5>
                 </div>               
                 <div class="card-body">
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="title" class="form-label"><?php ee('Meta Title') ?></label>
                         <input type="text" class="form-control" name="title" id="title" autocomplete="off" value="<?php echo $url->meta_title ?>" >
                     </div>
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="description" class="form-label"><?php ee('Meta Description') ?></label>
                         <textarea class="form-control" name="description" id="description" autocomplete="off"><?php echo $url->meta_description ?></textarea>
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="pass" class="form-label"><?php ee('Password Protection') ?></label>
                         <p class="form-text"><?php ee('By adding a password, you can restrict the access.') ?></p>
                         <div class="input-group">
@@ -290,7 +290,7 @@
                     </div>
                     <?php endif ?>
                     <hr>
-                    <div class="form-group">
+                    <div class="mb-3">
                     <label for="customcss" class="form-label"><?php ee('Custom CSS') ?></label>
                         <textarea class="form-control" name="customcss" id="customcss" rows="5" placeholder="e.g. .btn { display: block }"><?php echo $bio->data->style->custom ?></textarea>
                     </div>
@@ -333,7 +333,7 @@
                             </div>
                         </div>
                         <div class="col-lg-8 ps-3">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="short" class="form-label"><?php ee('Short Link') ?></label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="modal-input" name="shortlink" value="<?php echo \Helpers\App::shortRoute($url->domain, $bio->alias) ?>">
@@ -480,7 +480,7 @@
             </div>
             <div id="modal-text" class="collapse" data-name="<?php echo e('Text') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Text') ?></label>
                     <textarea class="form-control p-2" id="editor" name="content" placeholder="e.g. some description here"></textarea>
                 </div>
@@ -488,34 +488,34 @@
             </div>
             <div id="modal-links" class="collapse" data-name="<?php echo e('Links') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('FontAwesome Icon Class') ?></label>
-                    <input type="text" class="form-control p-2" name="icon" placeholder="e.g. fab fa-twitter">
-                    <p class="form-text"><?php ee('You can use any font from the following list:') ?> <a href="https://fontawesome.com/v5/cheatsheet/free/" target="_blank">FontAwesome</a>
+                    <input type="text" class="form-control p-2" name="icon" placeholder="e.g. fa-brands fa-x-twitter" autocomplete="off" aria-describedby="bio-icon-help">
+                    <p class="form-text" id="bio-icon-help"><?php ee('You can use any font from the following list:') ?> <a href="https://fontawesome.com/icons" target="_blank" rel="noopener noreferrer">Font Awesome</a></p>
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Text') ?></label>
                     <input type="text" class="form-control p-2" name="text" placeholder="e.g. My Site">                        
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Link') ?></label>
                     <input type="text" class="form-control p-2" name="link" placeholder="https://" data-error="<?php ee('Please enter a valid link') ?>">                        
                 </div>
                 <div class="row">
                     <div class="col-md-4">
-                        <div class="form-group mt-3">
+                        <div class="mb-3 mt-3">
                             <label class="form-label"><?php ee('Color') ?></label>
                             <p><input type="text" class="form-control p-2" name="color" placeholder="e.g Heading" data-trigger="color"></p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="form-group mt-3">
+                        <div class="mb-3 mt-3">
                             <label class="form-label"><?php ee('Background') ?></label>
                             <p><input type="text" class="form-control p-2" name="bg" placeholder="e.g Heading" data-trigger="color"></p>
                         </div>                        
                     </div>
                     <div class="col-md-4">
-                        <div class="form-group mt-3">
+                        <div class="mb-3 mt-3">
                             <label class="form-label"><?php ee('Style') ?></label>
                             <select name="style" class="form-select">
                                 <option value="h1" selected><?php ee('Rectangular') ?></option>
@@ -528,7 +528,7 @@
             </div>
             <div id="modal-image" class="collapse" data-name="<?php echo e('Image') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Image') ?></label>
                     <p><?php ee('Click the button add insert an Image then choose the file to upload.') ?></p>
                 </div>
@@ -536,7 +536,7 @@
             </div>            
             <div id="modal-youtube" class="collapse" data-name="<?php echo e('Youtube Video') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Link to Video') ?></label>
                     <input type="text" class="form-control p-2" name="link" placeholder="e.g https://www.youtube.com/watch?v=dQw4w9WgXcQ" data-error="<?php ee('Please enter a valid youtube link') ?>">                        
                 </div>
@@ -544,11 +544,11 @@
             </div>
             <div id="modal-whatsapp" class="collapse" data-name="<?php echo e('WhatsApp Call') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Phone Number') ?></label>
                     <input type="text" class="form-control p-2" name="phone" placeholder="e.g +1123456789">                        
                 </div>
-                <div class="form-group mt-2">
+                <div class="mb-3 mt-2">
                     <label class="form-label"><?php ee('Label') ?></label>
                     <input type="text" class="form-control p-2" name="label" placeholder="e.g Call us">                        
                 </div>
@@ -556,7 +556,7 @@
             </div>
             <div id="modal-spotify" class="collapse" data-name="<?php echo e('Spotify Embed') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Link to Spotify Song') ?></label>
                     <input type="text" class="form-control p-2" name="link" placeholder="e.g https://open.spotify.com/track/6PQ88X9TkUIAUIZJHW2upE?si=e8ab004e890a4d2f" data-error="<?php ee('Please enter a valid spotify link') ?>">                        
                 </div>
@@ -564,7 +564,7 @@
             </div>
             <div id="modal-itunes" class="collapse" data-name="<?php echo e('Apple Music Embed') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Link to Apple Music Song') ?></label>
                     <input type="text" class="form-control p-2" name="link" placeholder="e.g https://music.apple.com/us/album/acapulco-jay-robinson-remix-single/1590557278" data-error="<?php ee('Please enter a valid apple music link') ?>">                        
                 </div>
@@ -572,19 +572,19 @@
             </div>
             <div id="modal-paypal" class="collapse" data-name="<?php echo e('PayPal Button') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Label') ?></label>
                     <input type="text" class="form-control p-2" name="label" placeholder="e.g New Hoodie For Sale">
                 </div>                
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('PayPal Email') ?></label>
                     <input type="text" class="form-control p-2" name="email" placeholder="e.g myemail@domain.com">
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Amount') ?></label>
                     <input type="text" class="form-control p-2" name="amount" placeholder="e.g 10">
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label d-block mb-2"><?php ee('Currency') ?></label>
                     <select name="currency" data-toggle="select" class="form-control">
                         <?php foreach(\Helpers\App::currency() as $code => $currency): ?>
@@ -596,7 +596,7 @@
             </div>
             <div id="modal-tiktok" class="collapse" data-name="<?php echo e('Tiktok Embed') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group">
+                <div class="mb-3">
                     <label class="form-label"><?php ee('Link to Tiktok Video') ?></label>
                     <input type="text" class="form-control p-2" name="link" placeholder="e.g https://www.tiktok.com/@marvel/video/7016405255604817157" data-error="<?php ee('Please enter a valid tiktok link') ?>">                        
                 </div>
@@ -612,11 +612,11 @@
                     <option value="h5">H5</option>
                     <option value="h6">H6</option>
                 </select>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Text') ?></label>
                     <input type="text" class="form-control p-2" name="text" placeholder="e.g Heading">                        
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Color') ?></label>
                     <p><input type="text" class="form-control p-2" name="color" placeholder="e.g Heading" data-trigger="color"></p>
                 </div>
@@ -624,14 +624,14 @@
             </div>
             <div id="modal-divider" class="collapse" data-name="<?php echo e('Divider') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>                                
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <select name="type" class="form-select">
                         <option value="solid" selected><?php echo e('Solid') ?></option>
                         <option value="dotted"><?php echo e('Dotted') ?></option>
                         <option value="dashed"><?php echo e('Dashed') ?></option>
                     </select>
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Height') ?></label><br>
                     <select name="height" class="form-select">
                         <option value="1" selected>1px</option>
@@ -642,7 +642,7 @@
                         <option value="10">10px</option>
                     </select>
                 </div>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Color') ?></label><br>
                     <input type="text" class="form-control p-2" name="color" id="dividercolor" value="#000">                        
                 </div>
@@ -650,7 +650,7 @@
             </div>
             <div id="modal-rss" class="collapse" data-name="<?php echo e('RSS Feed') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>                
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <p><label class="form-label"><?php ee('RSS Feed') ?></label></p>
                     <input type="text" class="form-control p-2" name="link" id="link" value="" placeholder="e.g. https://mysite/rss" data-error="<?php ee('Please enter a valid link') ?>">
                 </div>
@@ -658,39 +658,39 @@
             </div> 
             <div id="modal-vcard" class="collapse" data-name="<?php echo e('vCard') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('First Name') ?></label>
                     <input type="text" class="form-control p-2" name="fname" placeholder="e.g. John">                     
                 </div>  
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Last Name') ?></label>
                     <input type="text" class="form-control p-2" name="lname" placeholder="e.g. Smith">                     
                 </div>      
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Phone') ?></label>
                     <input type="text" class="form-control p-2" name="phone" placeholder="e.g. +123456789">                     
                 </div>            
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Email') ?></label>
                     <input type="text" class="form-control p-2" name="email" placeholder="e.g. john@domain.com">                     
                 </div> 
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Site') ?></label>
                     <input type="text" class="form-control p-2" name="site" placeholder="e.g. domain.com">                     
                 </div> 
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Address') ?></label>
                     <input type="text" class="form-control p-2" name="address" placeholder="e.g. 1 infinite loop">                     
                 </div>  
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('City') ?></label>
                     <input type="text" class="form-control p-2" name="city" placeholder="e.g. NY">                     
                 </div>  
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('State') ?></label>
                     <input type="text" class="form-control p-2" name="state" placeholder="e.g. New York">                     
                 </div>  
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Country') ?></label>
                     <input type="text" class="form-control p-2" name="country" placeholder="e.g. Canada">   
                 </div>  
@@ -703,7 +703,7 @@
             </div>
             <div id="modal-newsletter" class="collapse" data-name="<?php echo e('Newsletter') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Text') ?></label>
                     <input type="text" class="form-control p-2" name="text" placeholder="e.g. Subscribe">   
                     <p class="form-text"><?php ee('Newsletter list can be downloaded on the Edit Bio page') ?></p>                     
@@ -712,11 +712,11 @@
             </div>
             <div id="modal-contact" class="collapse" data-name="<?php echo e('Contact') ?>">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Text') ?></label>
                     <input type="text" class="form-control p-2" name="text" placeholder="e.g. Contact us">                        
                 </div>    
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label"><?php ee('Email') ?></label>
                     <input type="email" class="form-control p-2" name="email" placeholder="e.g. email@domain.com">     
                     <p class="form-text"><?php ee('You will receive emails here') ?></p>
@@ -725,7 +725,7 @@
             </div>
             <div id="modal-html" class="collapse" data-name="HTML">
                 <a href="#options" data-bs-toggle="collapse" data-bs-parent="#modalcontent" class="mb-4 d-block"><i data-feather="chevron-left"></i> <?php ee('Back') ?></a>
-                <div class="form-group mt-3">
+                <div class="mb-3 mt-3">
                     <label class="form-label">HTML</label>
                     <textarea class="form-control" name="code"></textarea>                     
                 </div>                

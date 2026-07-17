@@ -21,6 +21,9 @@ use Core\View;
 use Core\Helper;
 use Core\Auth;
 use Core\DB;
+use Helpers\AuthThrottle;
+use Helpers\FacebookOAuth;
+use Helpers\PasswordPolicy;
 use Models\User;
 use Models\Plans;
 
@@ -32,11 +35,13 @@ class Users {
      */
     private $regenerateToken = false;
 
-    /**
-     * Maximum Login Attempts
-     * @param int
-     */
-    private $maxLoginAttempts = 10;
+    private const THROTTLE_MESSAGE = 'Too many authentication attempts. Please try again in one hour.';
+
+    private AuthThrottle $authThrottle;
+
+    public function __construct(?AuthThrottle $authThrottle = null){
+        $this->authThrottle = $authThrottle ?? new AuthThrottle();
+    }
 
     /**
      * Login Page
@@ -66,14 +71,17 @@ class Users {
      * @return void
      */
     public function loginAuth(Request $request){
-
-        if($request->cookie('__bl')){
-            return back()->with('danger', e('You have been blocked for 1 hour due to many unsuccessful login attempts.'));
-        }
         
         if(is_null($request->email)) return Helper::redirect()->back()->with('danger', e('Please enter a valid email or username.'));
         
         if(is_null($request->password)) return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.'));
+
+        $identity = is_scalar($request->email) ? (string) $request->email : '';
+        $ip = $request->ip();
+
+        if($this->authThrottle->isBlocked(AuthThrottle::LOGIN_SCOPE, $identity, $ip)){
+            return Helper::redirect()->back()->with('danger', e(self::THROTTLE_MESSAGE));
+        }
 
         \Core\Plugin::dispatch('login.verify', $request);
 
@@ -83,18 +91,16 @@ class Users {
             $user = User::where("username", $request->email)->first();
         }
 
-        if(!$user) return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.'));
+        if(!$user){
+            $this->authThrottle->recordFailure(AuthThrottle::LOGIN_SCOPE, $identity, $ip);
+            return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.'));
+        }
 
         Helper::set("hashCost", 8);
         
-        $loginCount = $request->session('login_count');
-
-        if($loginCount === false){
-            $request->session('login_count', 0);
-            $loginCount = 0;
-        }
-        
         if(Helper::validatePass($request->password, $user->password)){
+
+            $this->authThrottle->clear(AuthThrottle::LOGIN_SCOPE, $identity, $ip);
 
             \Core\Plugin::dispatch('login.verified', [$request, $user]);
 
@@ -155,12 +161,7 @@ class Users {
             return Helper::redirect()->to(route('dashboard'));
         }
 
-        $loginCount++;
-        $request->session('login_count', $loginCount);
-
-        if($loginCount >= $this->maxLoginAttempts){
-            $request->cookie('__bl', md5(rand(10000, 101010)), 60);
-        }
+        $this->authThrottle->recordFailure(AuthThrottle::LOGIN_SCOPE, $identity, $ip);
 
         return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.')); 
     }
@@ -177,7 +178,8 @@ class Users {
         
         View::set('title', e("Enter your 2FA access code"));
 
-        View::push(assets('frontend/libs/jquery-mask-plugin/dist/jquery.mask.min.js'), 'js')->tofooter();
+        View::push(assets('frontend/libs/imask/imask.min.js'), 'js')->tofooter();
+        View::push(assets('input-mask.min.js'), 'js')->tofooter();
 
         return View::with('auth.2fa')->extend('layouts.auth');
     }
@@ -199,15 +201,32 @@ class Users {
             return Helper::redirect()->to(route('login'))->with("danger", e("Invalid token. Please try again."));
         }
 
-        $request->secret = str_replace(' ', '', $request->secret);
+        $identity = isset($user->id) ? (string) $user->id : (string) $user->email;
+        $ip = $request->ip();
 
-        if(strlen($request->secret) != 6) return back()->with("danger", e("Invalid token. Please try again."));
+        if($this->authThrottle->isBlocked(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip)){
+            return Helper::redirect()->back()->with('danger', e(self::THROTTLE_MESSAGE));
+        }
 
-        $gAuth = new \Sonata\GoogleAuthenticator\GoogleAuthenticator();
+        $request->secret = is_scalar($request->secret)
+            ? str_replace(' ', '', (string) $request->secret)
+            : '';
 
-        if(!$gAuth->checkCode($user->secret2fa, $request->secret)) return back()->with("danger", e("Invalid token. Please try again."));
-				
-        session_regenerate_id();    
+        if(strlen($request->secret) != 6){
+            $this->authThrottle->recordFailure(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip);
+            return Helper::redirect()->back()->with("danger", e("Invalid token. Please try again."));
+        }
+
+        $gAuth = new \Helpers\GoogleAuthenticator();
+
+        if(!$gAuth->checkCode($user->secret2fa, $request->secret)){
+            $this->authThrottle->recordFailure(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip);
+            return Helper::redirect()->back()->with("danger", e("Invalid token. Please try again."));
+        }
+
+        $this->authThrottle->clear(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip);
+
+        session_regenerate_id();
 
         if($this->regenerateToken){            
             $newAuthKey = Helper::Encode($user->email.$user->id.uniqid().rand(0, 99999));
@@ -279,9 +298,9 @@ class Users {
 
         if(in_array($user->username, ['admin','moderator','owner','founder'])) return Helper::redirect()->back()->with('danger', e("This username cannot be used or already exists. Please choose another username"));
         
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(PasswordPolicy::message()));
 
-        if(strlen($request->password) > 64) return Helper::redirect()->back()->with('danger', e('Your password is too long. Passwords must be between 8 to 64 characters.'));
+        if(strlen($request->password) > 64) return Helper::redirect()->back()->with('danger', e('Your password is too long. Passwords must be between 12 to 64 characters.'));
 
         if($request->password != $request->cpassword) return Helper::redirect()->back()->with('danger', e("Passwords don't match."));
 
@@ -383,7 +402,7 @@ class Users {
 
         $expiry = $data[1];        
 
-        if($expiry != md5(AuthToken.": Expires on".strtotime(date('Y-m-d')))){
+        if(!hash_equals(md5(AuthToken.": Expires on".strtotime(date('Y-m-d'))), $expiry)){
             return Helper::redirect()->to(route('forgot'))->with("danger", e("Token has expired, please request another link."));
         }
 
@@ -413,7 +432,7 @@ class Users {
 
         $expiry = $data[1];
 
-        if($expiry != md5(AuthToken.": Expires on".strtotime(date('Y-m-d')))){
+        if(!hash_equals(md5(AuthToken.": Expires on".strtotime(date('Y-m-d'))), $expiry)){
             return Helper::redirect()->to(route('forgot'))->with("danger", e("Token has expired, please request another link."));
         }
 
@@ -421,7 +440,7 @@ class Users {
             return Helper::redirect()->to(route('forgot'))->with("danger", e("Token has expired, please request another link."));
         }
 
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(PasswordPolicy::message()));
 
         if($request->password != $request->cpassword) return Helper::redirect()->back()->with('danger', e("Passwords don't match."));
 
@@ -507,7 +526,7 @@ class Users {
 
         if(in_array($user->username, ['admin','moderator','owner','founder'])) return Helper::redirect()->back()->with('danger', e("This username cannot be used or already exists. Please choose another username"));
         
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(PasswordPolicy::message()));
 
         if($request->password != $request->cpassword) return Helper::redirect()->back()->with('danger', e("Passwords don't match."));
 
@@ -549,45 +568,39 @@ class Users {
         
         if($request->error) return Helper::redirect()->to(route('login'))->with("danger", e("You must grant access to this application to use your facebook account."));
 
-    
-        $fb = new \Facebook\Facebook([
-            'app_id' => config("facebook_app_id"),
-            'app_secret' => config("facebook_secret"),
-            'default_graph_version' => 'v12.0',
-        ]);	
+        $oauth = new FacebookOAuth(
+            (string) config("facebook_app_id"),
+            (string) config("facebook_secret"),
+            route('login.facebook')
+        );
 
-        
-        $helper = $fb->getRedirectLoginHelper(route('login.facebook'));
+        $code = is_scalar($request->code) ? (string) $request->code : '';
+        $state = is_scalar($request->state) ? (string) $request->state : '';
+
+        if($code === '') {
+            return Helper::redirect()->to($oauth->authorizationUrl());
+        }
 
         try {
-            $accessToken = $helper->getAccessToken();
-        } catch(\Facebook\Exceptions\FacebookResponseException $e) {
-            // Graph Error
-            GemError::log('Facebook Auth: '.$e->getMessage());
-            return Helper::redirect()->to(route('login'))->with("danger", e("An error has occurred. Please try again later."));
-
-        } catch(\Facebook\Exceptions\FacebookSDKException $e) {
-            // SDK Error
+            $accessToken = $oauth->exchangeCode($code, $state);
+            $response = $oauth->user($accessToken);
+        } catch(\RuntimeException $e) {
             GemError::log('Facebook Auth: '.$e->getMessage());
             return Helper::redirect()->to(route('login'))->with("danger", e("An error has occurred. Please try again later."));
         }
 
-        if(!isset($accessToken) || empty($accessToken)) {
-            return Helper::redirect()->to($helper->getLoginUrl(route('login.facebook'), ["email"]));
-        }
-            
-        $request = $fb->get('/me?fields=id,email,name', $accessToken);
-        $response = $request->getGraphUser();
+        $email = is_scalar($response['email'] ?? null) ? (string) $response['email'] : '';
+        $facebookId = is_scalar($response['id'] ?? null) ? (string) $response['id'] : '';
 
-        if(!$response->getEmail()) return Helper::redirect()->to(route('login'))->with("danger", e("You must grant permission to this application to use your profile information."));
+        if($email === '') return Helper::redirect()->to(route('login'))->with("danger", e("You must grant permission to this application to use your profile information."));
         
         // Check if email is already taken
-        if(DB::user()->whereRaw("(auth != 'facebook' OR auth IS NULL)")->where('email', $response->getEmail())->first()){
+        if(DB::user()->whereRaw("(auth != 'facebook' OR auth IS NULL)")->where('email', $email)->first()){
             return Helper::redirect()->to(route('login'))->with("danger", e("The email linked to your account has been already used. If you have used that, please login to your existing account otherwise please contact us.")); 
         }
 
         // Let's see if the user is registered
-        if($user = DB::user()->where('auth', 'facebook')->whereAnyIs([['email' => $response->getEmail()], ['auth_id'=> $response->getId()]])->first()){
+        if($user = DB::user()->where('auth', 'facebook')->whereAnyIs([['email' => $email], ['auth_id'=> $facebookId]])->first()){
 
             // Check Auth Key: If empty generate one
             if(empty($user->auth_key)){	
@@ -596,9 +609,9 @@ class Users {
                 $user->save();
             }
             // Insert AuthID
-            if(empty($user->auth_id) && $response->getId()){	
+            if(empty($user->auth_id) && $facebookId){
                 // Update database
-                $user->auth_id = $response->getId();
+                $user->auth_id = $facebookId;
                 $user->save();
             }
 
@@ -617,12 +630,12 @@ class Users {
             
             $user = DB::user()->create();
 
-            $user->email = Helper::clean($response->getEmail(),3,TRUE);
+            $user->email = Helper::clean($email,3,TRUE);
             $user->username = "";
             $user->password = Helper::Encode(Helper::rand(12));
             $user->date = Helper::dtime();
             $user->auth = "facebook";
-            $user->auth_id = $response->getId() ?clean($response->getId()) : "";
+            $user->auth_id = $facebookId ? clean($facebookId) : "";
             $user->api = Helper::rand(16);
             $user->auth_key = $auth_key;
             $user->uniquetoken = Helper::rand(32);
@@ -720,7 +733,7 @@ class Users {
         }
 
         // The TwitterOAuth instance          
-        $twitteroauth = new \Abraham\TwitterOAuth\TwitterOAuth(config("twitter_key"), config("twitter_secret"), $request->session('oauth_token')); 
+        $twitteroauth = new \Abraham\TwitterOAuth\TwitterOAuth(config("twitter_key"), config("twitter_secret"));
 
         try{
             
@@ -854,7 +867,7 @@ class Users {
 
         $expiry = $data[1];        
 
-        if($expiry != md5(AuthToken.": Expires on".strtotime(date('Y-m-d H')))){
+        if(!hash_equals(md5(AuthToken.": Expires on".strtotime(date('Y-m-d H'))), $expiry)){
             return Helper::redirect()->to(route('login'))->with("danger", e("Token has expired, please login manually"));
         }
 

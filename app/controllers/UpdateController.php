@@ -20,6 +20,7 @@ use Core\Request;
 use Core\View;
 use Core\Helper;
 use Core\DB;
+use Helpers\Payments\Nowpayments\Migrations as NowPaymentsMigrations;
 
 class Update {
     /**
@@ -39,21 +40,15 @@ class Update {
     public function __construct(){
 
         if(config('version')){
-            $request  = request();
-        
             \Core\Auth::check();
     
             $user = \Core\Auth::user();
             
-            if(!$request->privatekey && !$user){
+            if(!$user){
                 return GemError::trigger(403);
             }
             
-            if(!$request->privatekey && !$user->admin){
-                return GemError::trigger(403);
-            }
-    
-            if($request->privatekey && $request->privatekey != md5('update.'.AuthToken)){
+            if(!$user->admin){
                 return GemError::trigger(403);
             }
         }
@@ -66,11 +61,6 @@ class Update {
      * @return void
      */
     public function index(Request $request){
-        
-        if($request->update){
-            return $this->processUpdate();
-        }
-
         $this->header($request);
         echo "<h1>Premium URL Shortener Updater</h1>
         <p>
@@ -80,8 +70,12 @@ class Update {
             If your current version is the same as the latest version and you are experiencing issues, you can still run this update to make sure changes are applied correctly. If this does not fix your issue, please contact us by <a href=\"https://support.gempixel.com/\" target=\"_blank\">opening a ticket</a> and provide us all the necessary information.
         </p>        
         
-        <p><a href=\"?update=true\" class=\"button\">Upgrade</a></p>";
+        <form method=\"post\" action=\"\">'.csrf().'<button type=\"submit\" class=\"button\">Upgrade</button></form>";
         $this->footer();
+    }
+
+    public function process(){
+        return $this->processUpdate();
     }
 
     /**
@@ -148,6 +142,8 @@ class Update {
             $this->update64();
 
             $this->update65();
+
+            $this->updateNowPayments();
             
             $this->updateversion();
             
@@ -161,6 +157,12 @@ class Update {
         }
 
         return \Core\Helper::redirect()->to(route('home'))->with('success', 'Updated was successfully completed.');
+    }
+
+    private function updateNowPayments(): void
+    {
+        NowPaymentsMigrations::up();
+        NowPaymentsMigrations::ensureSettings();
     }
     /**
      * Update to 6.5
@@ -382,6 +384,12 @@ class Update {
             }
             if(DB::hasIndex('stats', 'os') === false){
                 $table->change('os')->string('os')->index();
+            }
+            if(DB::hasIndex('stats', 'stats_user_date') === false){
+                $table->multiindex('stats_user_date', ['urluserid', 'date']);
+            }
+            if(DB::hasIndex('stats', 'stats_url_ip') === false){
+                $table->multiindex('stats_url_ip', ['urlid', 'ip']);
             }
         });
         

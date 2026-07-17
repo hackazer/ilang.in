@@ -9,14 +9,14 @@
                     <?php if(user()->teamPermission('links.edit')): ?>
                         <li><a class="dropdown-item" href="<?php echo route('links.edit', [$url->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                         <?php if($url->archived): ?>
-                            <li><a class="dropdown-item" href="<?php echo route('links.unarchive', ['link' => $url->id]) ?>" data-trigger="archiveselected"><i data-feather="briefcase"></i> <?php ee('Unarchive') ?></a></li>  
+                            <li><form action="<?php echo route('links.unarchive') ?>" method="post" class="m-0"><?php echo csrf() ?><input type="hidden" name="link" value="<?php echo $url->id ?>"><button type="submit" class="dropdown-item" data-trigger="archiveselected"><i data-feather="briefcase"></i> <?php ee('Unarchive') ?></button></form></li>
                         <?php else: ?>
-                            <li><a class="dropdown-item" href="<?php echo route('links.archive', ['link' => $url->id]) ?>" data-trigger="archiveselected"><i data-feather="briefcase"></i> <?php ee('Archive') ?></a></li>  
+                            <li><form action="<?php echo route('links.archive') ?>" method="post" class="m-0"><?php echo csrf() ?><input type="hidden" name="link" value="<?php echo $url->id ?>"><button type="submit" class="dropdown-item" data-trigger="archiveselected"><i data-feather="briefcase"></i> <?php ee('Archive') ?></button></form></li>
                         <?php endif ?>
                         <?php if($url->public): ?>
-                            <li><a class="dropdown-item" href="<?php echo route('links.private', ['link' => $url->id]) ?>" data-trigger="archiveselected"><i data-feather="eye-off"></i> <?php ee('Set Private') ?></a></li>  
+                            <li><form action="<?php echo route('links.private') ?>" method="post" class="m-0"><?php echo csrf() ?><input type="hidden" name="link" value="<?php echo $url->id ?>"><button type="submit" class="dropdown-item" data-trigger="archiveselected"><i data-feather="eye-off"></i> <?php ee('Set Private') ?></button></form></li>
                         <?php else: ?>
-                            <li><a class="dropdown-item" href="<?php echo route('links.public', ['link' => $url->id]) ?>" data-trigger="archiveselected"><i data-feather="eye"></i> <?php ee('Set Public') ?></a></li>  
+                            <li><form action="<?php echo route('links.public') ?>" method="post" class="m-0"><?php echo csrf() ?><input type="hidden" name="link" value="<?php echo $url->id ?>"><button type="submit" class="dropdown-item" data-trigger="archiveselected"><i data-feather="eye"></i> <?php ee('Set Public') ?></button></form></li>
                         <?php endif ?>
                     <?php endif ?>
                     <?php if(user()->has('export')): ?>
@@ -24,10 +24,10 @@
                     <?php endif ?>
                     <li><hr class="dropdown-divider"></li>
                     <?php if(user()->teamPermission('links.edit')): ?>
-                        <li><a class="dropdown-item" href="<?php echo route('links.reset', [$url->id, \Core\Helper::nonce('link.reset')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#resetModal"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></a></li>
+                        <li><form action="<?php echo route('links.reset', [$url->id, \Core\Helper::nonce('link.reset')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></button></form></li>
                     <?php endif ?>
                     <?php if(user()->teamPermission('links.delete')): ?>
-                        <li><a class="dropdown-item" href="<?php echo route('links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                        <li><form action="<?php echo route('links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                     <?php endif ?>
                 </ul>                        
             </div>

@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
         <?php meta() ?>
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link rel="stylesheet" href="<?php echo assets('frontend/libs/fontawesome-free/css/all.min.css') ?>">
         <link rel="stylesheet" href="<?php echo assets('frontend/libs/select2/dist/css/select2.min.css') ?>">
         <link rel="stylesheet" type="text/css" href="<?php echo assets('cookieconsent.min.css') ?>">
         <link rel="stylesheet" href="<?php echo assets('frontend/css/style'.(request()->cookie('darkmode') || \Helpers\App::themeConfig('homestyle', 'darkmode', true) ? '-dark' : '').'.min.css') ?>" id="stylesheet">
@@ -19,14 +19,14 @@
         <?php echo html_entity_decode(config('customheader')) ?>
     </head>
     <body<?php echo \Core\View::bodyClass() ?>>
-        <?php section() ?>               
-        <script src="<?php echo assets('bundle.pack.js') ?>"></script>   
+        <?php section() ?>
+        <script src="<?php echo assets('bundle.pack.js') ?>"></script>
         <?php if(config('cookieconsent')->enabled): ?>
             <script src="<?php echo assets('cookieconsent.min.js') ?>"></script>
         <?php endif ?>
         <?php block('footer') ?>
         <script type="text/javascript">
-            var lang = <?php echo json_encode([       
+            var lang = <?php echo json_encode([
                 "error" => e('Please enter a valid URL.'),
                 "cookie" => !empty(config('cookieconsent')->message) ? e(config('cookieconsent')->message) : e("This website uses cookies to ensure you get the best experience on our website."),
                 "cookieok" => e("Got it!"),
@@ -40,12 +40,12 @@
                     '7d' => 'Last 7 Days',
                     '3d' => 'Last 30 Days',
                     'tm' => 'This Month',
-                    'lm' => 'Last Month',                    
+                    'lm' => 'Last Month',
                 ]]) ?>
-        </script> 
+        </script>
         <script src="<?php echo assets('frontend/js/app.js') ?>"></script>
         <script src="<?php echo assets('custom.min.js') ?>"></script>
-        <script src="<?php echo assets('server.min.js?v=1.0') ?>"></script>        
+        <script src="<?php echo assets('server.min.js?v=1.0') ?>"></script>
         <script>
             feather.replace({
                 'width': '1em',

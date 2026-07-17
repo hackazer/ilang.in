@@ -63,7 +63,7 @@ final class GoogleAuth {
      */
     public function redirectURI(Request $request){
         
-        $state = md5(Helper::rand(32));
+        $state = bin2hex(random_bytes(32));
 
 		$options = [
 			"scope" => "email profile",
@@ -87,7 +87,14 @@ final class GoogleAuth {
      */
     public function getAccessToken(Request $request){
 
-        if(!$request->state || $request->state != $request->session('oauth_state')){
+        $providedState = $request->state;
+        $expectedState = $request->session('oauth_state');
+
+        if(!is_string($providedState)
+            || !is_string($expectedState)
+            || $providedState === ''
+            || $expectedState === ''
+            || !hash_equals($expectedState, $providedState)){
             throw new \Exception("Security token doesn't match. Please try again.");
 		}		
 
@@ -122,4 +129,4 @@ final class GoogleAuth {
     public function getUser(){
         return $this->response;
     }
-}        
+}

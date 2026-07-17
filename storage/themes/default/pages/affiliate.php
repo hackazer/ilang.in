@@ -16,7 +16,7 @@
     </div>
 </section>
 <section class="slice slice-lg pt-8 bg-section-secondary">
-    <div class="container">            
+    <div class="container">
         <div class="row mb-5 justify-content-center text-center">
             <div class="col-lg-8 col-md-10">
                 <h2 class="mt-4"><?php ee('Frequently Asked Questions') ?></h2>
@@ -28,22 +28,22 @@
                 <?php if($i > 0 && $i % 2 == 0): ?>
                     </div>
                     <div class="row">
-                <?php endif; ?>                
+                <?php endif; ?>
                 <div class="col-xl-6">
                     <div id="<?php echo 'faq-holder-'.$faq->slug ?>" class="accordion accordion-spaced">
                         <div class="card">
-                            <div class="card-header py-4" id="<?php echo $faq->slug ?>" data-toggle="collapse" role="button" data-target="#faq-<?php echo $faq->id ?>" aria-expanded="false" aria-controls="faq-<?php echo $faq->id ?>">
-                                <h6 class="mb-0"><i data-feather="help-circle" class="mr-3"></i><?php echo $faq->question ?></h6>
+                            <div class="card-header py-4" id="<?php echo $faq->slug ?>" data-bs-toggle="collapse" role="button" data-bs-target="#faq-<?php echo $faq->id ?>" aria-expanded="false" aria-controls="faq-<?php echo $faq->id ?>">
+                                <h6 class="mb-0"><i data-feather="help-circle" class="me-3"></i><?php echo $faq->question ?></h6>
                             </div>
-                            <div id="faq-<?php echo $faq->id ?>" class="collapse" aria-labelledby="<?php echo $faq->slug ?>" data-parent="#<?php echo 'faq-holder-'.$faq->slug ?>">
+                            <div id="faq-<?php echo $faq->id ?>" class="collapse" aria-labelledby="<?php echo $faq->slug ?>" data-bs-parent="#<?php echo 'faq-holder-'.$faq->slug ?>">
                                 <div class="card-body">
                                     <?php echo $faq->answer ?>
                                 </div>
                             </div>
                         </div>
-                    </div>         
-                </div>                  
-            <?php endforeach ?> 
+                    </div>
+                </div>
+            <?php endforeach ?>
         </div>
     </div>
 </section>

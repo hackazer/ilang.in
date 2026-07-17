@@ -8,6 +8,8 @@
 
 **Tech Stack:** PHP 8.3 and 8.5, custom GemPixel framework, MySQL, NOWPayments API v1, Bootstrap theme UI, PHPUnit
 
+**Status:** Complete for implementation and automated verification. Live NOWPayments sandbox checkout and IPN delivery remain deployment credentials and provider-environment checks, not local test prerequisites.
+
 ---
 
 ### Task 1: Add provider value objects and signature verification

@@ -7,7 +7,7 @@
                     <?php echo csrf() ?>
                     <div class="row">
                         <div class="col-md-4">
-                            <div class="form-group mb-4">
+                            <div class="mb-4">
                                 <label for="type" class="form-label"><?php echo e("Pixel Provider") ?></label>
                                 <select name="type" id="type" class="form-control" data-toggle="select">
                                     <?php foreach($providers as $key => $provider): ?>
@@ -17,13 +17,13 @@
                             </div>	
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group mb-4">
+                            <div class="mb-4">
                                 <label for="pixel" class="form-label"><?php ee('Pixel Name') ?></label>
                                 <input type="text" class="form-control p-2" name="pixel" id="pixel" value="" placeholder="<?php echo e("Shopify Campaign") ?>">
                             </div>	
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group mb-4">
+                            <div class="mb-4">
                                 <label for="tag" class="form-label"><?php echo e("Pixel Tag") ?></label>
                                 <input type="text" value="" name="tag" class="form-control p-2" placeholder="e.g. <?php echo e("Numerical or alphanumerical values only") ?>" /> 
                             </div>	

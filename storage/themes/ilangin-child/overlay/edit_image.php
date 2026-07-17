@@ -8,13 +8,13 @@
                     <?php echo csrf() ?>
                     <div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="name"><?php ee("Name") ?></label>
 								<input type="text" class="form-control" name="name" id="name"  placeholder="e.g. Promo" value="<?php echo $overlay->name ?>" data-required="true">
 							</div>	
 						</div>	
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="link" class="form-label"><?php ee("Link") ?></label>
                                 <input type="text" class="form-control" id="link" name="link"  value="<?php echo $overlay->data->link ?>">
                                 <p class="form-text"><?php ee("If you add a link here, the whole overlay will be linked to this when clicked.") ?></p>
@@ -23,14 +23,14 @@
 					</div>
 					<div class="row mb-3">
                         <div class="col-md-6">
-							<div class="form-group">
+							<div class="mb-3">
 								<label for="logo" class="form-label"><?php ee("Logo") ?></label>
 								<input type="file" class="form-control" id="logo" name="logo">
 								<p class="form-text"><?php ee("Logo should be square with a maximum size of 100x100. To remove the image, click on the upload field and then cancel it.") ?></p>
 							</div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="image" class="form-label"><?php ee("Background Image") ?></label>
                                 <input type="file" class="form-control" id="image" name="image">
                                 <p class="form-text"><?php ee("Image should be rectangle with a maximum size of 600x150. To remove the image, click on the upload field and then cancel it.") ?></p>
@@ -46,13 +46,13 @@
 				<div class="card-body collapse" id="custom">					
 					<div class="row">						
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="bg"><?php ee("Overlay Background Color") ?></label> <br>
 								<input type="text" name="bg" id="bg" value="<?php echo old('bg') ?>">
 							</div>			
 						</div>
 					</div>				
-					<div class="form-group">
+					<div class="mb-3">
 						<label class="form-label d-block" for="position"><?php ee("Overlay Position") ?></label>
 						<select name="position" id="position" class="form-control" data-toggle="select">
 							<option value="tl"<?php echo $overlay->data->position == 'tl' ? 'selected' : '' ?>><?php ee("Top Left") ?></option>

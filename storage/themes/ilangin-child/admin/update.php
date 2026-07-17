@@ -33,7 +33,7 @@
                     </p>
                     <form action="<?php echo route('admin.update.process') ?>" method="post" class="mt-5">
                         <?php echo csrf() ?>
-                        <div class="form-group mb-2">
+                        <div class="mb-2">
                             <label for="code" class="form-label"><?php ee('Purchase Code') ?></label>
                             <input type="text" class="form-control p-2" id="code" name="code" placeholder="Envato Purchase Code"  value="<?php echo config('purchasecode') ?>" autocomplete="off">
                         </div>
@@ -79,8 +79,9 @@
                     <span class="mb-2 d-block fw-bold"><?php ee('License Type') ?>: <?php echo $license->type ?></span>
                     <span class="mb-4 d-block fw-bold"><?php ee('Support Until') ?>: <?php echo \Core\Helper::dtime($license->support, 'F d Y') ?></span>
                 <?php endif ?>
-                <form method="post">
-                    <div class="form-group">
+                <form action="<?php echo route('admin.update.code') ?>" method="post">
+                    <?php echo csrf() ?>
+                    <div class="mb-3">
                         <label class="form-label"><?php ee('Envato Purchase Code') ?></label>
                         <input class="form-control p-2" name="newcode" placeholder="Envato Purchase Code" value="<?php echo config("purchasecode") ?>">
                     </div>

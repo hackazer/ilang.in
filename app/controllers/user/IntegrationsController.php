@@ -18,7 +18,6 @@
 
 namespace User;
 
-use Core\Helper;
 use Core\View;
 use Core\DB;
 use Core\Auth;
@@ -153,20 +152,126 @@ class Integrations {
 		$plugin = str_replace("__KEY__", user()->api, $plugin);
 
 
-        $zip = new \ZipArchive();
-        
-        $tmpname = Helper::rand(12).".zip";
+        $this->deliverPluginArchive($plugin);
+    }
 
-        if(!$zip->open(STORAGE."/app/".$tmpname,  \ZipArchive::CREATE)){
-            return back()->wih('danger', e('Plugin cannot be generated. Please contact us for more information.'));
+    /**
+     * Generate, stream, and remove a user-specific WordPress plugin archive.
+     */
+    protected function deliverPluginArchive(string $plugin): void
+    {
+        $path = $this->createPluginArchive($plugin);
+
+        try {
+            $this->streamPluginArchive($path);
+        } finally {
+            $this->removePluginArchive($path);
+        }
+    }
+
+    /**
+     * Create the archive in an atomically allocated private temporary file.
+     */
+    protected function createPluginArchive(string $plugin): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'ilangin-wordpress-');
+
+        if ($path === false) {
+            throw new \RuntimeException('Plugin archive temporary file could not be created.');
         }
 
-        $zip->addFromString('plugin.php', $plugin);
-        $zip->close();
-        
-        header('Content-disposition: attachment; filename=linkshortenershortcode.zip');
-        header('Content-type: application/zip');
-        readfile(STORAGE."/app/".$tmpname);
-        unlink(STORAGE."/app/".$tmpname);
+        $zip = new \ZipArchive();
+        $isOpen = false;
+
+        try {
+            if (!chmod($path, 0600)) {
+                throw new \RuntimeException('Plugin archive permissions could not be secured.');
+            }
+
+            if ($zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+                throw new \RuntimeException('Plugin archive could not be opened.');
+            }
+
+            $isOpen = true;
+
+            if (!$zip->addFromString('plugin.php', $plugin)) {
+                throw new \RuntimeException('Plugin file could not be added to the archive.');
+            }
+
+            $closed = $zip->close();
+            $isOpen = false;
+
+            if (!$closed) {
+                throw new \RuntimeException('Plugin archive could not be finalized.');
+            }
+
+            return $path;
+        } catch (\Throwable $exception) {
+            if ($isOpen) {
+                $zip->close();
+            }
+
+            $this->removePluginArchive($path);
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * Stream the generated archive without allowing browser or proxy caching.
+     */
+    protected function streamPluginArchive(string $path): void
+    {
+        $stream = fopen($path, 'rb');
+
+        if ($stream === false) {
+            throw new \RuntimeException('Plugin archive could not be opened for download.');
+        }
+
+        try {
+            $metadata = fstat($stream);
+
+            if ($metadata === false || !isset($metadata['size'])) {
+                throw new \RuntimeException('Plugin archive size could not be determined.');
+            }
+
+            foreach ($this->pluginDownloadHeaders((int) $metadata['size']) as $header) {
+                header($header, true);
+            }
+
+            while (!feof($stream)) {
+                $chunk = fread($stream, 8192);
+
+                if ($chunk === false) {
+                    throw new \RuntimeException('Plugin archive could not be streamed.');
+                }
+
+                if ($chunk !== '') {
+                    echo $chunk;
+                }
+            }
+        } finally {
+            fclose($stream);
+        }
+    }
+
+    protected function pluginDownloadHeaders(int $size): array
+    {
+        return [
+            'Content-Disposition: attachment; filename="linkshortenershortcode.zip"',
+            'Content-Type: application/zip',
+            'Content-Length: '.$size,
+            'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma: no-cache',
+            'Expires: 0',
+            'X-Content-Type-Options: nosniff',
+        ];
+    }
+
+    protected function removePluginArchive(string $path): void
+    {
+        if (is_file($path) && !unlink($path)) {
+            throw new \RuntimeException('Plugin archive temporary file could not be removed.');
+        }
     }
 }

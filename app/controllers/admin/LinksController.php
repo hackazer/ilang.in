@@ -51,10 +51,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -64,7 +61,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Links'));
 
@@ -91,10 +88,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -104,7 +98,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Expired Links'));
 
@@ -131,10 +125,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -144,7 +135,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Archived Links'));        
         return View::with('admin.links.index', compact('urls'))->extend('admin.layouts.main');
@@ -171,10 +162,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -184,7 +172,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Pending Links'));        
         return View::with('admin.links.index', compact('urls'))->extend('admin.layouts.main');
@@ -211,10 +199,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -224,7 +209,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
         
         View::set('title', e('Anonymous Links'));        
         return View::with('admin.links.index', compact('urls'))->extend('admin.layouts.main');
@@ -380,7 +365,7 @@ class Links {
 
         View::set('title', e('Edit Link'));
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         return View::with('admin.links.edit', compact('url', 'locations'))->extend('admin.layouts.main');
     }
@@ -557,6 +542,24 @@ class Links {
         
         return Helper::redirect()->back()->with('success', e('Selected Links have been enabled.'));
     }   
+
+    private static function applyDateCutoff($query, ?string $value)
+    {
+        $value = trim((string) $value);
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if(
+            !$date ||
+            ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+            $date->format('Y-m-d') !== $value
+        ){
+            return $query;
+        }
+
+        return $query->whereLt('date', $date->format('Y-m-d H:i:s'));
+    }
+
     /**
      * Import Links
      *

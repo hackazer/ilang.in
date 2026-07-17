@@ -17,7 +17,7 @@
                 <div>
                     <a class="btn btn-primary btn-sm" href="<?php echo route('admin.email', ['email'=> $user->email]) ?>"><span data-feather="message-square"></span> <?php echo e('Send Email') ?></a>
                     <?php if(!$user->verified): ?>                    
-                    <a class="btn btn-success btn-sm" href="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>"><i data-feather="check-circle"></i> <?php ee('Verify User') ?></a>
+                    <form action="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>" method="post" class="d-inline"><?php echo csrf() ?><button type="submit" class="btn btn-success btn-sm"><i data-feather="check-circle"></i> <?php ee('Verify User') ?></button></form>
                     <?php endif ?>
                     <a class="btn btn-primary btn-sm" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><span data-feather="edit"></span></a>                    
                 </div>
@@ -54,7 +54,7 @@
                                 <a href="<?php echo $url->url ?>" target="_blank" rel="nofollow"><strong><?php echo \Core\Helper::empty($url->meta_title, $url->url) ?></strong></a><br />
                             <?php endif ?>
                             <small class="text-muted"><?php echo Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?></small> - 
-                            <a href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>"><small class="text-danger"><?php ee('Delete') ?></span></small></a>
+                            <form action="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="btn btn-link p-0"><small class="text-danger"><?php ee('Delete') ?></small></button></form>
                         </div>
                     </div>          
                 <hr>          

@@ -21,10 +21,10 @@
                 <br>
                 <div class="row">
                     <div class="col-sm-6">
-                        <a href="<?php echo $url->url ?>" class="btn btn-secondary btn-block redirect" rel="nofollow"><?php echo e("Redirect me"); ?></a>
+                        <a href="<?php echo $url->url ?>" class="btn btn-secondary w-100 redirect" rel="nofollow"><?php echo e("Redirect me"); ?></a>
                     </div>
                     <div class="col-sm-6">
-                        <a href="<?php echo config('url') ?>" class="btn btn-primary btn-block" rel="nofollow"><?php echo e("Take me to your homepage") ?></a></a>
+                        <a href="<?php echo config('url') ?>" class="btn btn-primary w-100" rel="nofollow"><?php echo e("Take me to your homepage") ?></a></a>
                     </div>
                 </div>
                 <hr>

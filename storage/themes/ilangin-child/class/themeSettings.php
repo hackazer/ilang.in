@@ -72,47 +72,48 @@ class themeSettings {
         \Helpers\CDN::load('simpleeditor');
 
         \Core\View::push("<script>
-                            CKEDITOR.replace('homedescription');
+                            EditorAdapter.create('homedescription');
                         </script>", "custom")->toFooter();  
 
         
-        \Helpers\CDN::load("spectrum");
-		
-        \Core\View::push('<script type="text/javascript">																			    						    				    
-                        $("#c1").spectrum({
-                            color: "'.(isset($option->homecolor->c1) ? $option->homecolor->c1 : '#DD7BFF').'",
-                            showInput: true,
-                            preferredFormat: "hex"
-                        });	
-                        $("#c2").spectrum({
-                            color: "'.(isset($option->homecolor->c1) ? $option->homecolor->c2 : '#FF6C6C').'",
-                            showInput: true,
-                            preferredFormat: "hex"
+        \Helpers\CDN::load('coloris');
+
+        \Core\View::push('<script type="text/javascript">
+                        document.addEventListener("DOMContentLoaded", function () {
+                            if (typeof Coloris !== "function") return;
+                            if (typeof Coloris.init === "function") Coloris.init();
+
+                            Coloris({
+                                el: "#c1, #c2",
+                                format: "hex",
+                                alpha: false,
+                                focusInput: true,
+                                selectInput: true
+                            });
                         });
-                    </script>', 'custom')->tofooter(); 
+                    </script>', 'custom')->toFooter();
 
         $content = '<div class="row">
                         <div class="col-md-8">
                             <div class="card card-default">
                                 <div class="card-body">
                                     <form action="'.route("admin.themes.update").'" method="post" enctype="multipart/form-data" id="setting-form">
-                                        <div class="form-group">
-                                            <label for="style" class="form-label mb-3">Theme Scheme</label><br>
-                                            <div class="btn-group btn-group-toggle mb-4 border rounded" data-toggle="buttons">
-                                                <label class="btn btn-dark text-light px-3 py-4">
-                                                    <input type="radio" name="homestyle" value="darkmode" class="me-2" autocomplete="off" '.($option->homestyle == 'darkmode' ? 'checked' : '').'> Pure Dark
-                                                </label>
-                                                <label class="btn btn-primary text-light px-3 py-4">
-                                                    <input type="radio" name="homestyle" value="dark" class="me-2" autocomplete="off" '.($option->homestyle == 'dark' ? 'checked' : '').'> Bluelit
-                                                </label>
-                                                <label class="btn btn-light text-dark px-3 py-4">
-                                                    <input type="radio" name="homestyle" value="light" class="me-2" autocomplete="off" '.($option->homestyle == 'light' ? 'checked' : '').'> White Sky
-                                                </label>
+                                        <div class="mb-3">
+                                            <span class="form-label mb-3 d-block">Theme Scheme</span>
+                                            <div class="btn-group mb-4" role="group" aria-label="Theme scheme">
+                                                <input type="radio" class="btn-check" name="homestyle" id="homestyle-darkmode" value="darkmode" autocomplete="off" '.($option->homestyle == 'darkmode' ? 'checked' : '').'>
+                                                <label class="btn btn-dark text-light px-3 py-4" for="homestyle-darkmode">Pure Dark</label>
+
+                                                <input type="radio" class="btn-check" name="homestyle" id="homestyle-dark" value="dark" autocomplete="off" '.($option->homestyle == 'dark' ? 'checked' : '').'>
+                                                <label class="btn btn-primary text-light px-3 py-4" for="homestyle-dark">Bluelit</label>
+
+                                                <input type="radio" class="btn-check" name="homestyle" id="homestyle-light" value="light" autocomplete="off" '.($option->homestyle == 'light' ? 'checked' : '').'>
+                                                <label class="btn btn-light text-dark px-3 py-4" for="homestyle-light">White Sky</label>
                                             </div>
                                             <p class="form-text">This option will change the color scheme for frontend.</p>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="style" class="form-label mb-4 d-block">Main Header Background Color</label>
+                                        <div class="mb-3">
+                                            <span class="form-label mb-4 d-block">Main Header Background Color</span>
 
                                             <label>
                                                 <input type="radio" name="homecolor[type]" value="default" class="me-2" autocomplete="off" '.(isset($option->homecolor->type) && $option->homecolor->type == 'default' ? 'checked' : '').'> Default
@@ -124,36 +125,36 @@ class themeSettings {
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <div class="form-group mb-3">
+                                                <div class="mb-3">
                                                     <label class="form-label" for="c1">'.e("Color 1").'</label><br>
-                                                    <input type="text" name="homecolor[c1]" id="c1" value="'.(isset($option->homecolor->c1) && $option->homecolor->c1 ? $option->homecolor->c1 : '#DD7BFF').'">
+                                                    <input type="text" class="form-control" name="homecolor[c1]" id="c1" value="'.(isset($option->homecolor->c1) && $option->homecolor->c1 ? $option->homecolor->c1 : '#DD7BFF').'" autocomplete="off" inputmode="text">
                                                 </div>
                                             </div>	
                                             <div class="col-md-6">
-                                                <div class="form-group mb-3">
+                                                <div class="mb-3">
                                                     <label class="form-label" for="c2">'.e("Color 2").'</label><br>
-                                                    <input type="text" name="homecolor[c2]" id="c2" value="'.(isset($option->homecolor->c2) && $option->homecolor->c2 ? $option->homecolor->c2 : '#FF6C6C').'">
+                                                    <input type="text" class="form-control" name="homecolor[c2]" id="c2" value="'.(isset($option->homecolor->c2) && $option->homecolor->c2 ? $option->homecolor->c2 : '#FF6C6C').'" autocomplete="off" inputmode="text">
                                                 </div>
                                             </div>
                                         </div>
                                         <hr>
-                                        <div class="form-group mt-3">
-                                            '.(!empty($option->hero) ? '<a href="#" id="remove_logo" class="btn btn-info btn-xs pull-right">Remove Current Image</a>':"").'
+                                        <div class="mb-3 mt-3">
                                             <label for="hero" class="form-label">Custom Home Page Image</label>
                                             <input type="file" class="form-control" name="hero" id="hero" value="'.$option->hero.'">
                                             <p class="form-text">This will replace the default hero image that comes shipped with the script. JPG or PNG. 500 kb max. Recommended size: 560x710</p>
+                                            '.(!empty($option->hero) ? '<p class="form-text"><a href="#" id="remove_logo" data-trigger="removeimage" class="btn btn-info btn-sm">Remove Current Image</a></p>':"").'
                                         </div>
-                                        <div class="form-group">
+                                        <div class="mb-3">
                                             <label for="homeheader" class="form-label">Home Main Header</label>
                                             <input type="text" class="form-control" name="homeheader" id="homeheader" value="'.$option->homeheader.'">
                                             <p class="form-text">This will replace the home main header right before the shortener form. If you leave it empty, the site title will be shown.</p>
                                         </div>	
-                                        <div class="form-group">
+                                        <div class="mb-3">
                                             <label for="homedescription" class="form-label">Home Main Description</label>
                                             <textarea class="form-control" name="homedescription" id="homedescription">'.$option->homedescription.'</textarea>
                                             <p class="form-text">This will replace the home main description right before the shortener form. If you leave it empty, the site description will be shown.</p>
                                         </div>
-                                        <div class="form-group">
+                                        <div class="mb-3">
                                             <label for="homelinks" class="form-label">Menu Links</label>
                                             <textarea class="form-control" name="homelinks" id="homelinks" rows="5" placeholder="e.g. Google|https://google.com">'.$option->homelinks.'</textarea>
                                             <p class="form-text">You can add custom links to the menu using the following format (one per line): TITLE|LINK</p>

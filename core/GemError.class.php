@@ -22,6 +22,7 @@
 use Core\View;
 use Core\Plugin;
 use Monolog\Logger;
+use Monolog\Level;
 use Monolog\Handler\StreamHandler;
 use Monolog\Formatter\LineFormatter;
 
@@ -53,7 +54,7 @@ class GemError {
 		self::$logger["system"] = new Logger("system");
 
 		$format = new LineFormatter("[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n\n", null, true, true);		
-		$handler = new StreamHandler($path."/Log-".date("m-d-Y").".log", Logger::ERROR);
+		$handler = new StreamHandler($path."/Log-".date("m-d-Y").".log", Level::Error);
 		$handler->setFormatter($format);
 		self::$logger["system"]->pushHandler($handler);
 	}
@@ -114,7 +115,7 @@ class GemError {
 		self::$logger[$name] = new Logger($name);
 		
 		$format = new LineFormatter("[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n\n", null, true, true);		
-		$handler = new StreamHandler($path."/{$name}.log", Logger::DEBUG);
+		$handler = new StreamHandler($path."/{$name}.log", Level::Debug);
 		$handler->setFormatter($format);
 		self::$logger[$name]->pushHandler($handler);		
 	}

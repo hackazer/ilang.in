@@ -5,7 +5,10 @@
     <div class="ms-auto">
         <a href="<?php echo route('admin.plans.new') ?>" class="btn btn-primary"><i data-feather="plus"></i> <?php ee('Add Plan') ?></a>
         <?php if (\Helpers\App::isExtended()): ?>
-            <a href="<?php echo route("admin.plans.sync") ?>" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Sync Plans') ?>"><i data-feather="repeat"></i></a> 
+            <form action="<?php echo route('admin.plans.sync') ?>" method="post" class="d-inline">
+                <?php echo csrf() ?>
+                <button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Sync Plans') ?>" aria-label="<?php ee('Sync Plans') ?>"><i data-feather="repeat"></i></button>
+            </form>
             <a href="<?php echo route("admin.settings.config",['payments']) ?>" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" title=" <?php ee('Settings') ?>"><i data-feather="settings"></i></a> 
         <?php endif ?>
     </div>
@@ -57,10 +60,10 @@
                         <td>
                             <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="<?php echo route('admin.plans.toggle', [$plan->id]) ?>"><i data-feather="toggle-right"></i> <?php echo $plan->status == '1' ? e('Disable') : e('Enable') ?></a></li>
+                                <li><form action="<?php echo route('admin.plans.toggle', [$plan->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="toggle-right"></i> <?php echo $plan->status == '1' ? e('Disable') : e('Enable') ?></button></form></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.plans.edit', [$plan->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.plans.delete', [$plan->id, \Core\Helper::nonce('plan.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                <li><form action="<?php echo route('admin.plans.delete', [$plan->id, \Core\Helper::nonce('plan.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>

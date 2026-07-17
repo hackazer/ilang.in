@@ -17,27 +17,27 @@
                 <div class="card">
                     <div class="card-body">
                         <form id="form-contact" method="post" action="<?php echo route('contact.send') ?>" data-trigger="server-form">
-                            <div class="form-group">
-                                <label class="form-control-label" for="contact-name"><?php ee("Name") ?></label>
+                            <div class="mb-3">
+                                <label class="form-label" for="contact-name"><?php ee("Name") ?></label>
                                 <input class="form-control form-control-lg" type="text" placeholder="<?php ee("Name") ?>" id="contact-name" name="name" value="<?php echo \Core\Auth::logged() ? \Core\Auth::user()->username : '' ?>" data-error="<?php ee('Please enter a valid name.') ?>">
                             </div>
-                            <div class="form-group">
-                                <label class="form-control-label" for="contact-email"><?php ee("Email") ?> <span class="text-danger">*</span></label>
+                            <div class="mb-3">
+                                <label class="form-label" for="contact-email"><?php ee("Email") ?> <span class="text-danger">*</span></label>
                                 <input class="form-control form-control-lg" type="email" placeholder="<?php ee("Email") ?>" name="email" id="contact-email" value="<?php echo \Core\Auth::logged() ? \Core\Auth::user()->email : '' ?>" data-error="<?php ee('Please enter a valid email.') ?>" required>
-                            </div>                   
-                            <div class="form-group">
-                                <label class="form-control-label" for="contact-message"><?php ee("Message") ?> <span class="text-danger">*</span></label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="contact-message"><?php ee("Message") ?> <span class="text-danger">*</span></label>
                                 <textarea class="form-control form-control-lg" placeholder="<?php ee('If you have any questions, feel free to contact us so we can help you') ?>" rows="10" min="10" data-error="<?php ee('The message is empty or too short.') ?>" id="content-message" name="message" required></textarea>
                             </div>
                             <?php echo \Helpers\Captcha::display() ?>
                             <div class="text-center">
                                 <?php echo csrf() ?>
-                                <button type="submit" class="btn btn-block btn-lg btn-primary mt-4"><?php ee('Send') ?></button>
+                                <button type="submit" class="btn w-100 btn-lg btn-primary mt-4"><?php ee('Send') ?></button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
-        </div>        
+        </div>
     </div>
 </section>

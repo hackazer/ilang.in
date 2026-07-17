@@ -278,7 +278,7 @@ class Account {
 
         $QR2FA = null;
         
-        $gAuth = new \Sonata\GoogleAuthenticator\GoogleAuthenticator();
+        $gAuth = new \Helpers\GoogleAuthenticator();
         $title = explode(" ", config("title"));
 
         if($user->secret2fa){
@@ -348,7 +348,7 @@ class Account {
 
         if($request->password){        
 
-            if(strlen($request->password) < 5) $errors .= e("Password must contain at least 5 characters.").'</br>';
+            if(!\Helpers\PasswordPolicy::allows($request->password)) $errors .= e(\Helpers\PasswordPolicy::message()).'</br>';
 
             if(!$request->cpassword || $request->password != $request->cpassword) $errors .= e("Passwords don't match.").'</br>';
         
@@ -450,7 +450,7 @@ class Account {
                 return Helper::redirect()->back()->with('danger', e('An unexpected error occurred. Please try again.'));
             }
 
-            $gAuth = new \Sonata\GoogleAuthenticator\GoogleAuthenticator();
+            $gAuth = new \Helpers\GoogleAuthenticator();
 
             if(!$gAuth->checkCode($request->session('qr2fa_temp'), $request->secret)) return back()->with("danger", e("Invalid token. Please try again."));
 

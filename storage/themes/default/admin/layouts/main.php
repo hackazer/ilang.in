@@ -10,8 +10,9 @@
         <link rel="preconnect" href="https://fonts.gstatic.com">
 
         <link href="<?php echo assets('backend/css/app.css') ?>" rel="stylesheet">
-        <link href="<?php echo assets('frontend/libs/select2/dist/css/select2.min.css') ?>" rel="stylesheet">
+        <link href="<?php echo assets('backend/admin-vendor.min.css') ?>" rel="stylesheet">
         <link href="<?php echo assets('backend/css/style.min.css') ?>" rel="stylesheet">
+        <link rel="stylesheet" href="<?php echo assets('frontend/libs/fontawesome-free/css/all.min.css') ?>">
         <link href="https://fonts.googleapis.com/css2?family=<?php echo config('font') ? str_replace(' ', '+', ucwords(config('font'))) : 'Inter:wght@300;400;600' ?>&display=swap" rel="stylesheet">
         <?php echo html_entity_decode(config('customheader')) ?>
         <?php block('header') ?>
@@ -24,7 +25,7 @@
                 <div class="sidebar-content <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'sidebar-light', '') ?> js-simplebar">
                     <a class="sidebar-brand" href="<?php echo route('dashboard') ?>">
                         <?php if(config('logo')): ?>
-                            <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" class="img-responsive w-50">
+                            <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" class="img-fluid w-50">
                         <?php else: ?>
                             <span class="align-middle"><?php echo config('title') ?></span>
                         <?php endif ?>
@@ -99,12 +100,9 @@
                     "close" => e("Close"),
                     "content" => e("Note that this action is permanent. Once you click proceed, you <strong>may not undo</strong> this. Click anywhere outside this modal or click <a href='#close' class='close-modal'>close</a> to close this.")
                 ]]) ?>
-        </script> 
-        <script src="<?php echo assets('backend/js/app.js') ?>"></script>
-        <script src="<?php echo assets('frontend/libs/jquery/dist/jquery.min.js') ?>"></script>
-        <script src="<?php echo assets('frontend/libs/select2/dist/js/select2.min.js') ?>"></script> 
-        <script src="<?php echo assets('frontend/libs/bootstrap-notify/bootstrap-notify.min.js') ?>"></script>               
+        </script>
+        <script src="<?php echo assets('backend/admin-vendor.min.js') ?>"></script>
         <?php block('footer') ?>
-        <script src="<?php echo assets('custom.js') ?>"></script>
+        <script src="<?php echo assets('custom.min.js') ?>"></script>
     </body>
 </html>

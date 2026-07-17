@@ -7,7 +7,7 @@
 
         <?php meta() ?>
 
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link rel="stylesheet" href="<?php echo assets('frontend/libs/fontawesome-free/css/all.min.css') ?>">
         <link rel="stylesheet" type="text/css" href="<?php echo assets('frontend/libs/select2/dist/css/select2.min.css') ?>">
         <link rel="stylesheet" type="text/css" href="<?php echo assets('cookieconsent.min.css') ?>">
         <link rel="stylesheet" href="<?php echo assets('frontend/css/style'.(request()->cookie('darkmode') || themeSettings::config('homestyle', 'darkmode', true) ? '-dark' : '').'.min.css') ?>" id="stylesheet">
@@ -15,21 +15,21 @@
             <link rel="preconnect" href="https://fonts.gstatic.com">
             <link href="https://fonts.googleapis.com/css2?family=<?php echo str_replace(' ', '+', config('font')) ?>:wght@300;400;600" rel="stylesheet">
             <style>body{font-family:'<?php echo config('font') ?>' !important}</style>
-        <?php endif ?>            
+        <?php endif ?>
         <script>
             var appurl = '<?php echo url() ?>';
         </script>
         <?php echo html_entity_decode(config('customheader')) ?>
         <?php block('header') ?>
     </head>
-    <body>        
-        <header class="header-transparent" id="header-main">            
+    <body>
+        <header class="header-transparent" id="header-main">
         <?php if(\Helpers\App::loggedAs()): ?>
-            <div class="alert alert-success mb-0 text-right p-2 rounded-0 d-block">
+            <div class="alert alert-success mb-0 text-end p-2 rounded-0 d-block">
                 <?php ee('You are logged in as another user') ?>
-                <a href="<?php echo route('return') ?>" class="btn btn-light ml-2 btn-xs"><?php ee('Return to my account') ?></a>
+                <a href="<?php echo route('return') ?>" class="btn btn-light ms-2 btn-xs"><?php ee('Return to my account') ?></a>
             </div>
-        <?php endif ?>            
+        <?php endif ?>
             <nav class="navbar navbar-main navbar-expand-lg <?php echo themeSettings::config('homestyle', 'light', 'navbar-light bg-white', 'navbar-dark bg-dark') ?>" id="navbar-main">
                 <div class="container">
                     <a class="navbar-brand" href="<?php echo route('home') ?>" title="<?php echo config('title') ?>">
@@ -38,13 +38,13 @@
                         <?php else: ?>
                             <h1 class="h5 mt-2 <?php echo themeSettings::config('homestyle', 'light', 'text-dark', 'text-white') ?>"><?php echo config('title') ?></h1>
                         <?php endif ?>
-                    </a>                    
-                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
-                    </button>                    
-                    <div class="collapse navbar-collapse navbar-collapse-overlay" id="navbar-main-collapse">                        
+                    </button>
+                    <div class="collapse navbar-collapse navbar-collapse-overlay" id="navbar-main-collapse">
                         <div class="position-relative">
-                            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
                                 <i data-feather="x"></i>
                             </button>
                         </div>
@@ -57,14 +57,14 @@
         <?php section() ?>
 
         <?php view('partials.footer') ?>
-        
-        <script src="<?php echo assets('bundle.pack.js') ?>"></script>        
+
+        <script src="<?php echo assets('bundle.pack.js') ?>"></script>
         <?php if(config('cookieconsent')->enabled): ?>
             <script src="<?php echo assets('cookieconsent.min.js') ?>"></script>
         <?php endif ?>
         <?php block('footer') ?>
         <script type="text/javascript">
-            var lang = <?php echo json_encode([       
+            var lang = <?php echo json_encode([
                 "error" => e('Please enter a valid URL.'),
                 "cookie" => !empty(config('cookieconsent')->message) ? e(config('cookieconsent')->message) : e("This website uses cookies to ensure you get the best experience on our website."),
                 "cookieok" => e("Got it!"),
@@ -78,15 +78,15 @@
                     '7d' => 'Last 7 Days',
                     '3d' => 'Last 30 Days',
                     'tm' => 'This Month',
-                    'lm' => 'Last Month',                    
+                    'lm' => 'Last Month',
                 ]]) ?>
-        </script> 
+        </script>
         <script>
             feather.replace({
                 'width': '1em',
                 'height': '1em'
             })
-        </script>    
+        </script>
         <script src="<?php echo assets('frontend/js/app.min.js') ?>"></script>
         <script src="<?php echo assets('server.min.js') ?>"></script>
         <?php echo html_entity_decode(config('customfooter')) ?>

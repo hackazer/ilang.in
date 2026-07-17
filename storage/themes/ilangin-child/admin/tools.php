@@ -9,7 +9,7 @@
                 <p><?php ee('This tool deletes all URLs (and their associated stats) shortened by anonymous users (non-registered). If you are experiencing slow response, this is recommended. You can also choose a date to remove all anon links before.') ?></p>                
 
                 <form action="<?php echo route('admin.toolsAction', ['flushurls', \Core\Helper::nonce('tools')]) ?>" method="get">
-                    <div class="form-group mb-2">
+                    <div class="mb-2">
                         <label for="date" class="form-label"><?php ee('Remove Links Before') ?></label>
                         <input type="text" data-toggle ="datepicker" class="form-control" id="date" name="date" placeholder="Leave empty to remove all urls" autocomplete="off">
                     </div>

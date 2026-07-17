@@ -24,6 +24,9 @@ use Core\Helper;
 use Core\Request;
 use Core\Response;
 use Core\View;
+use Helpers\Payments\Paypal\ApiException;
+use Helpers\Payments\Paypal\Client;
+use Helpers\Payments\Paypal\CurlTransport;
 
 class PaypalApi{
     /**
@@ -110,22 +113,7 @@ class PaypalApi{
 		
         $user = Auth::user();
 
-        $connection = new \PayPal\Rest\ApiContext(
-            new \PayPal\Auth\OAuthTokenCredential(
-                config('paypalapi')->public,
-                config('paypalapi')->secret
-            )
-        );    
-
-        $connection->setConfig(
-            [
-                'log.LogEnabled' => DEBUG,
-                'log.FileName' => LOGS.'/PayPal.log',
-                'log.LogLevel' => 'DEBUG',
-                'http.CURLOPT_SSL_VERIFYPEER' => DEBUG ? false : true,
-                'mode' => DEBUG ? 'sandbox' : 'live'
-            ]
-        );    
+        $client = self::client();
 
         $coupon = null;
         if($request->coupon && $coupon = DB::coupons()->where('code', clean($request->coupon))->first()){
@@ -137,9 +125,9 @@ class PaypalApi{
             if($coupon->maxuse > 0 && $coupon->used >= $coupon->maxuse) $valid = false;
 
 			if($valid) {	
-				$coupon->used++;
-				$coupon->save();
 				$coupon->data = json_decode($coupon->data);
+			} else {
+				$coupon = null;
 			}
 		}
         
@@ -153,31 +141,63 @@ class PaypalApi{
                 $price = round($price * (1+($tax->rate / 100)), 2);
             }
 
-            $payer = new \PayPal\Api\Payer();
-            $payer->setPaymentMethod('paypal');
-
-            $amount = new \PayPal\Api\Amount();
-            $amount->setCurrency(config('currency'))
-                    ->setTotal($price);
-
-            $transaction = new \PayPal\Api\Transaction();
-            $transaction->setAmount($amount)
-                        ->setDescription('userid:'.$user->id);
-
-            $redirect = new \PayPal\Api\RedirectUrls();
-            $redirect->setReturnUrl(url("webhook/paypal?success=true&type=lifetime&planid={$plan->id}"))
-                    ->setCancelUrl(url("webhook/paypal?success=false"));
-
-            $payment = new \PayPal\Api\Payment();
-            $payment->setIntent('sale')
-                    ->setPayer($payer)
-                    ->setTransactions([$transaction])
-                    ->setRedirectUrls($redirect);
+            $amount = self::money($price);
+            $currency = strtoupper(trim((string) config('currency')));
 
             try {
-                $payment->create($connection);
+                $order = $client->createOrder([
+                    'intent' => 'CAPTURE',
+                    'purchase_units' => [[
+                        'description' => 'userid:'.$user->id,
+                        'custom_id' => 'userid:'.$user->id,
+                        'amount' => [
+                            'currency_code' => $currency,
+                            'value' => $amount,
+                        ],
+                    ]],
+                    'payment_source' => [
+                        'paypal' => [
+                            'experience_context' => [
+                                'return_url' => url('webhook/paypal?success=true'),
+                                'cancel_url' => url('webhook/paypal?success=false'),
+                                'user_action' => 'PAY_NOW',
+                            ],
+                        ],
+                    ],
+                ]);
+                $approvalUrl = self::approvalUrl($order);
 
-                header("Location: {$payment->getApprovalLink()}");
+                if($approvalUrl === null || empty($order['id'])) {
+                    throw new ApiException('PayPal did not return an order ID and approval URL.');
+                }
+
+                $sub = DB::subscription()->create();
+                $sub->tid = $order['id'];
+                $sub->userid = $user->id;
+                $sub->plan = 'lifetime';
+                $sub->planid = $plan->id;
+                $sub->status = "Pending";
+                $sub->amount = $amount;
+                $sub->date = Helper::dtime();
+                $sub->expiry = Helper::dtime('+1 day');
+                $sub->lastpayment = Helper::dtime();
+                $sub->data = json_encode([
+                    'paymentmethod' => 'PaypalApi',
+                    'coupon_id' => $coupon ? (int) $coupon->id : null,
+                    'intent' => [
+                        'order_id' => (string) $order['id'],
+                        'user_id' => (int) $user->id,
+                        'plan_id' => (int) $plan->id,
+                        'term' => 'lifetime',
+                        'amount' => $amount,
+                        'currency' => $currency,
+                    ],
+                    'paypal' => $order,
+                ], JSON_THROW_ON_ERROR);
+                $sub->uniqueid = Helper::rand(16);
+                $sub->save();
+
+                header("Location: {$approvalUrl}");
                 exit;
             } catch (\Exception $e) {
                 \GemError::log('PayPal API Error: '.$e->getMessage());
@@ -186,36 +206,37 @@ class PaypalApi{
 
         } else {
 
-            $planid = self::createSinglePlan($plan, $type, $coupon, $tax);
+            $planid = self::createSinglePlan($plan, $type, $coupon, $tax, $client);
 
-            $agreement = new \PayPal\Api\Agreement();
+            if(!$planid) return back()->with("danger",e("An issue occurred. You have not been charged."));
 
-            $agreement->setName($plan->name)
-                ->setDescription('userid:'.$user->id)
-                ->setStartDate(date("c", strtotime("+2 minutes")));
-    
-            $pplan = new \PayPal\Api\Plan();
-            $pplan->setId($planid);
-            $agreement->setPlan($pplan);
-    
-            $payer = new \PayPal\Api\Payer();
-            $payer->setPaymentMethod('paypal');
-    
-            $payerInfo = new \PayPal\Api\PayerInfo();
-            $payerInfo->setEmail($user->email);
-            $payerInfo->setFirstName($user->email);
-            $payer->setPayerInfo($payerInfo);
-    
-            $agreement->setPayer($payer); 
+            $price = $type == 'yearly' ? $plan->price_yearly : $plan->price_monthly;
+            $price = $coupon ? round((1 - ($coupon->discount / 100)) * $price, 2) : $price;
+
+            if($tax) $price = round($price * (1 + ($tax->rate / 100)), 2);
     
             try {
-                $agreement = $agreement->create($connection);
-    
-                $approvalUrl = $agreement->getApprovalLink();
+                $subscription = $client->createSubscription([
+                    'plan_id' => $planid,
+                    'custom_id' => 'userid:'.$user->id,
+                    'subscriber' => ['email_address' => $user->email],
+                    'application_context' => [
+                        'brand_name' => config('title'),
+                        'user_action' => 'SUBSCRIBE_NOW',
+                        'return_url' => url('webhook/paypal?success=true'),
+                        'cancel_url' => url('webhook/paypal?success=false'),
+                    ],
+                ]);
+                $approvalUrl = self::approvalUrl($subscription);
+
+                if($approvalUrl === null || empty($subscription['id'])) {
+                    throw new ApiException('PayPal did not return a subscription approval URL.');
+                }
+
                 $uniqueid = Helper::rand(16);
     
                 $sub = DB::subscription()->create();
-                $sub->tid = null;
+                $sub->tid = $subscription['id'];
                 $sub->userid = $user->id;
                 $sub->plan = $type;
                 $sub->planid = $plan->id;
@@ -224,13 +245,15 @@ class PaypalApi{
                 $sub->date = Helper::dtime();
                 $sub->expiry = Helper::dtime('+5 minutes');
                 $sub->lastpayment = Helper::dtime();
-                $sub->data = NULL;
+                $sub->data = json_encode([
+                    'paymentmethod' => 'PaypalApi',
+                    'expected_amount' => self::money($price),
+                    'coupon_id' => $coupon ? (int) $coupon->id : null,
+                    'paypal' => $subscription,
+                ]);
                 $sub->uniqueid = $uniqueid;
                 $sub->save();
     
-                $user->last_payment = Helper::dtime();
-                $user->pro = 1;
-                $user->planid = $plan->id;
                 $user->address = json_encode([
                         "address" 	=>	clean($request->address),
                         "city" 		=>	clean($request->city), 
@@ -243,10 +266,6 @@ class PaypalApi{
     
                 header("Location: {$approvalUrl}");
                 exit;
-            } catch (PayPal\Exception\PayPalConnectionException $ex) {
-                \GemError::log('Paypal:' .$ex->getCode());
-                \GemError::log('Paypal:' .$ex->getData());
-                return back()->with("danger",e("An issue occurred. You have not been charged."));
             } catch (\Exception $e) {
                 \GemError::log('Paypal:' .$e->getMessage());
                 return back()->with("danger",e("An issue occurred. You have not been charged."));
@@ -270,152 +289,24 @@ class PaypalApi{
             return null;
         }
 
-        $connection = new \PayPal\Rest\ApiContext(
-            new \PayPal\Auth\OAuthTokenCredential(
-                config('paypalapi')->public,
-                config('paypalapi')->secret
-            )
-        );    
+        $client = self::client();
 
-        $connection->setConfig(
-            [
-                'log.LogEnabled' => DEBUG,
-                'log.FileName' => LOGS.'/PayPal.log',
-                'log.LogLevel' => 'DEBUG',
-                'http.CURLOPT_SSL_VERIFYPEER' => DEBUG ? false : true,
-                'mode' => DEBUG ? 'sandbox' : 'live'
-            ]
-        );    
+        if($request->success === null) return self::handleWebhookEvent($request, $client);
 
-        
-		if($request->success && $request->success == 'true') {
-            
-          if($request->type && $request->type == "lifetime"){
-                
-                $payment = \PayPal\Api\Payment::get($request->paymentId, $connection);
-                $execution = new \PayPal\Api\PaymentExecution();
-                $execution->setPayerId($request->PayerID);
+        if($request->success != 'true') {
+            return Helper::redirect()->to(route('dashboard'))->with("warning", e("Your payment has been canceled."));
+        }
 
-                try {
-                    // Take the payment
-                    $payment->execute($execution, $connection);
+        try {
+            if(self::lifetimeIntentForCallback($request) !== null) {
+                return self::completeLifetimeOrder($request, $client);
+            }
 
-                    if($payment->state == 'approved'){
-                        
-                        $userid = str_replace('userid:', '', $payment->transactions[0]->description);
-                        
-                        if(!$user = DB::user()->where("id", $userid)->first()) return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. Please contact us for more info."));
-
-                        $sub = DB::subscription()->create();
-                        $sub->tid = Helper::rand(16);
-                        $sub->userid = $user->id;
-                        $sub->plan = 'lifetime';
-                        $sub->planid = $request->planid;
-                        $sub->status = "Active";
-                        $sub->amount = $payment->transactions[0]->amount->total;
-                        $sub->date = Helper::dtime();
-                        $sub->expiry = Helper::dtime('+10 years');
-                        $sub->lastpayment = Helper::dtime();
-                        $sub->data = json_encode(['paymentmethod' => 'PaypalApi']);
-                        $sub->uniqueid = Helper::rand(16);
-                        $sub->save();
-
-                        $newpayment = DB::payment()->create();
-                        $newpayment->date = Helper::dtime('now');
-                        $newpayment->cid = $payment->id;
-                        $newpayment->tid = Helper::rand(16);
-                        $newpayment->amount =  $payment->transactions[0]->amount->total;
-                        $newpayment->userid =  $user->id;
-                        $newpayment->status = "Completed";
-                        $newpayment->expiry =  Helper::dtime('+10 years');
-                        $newpayment->data =  json_encode($payment);
-        
-                        $newpayment->save();
-        
-                        $user->expiration = Helper::dtime('+10 years');
-                        $user->pro = 1;
-                        $user->planid = $request->planid;
-                        $user->save();
-
-                        \Core\Plugin::dispatch('payment.success', [$user, $request->planid, $newpayment->id]);
-                    }
-
-                    return Helper::redirect()->to(route('billing'))->with("success", e("Your payment was successfully made. Thank you."));
-
-                } catch (\PayPal\Exception\PayPalConnectionException $ex) {
-                    \GemError::log('Paypal:' .$ex->getCode());
-                    \GemError::log('Paypal:' .$ex->getData());
-                    return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
-                } catch (\Exception $ex) {
-                    \GemError::log('Paypal:' .$ex->getMessage());
-                    return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
-                }
-          }
-
-
-		  $token = $request->token;
-		  $agreement = new \PayPal\Api\Agreement();
-
-		  try {
-		        // Execute agreement
-		        $response = $agreement->execute($token, $connection)->toArray();
-
-		        $userid = str_replace('userid:', '', $response["description"]);
-				
-				if(!$user = DB::user()->where("id", $userid)->first()) return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
-
-				$subscription = DB::subscription()->where('userid', $user->id)->orderByDesc('date')->first();
-
-				if($response["state"] !== "Active") return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
-
-				if($response["plan"]['payment_definitions'][0]['frequency'] == "YEAR"){
-
-					$new_expiry = date("Y-m-d H:i:s", strtotime("+1 year", strtotime($response['start_date'])));
-
-				}else{
-
-					$new_expiry = date("Y-m-d H:i:s", strtotime("+1 month", strtotime($response['start_date'])));
-				}
-
-                $payment = DB::payment()->create();
-	    		$payment->date = Helper::dtime('now');
-	    		$payment->cid = $response['id'];
-	    		$payment->tid = Helper::rand(16);
-	    		$payment->amount =  $response["plan"]['payment_definitions'][0]['amount']['value'];
-	    		$payment->userid =  $user->id;
-	    		$payment->status = "Completed";
-	    		$payment->expiry =  $new_expiry;
-	    		$payment->data =  json_encode($response);
-
-				$payment->save();
-
-				$amount = $subscription->amount + $payment->amount;
-
-				$subscription->amount = $amount;
-				$subscription->expiry = $new_expiry;
-				$subscription->status = "Active";
-				$subscription->save();
-
-				$user->expiration = $new_expiry;
-				$user->pro = 1;
-                $user->planid = $subscription->planid;
-				$user->save();
-
-                \Core\Plugin::dispatch('payment.success', [$user, $subscription->planid, $payment->id]);
-				
-				return Helper::redirect()->to(route('billing'))->with("success", e("Your payment was successfully made. Thank you."));
-
-		  } catch (\PayPal\Exception\PayPalConnectionException $ex) {
-		        \GemError::log('Paypal:' .$ex->getCode());
-		        \GemError::log('Paypal:' .$ex->getData());
-		        return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
-		  } catch (\Exception $ex) {
-		  	    \GemError::log('Paypal:' .$ex->getMessage());
-		        return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
-		  }
-		} else {
-                return Helper::redirect()->to(route('dashboard'))->with("warning", e("Your payment has been canceled."));
-		}
+            return self::completeSubscription($request, $client);
+        } catch (\Exception $exception) {
+            \GemError::log('Paypal: '.$exception->getMessage());
+            return Helper::redirect()->to(route('dashboard'))->with("danger",e("An issue occurred. You have not been charged."));
+        }
     }
     /**
      * Create plan
@@ -436,99 +327,57 @@ class PaypalApi{
      * @param [type] $plan
      * @return void
      */
-    public static function createSinglePlan($plan, $type, $coupon = null, $tax = null){        
-       
-        $connection = new \PayPal\Rest\ApiContext(
-            new \PayPal\Auth\OAuthTokenCredential(
-                config('paypalapi')->public,
-                config('paypalapi')->secret
-            )
-        );    
+    public static function createSinglePlan($plan, $type, $coupon = null, $tax = null, ?Client $client = null){
+        $client = $client ?? self::client();
+        $description = $plan->description ? $plan->description : $plan->name;
+        $price = $type == 'yearly' ? $plan->price_yearly : $plan->price_monthly;
+        $price = $coupon ? round((1 - ($coupon->discount / 100)) * $price, 2) : $price;
 
-        $connection->setConfig(
-            [
-                'log.LogEnabled' => DEBUG,
-                'log.FileName' => LOGS.'/PayPal.log',
-                'log.LogLevel' => 'DEBUG',
-                'http.CURLOPT_SSL_VERIFYPEER' => DEBUG ? false : true,
-                'mode' => DEBUG ? 'sandbox' : 'live'
-            ]
-        );  
-
-        $paypalplan = new \PayPal\Api\Plan();
-
-        $paypalplan->setName($plan->name)
-            ->setDescription($plan->description ? $plan->description : $plan->name)
-            ->setType('fixed'); 
-
-        if($type == 'yearly'){
-            $paymentDefinition = new \PayPal\Api\PaymentDefinition();
-
-            $price = $coupon ?  round((1 - ($coupon->discount / 100)) * $plan->price_yearly, 2) : $plan->price_yearly;
-
-            if($tax){
-                $price = round($price * (1+($tax->rate / 100)), 2);
-            }
-
-            $paymentDefinition->setName('Regular Yearly Payments')
-                ->setType('REGULAR')
-                ->setFrequency('Year')
-                ->setFrequencyInterval("1")
-                ->setCycles("1")
-                ->setAmount(new \PayPal\Api\Currency(['value' => $price, 'currency' => config('currency')]));
-
-        } else {
-            $paymentDefinition = new \PayPal\Api\PaymentDefinition();
-
-            $price = $coupon ? round((1 - ($coupon->discount / 100)) * $plan->price_monthly, 2) : $plan->price_monthly;
-
-            if($tax){
-                $price = round($price * (1+($tax->rate / 100)), 2);
-            }
-
-            $paymentDefinition->setName('Regular Monthly Payments')
-                ->setType('REGULAR')
-                ->setFrequency('Month')
-                ->setFrequencyInterval("1")
-                ->setCycles("12")
-                ->setAmount(new \PayPal\Api\Currency(['value' =>  $price, 'currency' => config('currency')]));            
-        }          
-
-        $merchantPreferences = new \PayPal\Api\MerchantPreferences();
-
-        $merchantPreferences->setReturnUrl(url("webhook/paypal?success=true"))
-            ->setCancelUrl(url("webhook/paypal?success=false"))
-            ->setAutoBillAmount("yes")
-            ->setInitialFailAmountAction("CONTINUE")
-            ->setMaxFailAttempts("0");
-
-
-        $paypalplan->setPaymentDefinitions([$paymentDefinition]);
-
-        $paypalplan->setMerchantPreferences($merchantPreferences);
+        if($tax) $price = round($price * (1 + ($tax->rate / 100)), 2);
 
         try {
-            
-            $output = $paypalplan->create($connection);
+            $product = $client->createProduct([
+                'name' => $plan->name,
+                'description' => $description,
+                'type' => 'SERVICE',
+                'category' => 'SOFTWARE',
+            ]);
 
-            $patch = new \PayPal\Api\Patch();
+            if(empty($product['id'])) throw new ApiException('PayPal did not return a product ID.');
 
-            $value = new \PayPal\Common\PayPalModel('{
-                "state":"ACTIVE"
-            }');
+            $paypalPlan = $client->createPlan([
+                'product_id' => $product['id'],
+                'name' => $plan->name,
+                'description' => $description,
+                'billing_cycles' => [[
+                    'frequency' => [
+                        'interval_unit' => $type == 'yearly' ? 'YEAR' : 'MONTH',
+                        'interval_count' => 1,
+                    ],
+                    'tenure_type' => 'REGULAR',
+                    'sequence' => 1,
+                    'total_cycles' => 0,
+                    'pricing_scheme' => [
+                        'fixed_price' => [
+                            'value' => self::money($price),
+                            'currency_code' => config('currency'),
+                        ],
+                    ],
+                ]],
+                'payment_preferences' => [
+                    'auto_bill_outstanding' => true,
+                    'setup_fee' => [
+                        'value' => '0',
+                        'currency_code' => config('currency'),
+                    ],
+                    'setup_fee_failure_action' => 'CONTINUE',
+                    'payment_failure_threshold' => 0,
+                ],
+            ]);
 
-            $patch->setOp('replace')
-                ->setPath('/')
-                ->setValue($value);
-            $patchRequest = new \PayPal\Api\PatchRequest();
-            $patchRequest->addPatch($patch);
-
-            $paypalplan->update($patchRequest, $connection); 
-            
-            
-            return $output->id;
-
-        } catch (\Exception $e) {
+            return $paypalPlan['id'] ?? false;
+        } catch (\Exception $exception) {
+            \GemError::log('Paypal: '.$exception->getMessage());
             return false;
         }
     }
@@ -552,28 +401,6 @@ class PaypalApi{
      * @return void
      */
     public static function syncplan($plan){
-
-        // $connection = new \PayPal\Rest\ApiContext(
-        //     new \PayPal\Auth\OAuthTokenCredential(
-        //         config('paypalapi')->public,
-        //         config('paypalapi')->secret
-        //     )
-        // );      
-
-        // $connection->setConfig(
-        //     [
-        //         'log.LogEnabled' => DEBUG,
-        //         'log.FileName' => LOGS.'/PayPal.log',
-        //         'log.LogLevel' => 'DEBUG',
-        //         'http.CURLOPT_SSL_VERIFYPEER' => DEBUG ? false : true,
-        //         'mode' => DEBUG ? 'sandbox' : 'live'
-        //     ]
-        // );  
-
-        // print_r(\PayPal\Api\Plan::get($plan->data->paypalapi->month, $connection));
-
-        // exit;
-
         return self::createplan($plan);
     }
     /**
@@ -588,53 +415,37 @@ class PaypalApi{
 
         if(!$request->paypalapi['public'] || !$request->paypalapi['secret']) return false;
         
-        $connection = new \PayPal\Rest\ApiContext(
-            new \PayPal\Auth\OAuthTokenCredential(
-                $request->paypalapi['public'],
-                $request->paypalapi['secret']
-            )
-        );    
-
-        $connection->setConfig(
-            [
-                'log.LogEnabled' => DEBUG,
-                'log.FileName' => LOGS.'/PayPal.log',
-                'log.LogLevel' => 'DEBUG',
-                'http.CURLOPT_SSL_VERIFYPEER' => DEBUG ? false : true,
-                'mode' => DEBUG ? 'sandbox' : 'live'
-            ]
-        );  
-
-        $webhook = new \PayPal\Api\Webhook();
-
-        $webhook->setUrl(route('webhook', ['paypal']));
-
-        $webhookEventTypes = array();
-        $webhookEventTypes[] = new \PayPal\Api\WebhookEventType(
-            '{
-                "name":"PAYMENT.SALE.COMPLETED"
-            }'
-        );
-        $webhookEventTypes[] = new \PayPal\Api\WebhookEventType(
-            '{
-                "name":"PAYMENT.SALE.REFUNDED"
-            }'
-        );
-        $webhookEventTypes[] = new \PayPal\Api\WebhookEventType(
-            '{
-                "name":"PAYMENT.SALE.REVERSED"
-            }'
-        );    
-        $webhook->setEventTypes($webhookEventTypes);    
-
         try {
-        
-            $webhook->create($connection);
-        
-        } catch (\Exception $e) {
+            $client = self::client($request->paypalapi['public'], $request->paypalapi['secret']);
+            $client->authenticate();
+            $webhook = $client->createWebhook(route('webhook', ['paypal']), [
+                'PAYMENT.CAPTURE.COMPLETED',
+                'PAYMENT.CAPTURE.REFUNDED',
+                'PAYMENT.CAPTURE.REVERSED',
+                'PAYMENT.SALE.COMPLETED',
+                'PAYMENT.SALE.REFUNDED',
+                'PAYMENT.SALE.REVERSED',
+                'BILLING.SUBSCRIPTION.ACTIVATED',
+                'BILLING.SUBSCRIPTION.PAYMENT.FAILED',
+                'BILLING.SUBSCRIPTION.CANCELLED',
+                'BILLING.SUBSCRIPTION.EXPIRED',
+                'BILLING.SUBSCRIPTION.SUSPENDED',
+            ]);
 
-            \GemError::log('PayPal API: '.$e->getMessage());
+            if(!empty($webhook['id'])) {
+                $settings = $request->paypalapi;
+                $settings['webhook_id'] = $webhook['id'];
 
+                if($record = DB::settings()->where('config', 'paypalapi')->first()) {
+                    $record->var = json_encode($settings);
+                    $record->save();
+                }
+            }
+
+            return true;
+        } catch (\Exception $exception) {
+            \GemError::log('PayPal API: '.$exception->getMessage());
+            return false;
         }
     }
     /**
@@ -644,5 +455,786 @@ class PaypalApi{
      * @version 6.1.8
      * @return void
      */
-    public static function cancel(){}
+    public static function cancel($user, $subscription){
+        $data = json_decode($subscription->data ?? '');
+
+        if(($data->paymentmethod ?? null) !== 'PaypalApi' || !$subscription->tid) return false;
+
+        try {
+            self::client()->cancelSubscription((string) $subscription->tid, 'Customer requested cancellation.');
+            return true;
+        } catch (\Exception $exception) {
+            \GemError::log('Paypal: '.$exception->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Resolve lifetime checkout context exclusively from the locally stored order intent.
+     */
+    public static function lifetimeIntentForCallback($request, ?callable $lookup = null): ?array{
+        $orderId = trim((string) ($request->token ?? ''));
+
+        if($orderId === '') return null;
+
+        $lookup ??= static fn(string $id) => DB::subscription()->where('tid', $id)->first();
+        $subscription = $lookup($orderId);
+
+        if(!$subscription) return null;
+
+        $data = json_decode((string) ($subscription->data ?? ''), true);
+        $intent = is_array($data) && is_array($data['intent'] ?? null) ? $data['intent'] : null;
+
+        if(($data['paymentmethod'] ?? null) !== 'PaypalApi' || !$intent || ($intent['term'] ?? null) !== 'lifetime') {
+            return null;
+        }
+
+        $intentAmount = self::canonicalMoney($intent['amount'] ?? null);
+        $storedAmount = self::canonicalMoney($subscription->amount ?? null);
+        $trusted = [
+            'order_id' => trim((string) ($intent['order_id'] ?? '')),
+            'user_id' => (int) ($intent['user_id'] ?? 0),
+            'plan_id' => (int) ($intent['plan_id'] ?? 0),
+            'term' => 'lifetime',
+            'amount' => $intentAmount,
+            'currency' => strtoupper(trim((string) ($intent['currency'] ?? ''))),
+        ];
+
+        if(
+            $trusted['order_id'] === ''
+            || !hash_equals($trusted['order_id'], $orderId)
+            || $trusted['user_id'] < 1
+            || $trusted['plan_id'] < 1
+            || $trusted['amount'] === null
+            || $trusted['currency'] === ''
+            || (string) ($subscription->tid ?? '') !== $trusted['order_id']
+            || (int) ($subscription->userid ?? 0) !== $trusted['user_id']
+            || (int) ($subscription->planid ?? 0) !== $trusted['plan_id']
+            || (string) ($subscription->plan ?? '') !== $trusted['term']
+            || $storedAmount === null
+            || !hash_equals($trusted['amount'], $storedAmount)
+        ) {
+            throw new ApiException('Local PayPal lifetime intent is invalid.');
+        }
+
+        return $trusted;
+    }
+
+    /**
+     * Recover an already captured order, or capture an approved order exactly once.
+     */
+    public static function captureOrFetchLifetimeOrder(string $orderId, callable $fetch, callable $capture): array{
+        $order = $fetch($orderId);
+
+        if(($order['status'] ?? null) === 'COMPLETED') return $order;
+
+        if(($order['status'] ?? null) !== 'APPROVED') {
+            throw new ApiException('PayPal order is not approved for capture.');
+        }
+
+        return $capture($orderId);
+    }
+
+    /**
+     * Verify a captured PayPal order against the immutable local checkout intent.
+     */
+    public static function validateLifetimeCapture(array $order, array $intent): array{
+        $orderId = trim((string) ($order['id'] ?? ''));
+        $expectedOrderId = trim((string) ($intent['order_id'] ?? ''));
+        $purchaseUnits = $order['purchase_units'] ?? [];
+        $captures = is_array($purchaseUnits) && count($purchaseUnits) === 1
+            ? ($purchaseUnits[0]['payments']['captures'] ?? [])
+            : [];
+        $capture = is_array($captures) && count($captures) === 1 ? $captures[0] : [];
+        $captureId = trim((string) ($capture['id'] ?? ''));
+        $actualAmount = self::canonicalMoney($capture['amount']['value'] ?? null);
+        $expectedAmount = self::canonicalMoney($intent['amount'] ?? null);
+        $actualCurrency = strtoupper(trim((string) ($capture['amount']['currency_code'] ?? '')));
+        $expectedCurrency = strtoupper(trim((string) ($intent['currency'] ?? '')));
+
+        if(
+            $orderId === ''
+            || $expectedOrderId === ''
+            || !hash_equals($expectedOrderId, $orderId)
+            || ($order['status'] ?? null) !== 'COMPLETED'
+            || ($capture['status'] ?? null) !== 'COMPLETED'
+            || $captureId === ''
+            || $actualAmount === null
+            || $expectedAmount === null
+            || !hash_equals($expectedAmount, $actualAmount)
+            || $actualCurrency === ''
+            || $expectedCurrency === ''
+            || !hash_equals($expectedCurrency, $actualCurrency)
+            || (int) ($intent['user_id'] ?? 0) < 1
+            || (int) ($intent['plan_id'] ?? 0) < 1
+            || ($intent['term'] ?? null) !== 'lifetime'
+        ) {
+            throw new ApiException('Captured PayPal order does not match the local lifetime intent.');
+        }
+
+        return [
+            'order_id' => $expectedOrderId,
+            'capture_id' => $captureId,
+            'user_id' => (int) ($intent['user_id'] ?? 0),
+            'plan_id' => (int) ($intent['plan_id'] ?? 0),
+            'term' => 'lifetime',
+            'amount' => $expectedAmount,
+            'currency' => $expectedCurrency,
+        ];
+    }
+
+    /**
+     * Commit local lifetime effects as one idempotent database transaction.
+     */
+    public static function applyLifetimeTransaction(\PDO $pdo, callable $alreadyProcessed, callable $apply): bool{
+        return self::applyWebhookTransaction($pdo, $alreadyProcessed, $apply);
+    }
+
+    /**
+     * Commit a verified PayPal webhook exactly once.
+     */
+    public static function applyWebhookTransaction(\PDO $pdo, callable $alreadyProcessed, callable $apply): bool{
+        $pdo->beginTransaction();
+
+        try {
+            if($alreadyProcessed()) {
+                $pdo->commit();
+                return false;
+            }
+
+            $apply();
+            $pdo->commit();
+
+            return true;
+        } catch (\Throwable $exception) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    /**
+     * Calculate entitlement expiry using the same rolling sentinel as other gateways.
+     */
+    public static function entitlementExpiry(string $term, ?string $currentExpiration = null, ?int $now = null): string{
+        if(!in_array($term, ['monthly', 'yearly', 'lifetime'], true)) {
+            throw new \InvalidArgumentException('Unsupported PayPal entitlement term.');
+        }
+
+        $now ??= time();
+        $current = $currentExpiration !== null ? strtotime($currentExpiration) : false;
+        $base = max($now, $current === false ? 0 : $current);
+        $modifier = match ($term) {
+            'yearly' => '+1 year',
+            'lifetime' => '+20 years',
+            default => '+1 month',
+        };
+
+        return date('Y-m-d H:i:s', strtotime($modifier, $base));
+    }
+
+    /**
+     * Only revoke the exact entitlement funded by a fully reversed PayPal sale.
+     */
+    public static function reversalRevokesEntitlement(
+        string $kind,
+        float $reversedTotal,
+        float $originalAmount,
+        int $userPlanId,
+        int $subscriptionPlanId,
+        ?string $userExpiration,
+        ?string $paymentExpiry
+    ): bool {
+        $fullyReversed = $kind === 'payment_reversed'
+            || $reversedTotal + 0.000001 >= $originalAmount;
+        $userExpiry = strtotime((string) $userExpiration);
+        $paidExpiry = strtotime((string) $paymentExpiry);
+
+        return $fullyReversed
+            && $userPlanId > 0
+            && $userPlanId === $subscriptionPlanId
+            && $userExpiry !== false
+            && $paidExpiry !== false
+            && $userExpiry === $paidExpiry;
+    }
+
+    /**
+     * Replace PayPal response data without discarding local idempotency metadata.
+     */
+    public static function updatedSubscriptionData(array $existing, array $paypal): array{
+        $existing['paymentmethod'] = 'PaypalApi';
+        $existing['paypal'] = $paypal;
+
+        return $existing;
+    }
+
+    /**
+     * A paid sale restores recoverable states but cannot undo terminal PayPal state.
+     */
+    public static function statusAfterCompletedSale(?string $currentStatus): string{
+        return in_array($currentStatus, ['Canceled', 'Expired'], true)
+            ? $currentStatus
+            : 'Active';
+    }
+
+    /**
+     * Normalize PayPal subscription webhooks into trusted local actions.
+     */
+    public static function normalizeSubscriptionWebhookEvent(array $event): ?array{
+        $eventType = trim((string) ($event['event_type'] ?? ''));
+        $supported = [
+            'PAYMENT.SALE.COMPLETED',
+            'PAYMENT.SALE.REFUNDED',
+            'PAYMENT.SALE.REVERSED',
+            'BILLING.SUBSCRIPTION.ACTIVATED',
+            'BILLING.SUBSCRIPTION.PAYMENT.FAILED',
+            'BILLING.SUBSCRIPTION.CANCELLED',
+            'BILLING.SUBSCRIPTION.EXPIRED',
+            'BILLING.SUBSCRIPTION.SUSPENDED',
+        ];
+
+        if(!in_array($eventType, $supported, true)) return null;
+
+        $eventId = trim((string) ($event['id'] ?? ''));
+        $occurredAt = trim((string) ($event['create_time'] ?? ''));
+        $resource = is_array($event['resource'] ?? null) ? $event['resource'] : [];
+
+        if($eventId === '' || $occurredAt === '' || strtotime($occurredAt) === false || !$resource) {
+            throw new ApiException('PayPal webhook event identity is invalid.');
+        }
+
+        $statusMap = [
+            'BILLING.SUBSCRIPTION.ACTIVATED' => 'Active',
+            'BILLING.SUBSCRIPTION.PAYMENT.FAILED' => 'Past Due',
+            'BILLING.SUBSCRIPTION.CANCELLED' => 'Canceled',
+            'BILLING.SUBSCRIPTION.EXPIRED' => 'Expired',
+            'BILLING.SUBSCRIPTION.SUSPENDED' => 'Suspended',
+        ];
+
+        if(isset($statusMap[$eventType])) {
+            $subscriptionId = trim((string) ($resource['id'] ?? ''));
+
+            if($subscriptionId === '') throw new ApiException('PayPal subscription webhook ID is invalid.');
+
+            return [
+                'event_id' => $eventId,
+                'event_type' => $eventType,
+                'kind' => 'subscription_status',
+                'subscription_id' => $subscriptionId,
+                'status' => $statusMap[$eventType],
+                'occurred_at' => $occurredAt,
+            ];
+        }
+
+        $state = strtolower(trim((string) ($resource['state'] ?? '')));
+        $expectedState = $eventType === 'PAYMENT.SALE.REVERSED' ? 'reversed' : 'completed';
+        $saleId = trim((string) (
+            $eventType === 'PAYMENT.SALE.REFUNDED'
+                ? ($resource['sale_id'] ?? '')
+                : ($resource['sale_id'] ?? $resource['id'] ?? '')
+        ));
+        $subscriptionId = trim((string) ($resource['billing_agreement_id'] ?? ''));
+        $amount = self::canonicalMoney($resource['amount']['total'] ?? $resource['amount']['value'] ?? null);
+        $currency = strtoupper(trim((string) ($resource['amount']['currency'] ?? $resource['amount']['currency_code'] ?? '')));
+
+        if($state !== $expectedState || $saleId === '' || $amount === null || $currency === '') {
+            throw new ApiException('PayPal subscription payment webhook is invalid.');
+        }
+
+        if($eventType === 'PAYMENT.SALE.COMPLETED' && $subscriptionId === '') {
+            throw new ApiException('PayPal subscription payment is missing its subscription ID.');
+        }
+
+        return [
+            'event_id' => $eventId,
+            'event_type' => $eventType,
+            'kind' => match ($eventType) {
+                'PAYMENT.SALE.COMPLETED' => 'payment_completed',
+                'PAYMENT.SALE.REFUNDED' => 'payment_refunded',
+                default => 'payment_reversed',
+            },
+            'sale_id' => $saleId,
+            'subscription_id' => $subscriptionId !== '' ? $subscriptionId : null,
+            'amount' => $amount,
+            'currency' => $currency,
+            'occurred_at' => $occurredAt,
+        ];
+    }
+
+    private static function withLifetimeOrderLock(string $orderId, callable $callback): mixed{
+        $pdo = DB::get_db();
+        $lockName = 'paypal-lifetime:'.substr(hash('sha256', $orderId), 0, 48);
+        $acquire = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $acquire->execute(['lock_name' => $lockName]);
+
+        if((int) $acquire->fetchColumn() !== 1) {
+            throw new ApiException('Unable to acquire PayPal lifetime order lock.');
+        }
+
+        try {
+            return $callback();
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
+    }
+
+    private static function completeLifetimeOrder($request, Client $client){
+        $orderId = trim((string) ($request->token ?? ''));
+
+        if($orderId === '') throw new ApiException('PayPal order ID is missing.');
+
+        $result = self::withLifetimeOrderLock($orderId, static function () use ($request, $client, $orderId): ?array {
+            if(DB::payment()->where('cid', $orderId)->first()) return null;
+
+            $subscription = DB::subscription()->where('tid', $orderId)->first();
+            $intent = self::lifetimeIntentForCallback(
+                $request,
+                static fn(string $id) => $id === $orderId ? $subscription : null
+            );
+
+            if($intent === null || (string) ($subscription->status ?? '') !== 'Pending') {
+                throw new ApiException('Local PayPal lifetime intent is not pending.');
+            }
+
+            $order = self::captureOrFetchLifetimeOrder(
+                $orderId,
+                static fn(string $id): array => $client->getOrder($id),
+                static fn(string $id): array => $client->captureOrder($id)
+            );
+            $capture = self::validateLifetimeCapture($order, $intent);
+            $pdo = DB::get_db();
+            $dispatch = null;
+
+            self::applyLifetimeTransaction(
+                $pdo,
+                static fn(): bool => (bool) DB::payment()->where('cid', $capture['order_id'])->first()
+                    || (bool) DB::payment()->where('tid', $capture['capture_id'])->first(),
+                static function () use (&$dispatch, $capture, $intent, $order, $orderId): void {
+                    $subscription = DB::subscription()->where('tid', $orderId)->first();
+                    $subscriptionData = json_decode((string) ($subscription->data ?? ''), true) ?: [];
+                    $freshIntent = self::lifetimeIntentForCallback(
+                        (object) ['token' => $orderId],
+                        static fn(string $id) => $id === $orderId ? $subscription : null
+                    );
+
+                    if(
+                        $freshIntent === null
+                        || $freshIntent !== $intent
+                        || (string) ($subscription->status ?? '') !== 'Pending'
+                    ) {
+                        throw new ApiException('Local PayPal lifetime intent changed during capture.');
+                    }
+
+                    $user = DB::user()->where('id', $capture['user_id'])->first();
+
+                    if(!$user || !DB::plans()->where('id', $capture['plan_id'])->first()) {
+                        throw new ApiException('Local PayPal lifetime user or plan no longer exists.');
+                    }
+
+                    $expiry = self::entitlementExpiry('lifetime', $user->expiration ?? null);
+                    $payment = DB::payment()->create();
+                    $payment->date = Helper::dtime('now');
+                    $payment->cid = $capture['order_id'];
+                    $payment->tid = $capture['capture_id'];
+                    $payment->amount = $capture['amount'];
+                    $payment->userid = $capture['user_id'];
+                    $payment->status = "Completed";
+                    $payment->expiry = $expiry;
+                    $payment->data = json_encode([
+                        'intent' => $intent,
+                        'paypal' => $order,
+                    ], JSON_THROW_ON_ERROR);
+                    $payment->save();
+
+                    self::consumeCoupon($subscriptionData);
+
+                    $subscription->status = "Active";
+                    $subscription->amount = $capture['amount'];
+                    $subscription->expiry = $expiry;
+                    $subscription->lastpayment = Helper::dtime();
+                    $subscription->data = json_encode(
+                        self::updatedSubscriptionData($subscriptionData, $order),
+                        JSON_THROW_ON_ERROR
+                    );
+                    $subscription->save();
+
+                    $user->last_payment = Helper::dtime();
+                    $user->expiration = $expiry;
+                    $user->pro = 1;
+                    $user->planid = $capture['plan_id'];
+                    $user->save();
+
+                    $dispatch = [$user, $capture['plan_id'], $payment->id()];
+                }
+            );
+
+            return $dispatch;
+        });
+
+        if($result !== null) \Core\Plugin::dispatch('payment.success', $result);
+
+        return Helper::redirect()->to(route('billing'))->with("success", e("Your payment was successfully made. Thank you."));
+    }
+
+    private static function completeSubscription($request, Client $client){
+        $subscriptionId = $request->subscription_id ?: $request->token;
+
+        if(!$subscriptionId) throw new ApiException('PayPal subscription ID is missing.');
+
+        $response = $client->getSubscription((string) $subscriptionId);
+
+        if(($response['status'] ?? null) !== 'ACTIVE') throw new ApiException('PayPal subscription is not active.');
+
+        $userid = str_replace('userid:', '', (string) ($response['custom_id'] ?? ''));
+
+        if(!$userid || !$user = DB::user()->where('id', $userid)->first()) {
+            throw new ApiException('PayPal subscription data did not match a user.');
+        }
+
+        $subscription = DB::subscription()->where('tid', $response['id'])->first();
+
+        if(!$subscription || (int) ($subscription->userid ?? 0) !== (int) $user->id) {
+            throw new ApiException('Local PayPal subscription was not found.');
+        }
+
+        $storedData = json_decode($subscription->data ?? '', true) ?: [];
+        if((string) ($subscription->status ?? '') === 'Pending') $subscription->status = "Active";
+        $subscription->data = json_encode(
+            self::updatedSubscriptionData($storedData, $response),
+            JSON_THROW_ON_ERROR
+        );
+        $subscription->save();
+
+        return Helper::redirect()->to(route('billing'))->with("success", e("Your PayPal subscription was activated. Access is granted after payment confirmation."));
+    }
+
+    private static function handleWebhookEvent(Request $request, Client $client): Response{
+        $body = file_get_contents('php://input');
+        $event = json_decode($body ?: '', true);
+        $webhookId = config('paypalapi')->webhook_id ?? null;
+
+        if(!is_array($event) || !$webhookId) {
+            \GemError::log('PayPal webhook could not be verified because its payload or webhook ID is missing.');
+            return Response::factory('', 400);
+        }
+
+        try {
+            $verified = $client->verifyWebhookSignature([
+                'auth_algo' => $request->serverString('HTTP_PAYPAL_AUTH_ALGO'),
+                'cert_url' => $request->serverString('HTTP_PAYPAL_CERT_URL'),
+                'transmission_id' => $request->serverString('HTTP_PAYPAL_TRANSMISSION_ID'),
+                'transmission_sig' => $request->serverString('HTTP_PAYPAL_TRANSMISSION_SIG'),
+                'transmission_time' => $request->serverString('HTTP_PAYPAL_TRANSMISSION_TIME'),
+                'webhook_id' => $webhookId,
+                'webhook_event' => $event,
+            ]);
+
+            if(!$verified) return Response::factory('', 400);
+
+            $action = self::normalizeSubscriptionWebhookEvent($event);
+
+            if($action === null) return Response::factory('', 200);
+
+            $status = match ($action['kind']) {
+                'payment_completed' => self::handleCompletedSubscriptionPayment($action, $event),
+                'payment_refunded', 'payment_reversed' => self::handleSubscriptionPaymentReversal($action, $event),
+                'subscription_status' => self::handleSubscriptionStatusEvent($action, $event),
+                default => 200,
+            };
+
+            return Response::factory('', $status);
+        } catch (\Exception $exception) {
+            \GemError::log('PayPal webhook verification failed: '.$exception->getMessage());
+            return Response::factory('', 400);
+        }
+    }
+
+    private static function handleCompletedSubscriptionPayment(array $action, array $event): int{
+        $result = self::withWebhookEventLock(
+            $action['subscription_id'],
+            static function () use ($action, $event): array {
+                if(
+                    DB::payment()->where('tid', $action['event_id'])->first()
+                    || DB::payment()->where('cid', $action['sale_id'])->first()
+                ) {
+                    return ['status' => 200, 'dispatch' => null];
+                }
+
+                $subscription = DB::subscription()->where('tid', $action['subscription_id'])->first();
+
+                if(!$subscription) return ['status' => 409, 'dispatch' => null];
+
+                $data = json_decode((string) ($subscription->data ?? ''), true) ?: [];
+                $expectedAmount = self::canonicalMoney($data['expected_amount'] ?? null);
+                $expectedCurrency = strtoupper(trim((string) config('currency')));
+
+                if(
+                    ($data['paymentmethod'] ?? null) !== 'PaypalApi'
+                    || !in_array((string) ($subscription->plan ?? ''), ['monthly', 'yearly'], true)
+                    || $expectedAmount === null
+                    || !hash_equals($expectedAmount, $action['amount'])
+                    || $expectedCurrency === ''
+                    || !hash_equals($expectedCurrency, $action['currency'])
+                ) {
+                    return ['status' => 422, 'dispatch' => null];
+                }
+
+                $user = DB::user()->where('id', $subscription->userid)->first();
+
+                if(!$user) return ['status' => 409, 'dispatch' => null];
+
+                $pdo = DB::get_db();
+                $dispatch = null;
+
+                self::applyWebhookTransaction(
+                    $pdo,
+                    static fn(): bool => (bool) DB::payment()->where('tid', $action['event_id'])->first()
+                        || (bool) DB::payment()->where('cid', $action['sale_id'])->first(),
+                    static function () use (&$dispatch, $action, $event, $subscription, $user, $data): void {
+                        $occurredAt = strtotime($action['occurred_at']);
+                        $expiry = self::entitlementExpiry(
+                            (string) $subscription->plan,
+                            $user->expiration ?? null,
+                            $occurredAt === false ? time() : $occurredAt
+                        );
+                        $payment = DB::payment()->create();
+                        $payment->date = Helper::dtime($action['occurred_at']);
+                        $payment->cid = $action['sale_id'];
+                        $payment->tid = $action['event_id'];
+                        $payment->amount = $action['amount'];
+                        $payment->userid = $user->id;
+                        $payment->status = 'Completed';
+                        $payment->expiry = $expiry;
+                        $payment->data = json_encode($event, JSON_THROW_ON_ERROR);
+                        $payment->save();
+
+                        self::consumeCoupon($data);
+
+                        $subscription->amount = (float) ($subscription->amount ?? 0) + (float) $action['amount'];
+                        $subscription->expiry = $expiry;
+                        $subscription->lastpayment = Helper::dtime($action['occurred_at']);
+                        $subscription->status = self::statusAfterCompletedSale($subscription->status ?? null);
+                        $subscription->data = json_encode(
+                            self::updatedSubscriptionData($data, $event),
+                            JSON_THROW_ON_ERROR
+                        );
+                        $subscription->save();
+
+                        $user->last_payment = Helper::dtime($action['occurred_at']);
+                        $user->expiration = $expiry;
+                        $user->pro = 1;
+                        $user->planid = $subscription->planid;
+                        $user->save();
+
+                        $dispatch = [$user, $subscription->planid, $payment->id()];
+                    }
+                );
+
+                return ['status' => 200, 'dispatch' => $dispatch];
+            }
+        );
+
+        if($result['dispatch'] !== null) \Core\Plugin::dispatch('payment.success', $result['dispatch']);
+
+        return $result['status'];
+    }
+
+    private static function handleSubscriptionPaymentReversal(array $action, array $event): int{
+        return self::withWebhookEventLock(
+            $action['sale_id'],
+            static function () use ($action, $event): int {
+                if(DB::payment()->where('tid', $action['event_id'])->first()) return 200;
+
+                $original = DB::payment()
+                    ->where('cid', $action['sale_id'])
+                    ->where('status', 'Completed')
+                    ->first();
+
+                if(!$original) return 409;
+
+                $originalData = json_decode((string) ($original->data ?? ''), true) ?: [];
+                $subscriptionId = $action['subscription_id']
+                    ?? ($originalData['resource']['billing_agreement_id'] ?? null);
+                $subscription = $subscriptionId
+                    ? DB::subscription()->where('tid', $subscriptionId)->first()
+                    : null;
+                $user = DB::user()->where('id', $original->userid)->first();
+
+                if(!$subscription || !$user) return 409;
+
+                $expectedCurrency = strtoupper(trim((string) config('currency')));
+
+                if($expectedCurrency === '' || !hash_equals($expectedCurrency, $action['currency'])) return 422;
+
+                $reversedTotal = (float) $action['amount'];
+
+                foreach(DB::payment()->where('cid', $action['sale_id'])->findMany() as $record) {
+                    if(in_array((string) ($record->status ?? ''), ['Refunded', 'Reversed'], true)) {
+                        $reversedTotal += abs((float) ($record->amount ?? 0));
+                    }
+                }
+
+                $fullyReversed = $action['kind'] === 'payment_reversed'
+                    || $reversedTotal + 0.000001 >= (float) $original->amount;
+                $revokeEntitlement = self::reversalRevokesEntitlement(
+                    $action['kind'],
+                    $reversedTotal,
+                    (float) $original->amount,
+                    (int) ($user->planid ?? 0),
+                    (int) ($subscription->planid ?? 0),
+                    $user->expiration ?? null,
+                    $original->expiry ?? null
+                );
+                $pdo = DB::get_db();
+
+                self::applyWebhookTransaction(
+                    $pdo,
+                    static fn(): bool => (bool) DB::payment()->where('tid', $action['event_id'])->first(),
+                    static function () use ($action, $event, $original, $subscription, $user, $fullyReversed, $revokeEntitlement): void {
+                        $adjustment = DB::payment()->create();
+                        $adjustment->date = Helper::dtime($action['occurred_at']);
+                        $adjustment->cid = $action['sale_id'];
+                        $adjustment->tid = $action['event_id'];
+                        $adjustment->amount = -((float) $action['amount']);
+                        $adjustment->userid = $original->userid;
+                        $adjustment->status = $action['kind'] === 'payment_reversed' ? 'Reversed' : 'Refunded';
+                        $adjustment->expiry = $original->expiry;
+                        $adjustment->data = json_encode($event, JSON_THROW_ON_ERROR);
+                        $adjustment->save();
+
+                        $subscription->amount = max(0, (float) ($subscription->amount ?? 0) - (float) $action['amount']);
+
+                        if($fullyReversed) {
+                            $subscription->status = $action['kind'] === 'payment_reversed' ? 'Suspended' : 'Refunded';
+
+                            if($revokeEntitlement) {
+                                $user->expiration = Helper::dtime();
+                                $user->pro = 0;
+                                $user->planid = null;
+                                $user->save();
+                            }
+                        }
+
+                        $subscription->save();
+                    }
+                );
+
+                return 200;
+            }
+        );
+    }
+
+    private static function handleSubscriptionStatusEvent(array $action, array $event): int{
+        return self::withWebhookEventLock(
+            $action['subscription_id'],
+            static function () use ($action, $event): int {
+                $subscription = DB::subscription()->where('tid', $action['subscription_id'])->first();
+
+                if(!$subscription) return 409;
+
+                $data = json_decode((string) ($subscription->data ?? ''), true) ?: [];
+                $processed = is_array($data['processed_webhook_events'] ?? null)
+                    ? $data['processed_webhook_events']
+                    : [];
+                $pdo = DB::get_db();
+
+                self::applyWebhookTransaction(
+                    $pdo,
+                    static fn(): bool => in_array($action['event_id'], $processed, true),
+                    static function () use ($action, $event, $subscription, $data, $processed): void {
+                        $subscription->status = $action['status'];
+                        $processed[] = $action['event_id'];
+                        $data['paymentmethod'] = 'PaypalApi';
+                        $data['paypal'] = $event;
+                        $data['processed_webhook_events'] = array_slice(array_values(array_unique($processed)), -20);
+                        $subscription->data = json_encode($data, JSON_THROW_ON_ERROR);
+                        $subscription->save();
+
+                        if($action['status'] !== 'Expired') return;
+
+                        $user = DB::user()->where('id', $subscription->userid)->first();
+
+                        if(
+                            $user
+                            && (int) ($user->planid ?? 0) === (int) ($subscription->planid ?? 0)
+                            && strtotime((string) ($user->expiration ?? '')) <= time()
+                        ) {
+                            $user->pro = 0;
+                            $user->planid = null;
+                            $user->save();
+                        }
+                    }
+                );
+
+                return 200;
+            }
+        );
+    }
+
+    private static function withWebhookEventLock(string $resourceId, callable $callback): mixed{
+        $pdo = DB::get_db();
+        $lockName = 'paypal-webhook:'.substr(hash('sha256', $resourceId), 0, 47);
+        $acquire = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $acquire->execute(['lock_name' => $lockName]);
+
+        if((int) $acquire->fetchColumn() !== 1) {
+            throw new ApiException('Unable to acquire PayPal webhook event lock.');
+        }
+
+        try {
+            return $callback();
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
+    }
+
+    private static function consumeCoupon(array &$data): bool{
+        $couponId = (int) ($data['coupon_id'] ?? 0);
+
+        if($couponId < 1 || !empty($data['coupon_consumed_at'])) return false;
+
+        $coupon = DB::coupons()->where('id', $couponId)->first();
+
+        if(!$coupon) return false;
+
+        $coupon->set_expr('used', '`used` + 1');
+        $coupon->save();
+        $data['coupon_consumed_at'] = Helper::dtime();
+
+        return true;
+    }
+
+    private static function client(?string $clientId = null, ?string $clientSecret = null): Client{
+        $settings = config('paypalapi');
+
+        return new Client(
+            new CurlTransport(),
+            $clientId ?? $settings->public,
+            $clientSecret ?? $settings->secret,
+            defined('DEBUG') && DEBUG
+        );
+    }
+
+    private static function approvalUrl(array $resource): ?string{
+        foreach($resource['links'] ?? [] as $link) {
+            if(in_array($link['rel'] ?? null, ['approve', 'payer-action'], true) && !empty($link['href'])) {
+                return $link['href'];
+            }
+        }
+
+        return null;
+    }
+
+    private static function money($amount): string{
+        return number_format((float) $amount, 2, '.', '');
+    }
+
+    private static function canonicalMoney($amount): ?string{
+        $amount = trim((string) $amount);
+
+        if(!preg_match('/^\d+(?:\.\d{1,2})?$/D', $amount)) return null;
+
+        return number_format((float) $amount, 2, '.', '');
+    }
 }

@@ -9,15 +9,15 @@
                 <?php endif ?>
             </a>    
         </div>
-        <div class="col-sm-4 hidden-xs">
+        <div class="col-sm-4 d-none d-sm-block">
             <?php \Helpers\App::ads('468') ?>
         </div>
         <div class="col-sm-4">
             <div class="d-flex mt-1">
-                <div class="btn-group ml-auto">
-                    <a href="https://www.facebook.com/sharer.php?u=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>" class="btn btn-primary btn-xs" target="_blank"><?php echo e("Share") ?></a>
-                    <a href="https://twitter.com/share?url=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>&amp;text=Check+out+this+url" class="btn btn-primary btn-xs" target="_blank"><?php echo e("Tweet") ?></a>
-                    <a href="<?php echo $url->url ?>" class="btn btn-primary btn-xs"><?php echo e("Close") ?></a>
+                <div class="btn-group ms-auto">
+                    <a href="https://www.facebook.com/sharer.php?u=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>" class="btn btn-primary btn-sm" target="_blank"><?php echo e("Share") ?></a>
+                    <a href="https://twitter.com/share?url=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>&amp;text=Check+out+this+url" class="btn btn-primary btn-sm" target="_blank"><?php echo e("Tweet") ?></a>
+                    <a href="<?php echo $url->url ?>" class="btn btn-primary btn-sm"><?php echo e("Close") ?></a>
                 </div>                
             </div>
         </div>         

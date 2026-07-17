@@ -35,22 +35,15 @@ class Users {
      */
     public function index(){
 
-        $users = [];
+        $users = self::withListDetails(
+            User::orderByDesc('date')->paginate(15),
+            true,
+            e('Pro')
+        );
 
-        foreach(User::orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-
-            if($user->pro) {
-                if($plan = DB::plans()->first($user->planid)){
-                    $user->pro = $plan->name;
-                } else{
-                    $user->pro = e('Pro');
-                }
-            }
-
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Users'));
@@ -65,13 +58,15 @@ class Users {
      * @return void
      */
     public function inactive(){
-        $users = [];
+        $users = self::withListDetails(
+            User::where('active', 0)->orderByDesc('date')->paginate(15),
+            false,
+            e('Pro')
+        );
 
-        foreach(User::where('active', 0)->orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Inactive Users'));
@@ -86,13 +81,15 @@ class Users {
      * @return void
      */
     public function banned(){
-        $users = [];
+        $users = self::withListDetails(
+            User::where('banned', 1)->orderByDesc('date')->paginate(15),
+            false,
+            e('Pro')
+        );
 
-        foreach(User::where('banned', 1)->orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Banned Users'));
@@ -107,19 +104,77 @@ class Users {
      * @return void
      */
     public function admin(){
-        $users = [];
+        $users = self::withListDetails(
+            User::where('admin', 1)->orderByDesc('date')->paginate(15),
+            false,
+            e('Pro')
+        );
 
-        foreach(User::where('admin', 1)->orderByDesc('date')->paginate(15) as $user){
+        foreach($users as $user){
             if(_STATE == "DEMO") $user->email="demo@demo.com";
-            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";   
-            $user->count = DB::url()->where('userid', $user->id)->count();
-            $users[] = $user;         
+            if(empty($user->email)) $user->email = ucfirst($user->auth)." User";
         }
 
         View::set('title', e('Admin Users'));
 
         return View::with('admin.users.index', compact('users'))->extend('admin.layouts.main');
     }
+
+    private static function withListDetails(
+        array $users,
+        bool $includePlans,
+        string $defaultPlanName,
+        ?callable $loadCounts = null,
+        ?callable $loadPlans = null
+    ): array {
+        $userIds = [];
+        $planIds = [];
+
+        foreach($users as $user){
+            $userIds[(string) $user->id] = $user->id;
+            if($includePlans && $user->pro){
+                $planIds[(string) $user->planid] = $user->planid;
+            }
+        }
+
+        if(!$userIds) return $users;
+
+        $counts = $loadCounts
+            ? $loadCounts(array_values($userIds))
+            : DB::url()
+                ->select('userid')
+                ->selectExpr('COUNT(id)', 'count')
+                ->whereIn('userid', array_values($userIds))
+                ->groupBy('userid')
+                ->findMany();
+        $countsByUserId = [];
+
+        foreach($counts as $count){
+            $countsByUserId[(string) $count->userid] = (int) $count->count;
+        }
+
+        $plansById = [];
+        if($planIds){
+            $plans = $loadPlans
+                ? $loadPlans(array_values($planIds))
+                : DB::plans()->whereIn('id', array_values($planIds))->findMany();
+            foreach($plans as $plan){
+                $plansById[(string) $plan->id] = $plan;
+            }
+        }
+
+        foreach($users as $user){
+            $user->count = $countsByUserId[(string) $user->id] ?? 0;
+            if($includePlans && $user->pro){
+                $user->pro = isset($plansById[(string) $user->planid])
+                    ? $plansById[(string) $user->planid]->name
+                    : $defaultPlanName;
+            }
+        }
+
+        return $users;
+    }
+
     /**
      * Add Post
      *
@@ -133,7 +188,7 @@ class Users {
 
         $plans = DB::plans()->findMany();
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         return View::with('admin.users.new', compact('plans'))->extend('admin.layouts.main');
     }
@@ -169,7 +224,7 @@ class Users {
 
         $user->username = Helper::clean($request->username);
         
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!\Helpers\PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(\Helpers\PasswordPolicy::message()));
 
         Helper::set("hashCost", 8);
 
@@ -210,7 +265,7 @@ class Users {
 
         View::set('title', e('Edit User'));
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         if(_STATE == "DEMO") $user->email="demo@demo.com";
 
@@ -245,7 +300,7 @@ class Users {
 
         if($request->password){
 
-            if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+            if(!\Helpers\PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(\Helpers\PasswordPolicy::message()));
             $user->password = Helper::Encode($request->password);
         }
 

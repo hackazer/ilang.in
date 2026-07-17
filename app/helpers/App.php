@@ -23,6 +23,10 @@ use Core\Helper;
 
 final class App {
 
+    private const IFRAME_POLICY_CONNECT_TIMEOUT = 2;
+    private const IFRAME_POLICY_TOTAL_TIMEOUT = 4;
+    private const IFRAME_POLICY_MAX_HEADER_BYTES = 65536;
+
     /**
      * Custom Pages Link
      *
@@ -483,22 +487,85 @@ final class App {
      * @author GemPixel <https://gempixel.com> 
      * @version 6.0
      * @param [type] $url
-     * @return void
+     * @param callable|null $resolver
+     * @param callable|null $transport
+     * @return bool
      */
-    public static function iframePolicy($url){
-        
-        if(!\Core\Helper::isURL($url)) return false;
+    public static function iframePolicy($url, ?callable $resolver = null, ?callable $transport = null){
 
-        $url_headers = get_headers($url);
-        foreach ($url_headers as $key => $value){
-            $x_frame_options_deny = strpos(strtolower($url_headers[$key]), strtolower('X-Frame-Options: DENY'));
-            $x_frame_options_sameorigin = strpos(strtolower($url_headers[$key]), strtolower('X-Frame-Options: SAMEORIGIN'));
-            $x_frame_options_allow_from = strpos(strtolower($url_headers[$key]), strtolower('X-Frame-Options: ALLOW-FROM'));
-            $csp_frame_ancestors_self = strpos(strtolower($url_headers[$key]), strtolower('content-security-policy: frame-ancestors')) && strpos(strtolower($url_headers[$key]), strtolower('self'));
-            if ($x_frame_options_deny !== false || $x_frame_options_sameorigin !== false || $x_frame_options_allow_from !== false || $csp_frame_ancestors_self !== false){
+        if(!is_string($url) || !\Core\Helper::isURL($url)) return false;
+
+        if(!class_exists(OutboundUrl::class)){
+            require_once __DIR__.'/OutboundUrl.php';
+        }
+
+        try {
+            $target = OutboundUrl::assertSafe($url, false, $resolver);
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+
+        $headers = [];
+        $headerBytes = 0;
+        $headerLimitExceeded = false;
+        $options = OutboundUrl::curlOptions(
+            $target,
+            self::IFRAME_POLICY_CONNECT_TIMEOUT,
+            self::IFRAME_POLICY_TOTAL_TIMEOUT
+        );
+        $options[CURLOPT_NOBODY] = true;
+        $options[CURLOPT_USERAGENT] = 'Mozilla/5.0 (compatible; iframe-policy-check/1.0)';
+        $options[CURLOPT_HEADERFUNCTION] = static function ($curl, string $line) use (&$headers, &$headerBytes, &$headerLimitExceeded): int {
+            $lineLength = strlen($line);
+            $headerBytes += $lineLength;
+
+            if($headerBytes > self::IFRAME_POLICY_MAX_HEADER_BYTES){
+                $headerLimitExceeded = true;
+                return 0;
+            }
+
+            $line = trim($line);
+
+            if($line !== '' && !str_starts_with(strtolower($line), 'http/')){
+                $headers[] = $line;
+            }
+
+            return $lineLength;
+        };
+
+        if($transport){
+            $result = $transport($url, $options);
+        } else {
+            $curl = curl_init($url);
+
+            if($curl === false) return false;
+
+            if(!curl_setopt_array($curl, $options)){
+                unset($curl);
+                return false;
+            }
+
+            $result = curl_exec($curl);
+            unset($curl);
+        }
+
+        if($headerLimitExceeded) return true;
+        if($result === false) return false;
+
+        foreach($headers as $header){
+            [$name, $value] = array_pad(explode(':', $header, 2), 2, '');
+            $name = strtolower(trim($name));
+            $value = strtolower(trim($value));
+
+            if($name === 'x-frame-options' && preg_match('/(?:^|[,\s])(deny|sameorigin|allow-from)(?:$|[,\s])/i', $value)){
+                return true;
+            }
+
+            if($name === 'content-security-policy' && preg_match('/(?:^|;)\s*frame-ancestors\s+[^;]*[\'\"]?self[\'\"]?(?:\s|;|$)/i', $value)){
                 return true;
             }
         }
+
         return false;
     }
     /**
@@ -815,21 +882,68 @@ final class App {
      * @param [type] $url
      * @return void
      */
-    public static function rss($url){
+    public static function rss($url, ?callable $resolver = null, ?callable $transport = null){
 
-        if(!$content = @file_get_contents($url)) return 'Invalid RSS';
+        if(!is_string($url) || !\Core\Helper::isURL($url)) return 'Invalid RSS';
 
-        if(!$feed = new \SimpleXMLElement($content)) return 'Invalid RSS';
+        if(!class_exists(OutboundUrl::class)){
+            require_once __DIR__.'/OutboundUrl.php';
+        }
+
+        try {
+            $target = OutboundUrl::assertSafe($url, false, $resolver);
+        } catch (\InvalidArgumentException) {
+            return 'Invalid RSS';
+        }
+
+        $content = '';
+        $limitExceeded = false;
+        $options = OutboundUrl::curlOptions($target, 3, 8);
+        $options[CURLOPT_USERAGENT] = 'Mozilla/5.0 (compatible; ilang.in-rss/1.0)';
+        $options[CURLOPT_HTTPHEADER] = ['Accept: application/rss+xml, application/xml, text/xml'];
+        $options[CURLOPT_WRITEFUNCTION] = OutboundUrl::responseWriter($content, $limitExceeded);
+
+        if($transport){
+            $result = $transport($url, $options);
+        } else {
+            $curl = curl_init($url);
+            if($curl === false || !curl_setopt_array($curl, $options)) return 'Invalid RSS';
+            $result = curl_exec($curl);
+            unset($curl);
+        }
+
+        if($result === false || $limitExceeded || $content === '') return 'Invalid RSS';
+
+        $previousXmlErrors = libxml_use_internal_errors(true);
+
+        try {
+            $feed = simplexml_load_string($content, \SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousXmlErrors);
+        }
+
+        if($feed === false || !isset($feed->channel->item)) return 'Invalid RSS';
 
         $items = [];
+        $safeHttpUrl = static function (mixed $value): ?string {
+            $value = trim((string) $value);
+            if($value === '' || !filter_var($value, FILTER_VALIDATE_URL)) return null;
+
+            $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
+            return in_array($scheme, ['http', 'https'], true) ? $value : null;
+        };
 
         foreach($feed->channel->item as $item){
+            $description = (string) ($item->description ?? '');
+            $description = preg_replace('#<(script|style)\b[^>]*>.*?</\1>#is', '', $description) ?? '';
+
             $items[] = [
-                'title' => $item->title ?? null,
-                'link' => $item->link ?? null,
-                'image' => $item->image ?? null,
-                'description' => $item->description ? \Core\Helper::truncate(strip_tags($item->description), 150) : null,
-                'date' => $item->pubDate ?? null
+                'title' => trim(strip_tags((string) ($item->title ?? ''))) ?: null,
+                'link' => $safeHttpUrl($item->link ?? null),
+                'image' => $safeHttpUrl($item->image ?? null),
+                'description' => $description !== '' ? \Core\Helper::truncate(strip_tags($description), 150) : null,
+                'date' => trim(strip_tags((string) ($item->pubDate ?? ''))) ?: null,
             ];
         }
 

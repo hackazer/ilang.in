@@ -9,9 +9,9 @@
 </div>
 <div class="row">
      <?php foreach($themes as $theme): ?>
-        <div class="col-md-3">        
+        <div class="col-md-3">
             <div class="card">
-                <div class="card-body">          
+                <div class="card-body">
                     <?php if($theme->thumbnail): ?>
                         <img src="<?php echo url($theme->thumbnail) ?>" alt="<?php echo $theme->name ?>">
                     <?php endif ?>
@@ -19,8 +19,8 @@
                       <?php if($theme->child): ?>
                         <span class="badge bg-primary text-sm"><?php ee('Child') ?></span>
                       <?php endif ?>
-                    </h5>                   
-                    <a href="<?php echo $theme->link ?>" target="_blank"><small class="text-muted"><?php ee('By') ?> <?php echo $theme->author ?></small></a> -                    
+                    </h5>
+                    <a href="<?php echo $theme->link ?>" target="_blank"><small class="text-muted"><?php ee('By') ?> <?php echo $theme->author ?></small></a> -
                     <small class="text-muted"><?php ee('Since') ?> <?php echo $theme->date ?></small>
                     <br>
                     <div class="d-flex mt-4">
@@ -28,13 +28,13 @@
                             <?php if(config('theme') == $theme->id): ?>
                                 <span class="badge bg-info fs-6"><?php ee('Active') ?></span>
                             <?php else: ?>
-                                <a href="<?php echo route('admin.themes.activate', [$theme->id]) ?>" class="btn btn-success btn-sm"><?php ee('Activate') ?></a>
+                                <form action="<?php echo route('admin.themes.activate', [$theme->id]) ?>" method="post" class="d-inline"><?php echo csrf() ?><button type="submit" class="btn btn-success btn-sm"><?php ee('Activate') ?></button></form>
                             <?php endif ?>
                         </div>
                         <div class="ms-auto">
                             <a href="<?php echo route('admin.themes.clone', [$theme->id, \Core\Helper::nonce('themes.clone')]) ?>" class="btn btn-primary btn-sm" title="<?php ee('Clone Theme') ?>"><span data-feather="copy"></span></a>
                             <?php if($theme->id != 'default' && config('theme') != $theme->id): ?>
-                                <a href="<?php echo route('admin.themes.delete', [$theme->id, \Core\Helper::nonce('themes.delete')]) ?>" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><span data-feather="trash-2"></span></a>
+                                <form action="<?php echo route('admin.themes.delete', [$theme->id, \Core\Helper::nonce('themes.delete')]) ?>" method="post" class="d-inline"><?php echo csrf() ?><button type="submit" class="btn btn-danger btn-sm"><span data-feather="trash-2"></span></button></form>
                             <?php endif ?>
                         </div>
                     </div>
@@ -85,11 +85,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="file" class="form-label"><?php ee('Theme File') ?></label>
                     <input type="file" class="form-control" name="file" id="file" value="" accept=".zip" placeholder="e.g. theme.zip">
                     <p class="form-text"><?php ee('Upload the zip file that comes in the package. Usually it is named THEMENAME.zip. Please make sure the theme respects the file structure.') ?></p>
-                </div>                
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>

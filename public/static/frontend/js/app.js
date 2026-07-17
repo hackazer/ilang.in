@@ -115,13 +115,15 @@ var Tooltip = (function() {
 
 	// Variables
 
-	var $tooltip = $('[data-toggle="tooltip"]');
+	var $tooltip = $('[data-bs-toggle="tooltip"]');
 
 
 	// Methods
 
 	function init() {
-		$tooltip.tooltip();
+		$tooltip.each(function() {
+			bootstrap.Tooltip.getOrCreateInstance(this);
+		});
 	}
 
 
@@ -143,7 +145,7 @@ var Dropdown = (function() {
 	// Variables
 
 	var $dropdown = $('.dropdown-animate'),
-		$dropdownSubmenu = $('.dropdown-submenu [data-toggle="dropdown"]');
+		$dropdownSubmenu = $('.dropdown-submenu [data-bs-toggle="dropdown"]');
 
 
 	// Methods
@@ -180,6 +182,10 @@ var Dropdown = (function() {
 	// Events
 
 	if ($dropdown.length) {
+		$dropdown.each(function() {
+			var toggle = this.querySelector('[data-bs-toggle="dropdown"]');
+			if (toggle) bootstrap.Dropdown.getOrCreateInstance(toggle, { autoClose: 'outside' });
+		});
     	$dropdown.on({
     		'hide.bs.dropdown': function(e) {
     			hideDropdown($(this));
@@ -196,33 +202,6 @@ var Dropdown = (function() {
 		});
 	}
 
-
-	// Prevent dropdown-menu on closing
-
-	// Stop closing dropdown-menu when clicked inside
-    $('.dropdown-menu').on('click', function (event) {
-        var events = $._data(document, 'events') || {};
-
-        events = events.click || [];
-
-        for(var i = 0; i < events.length; i++) {
-            if(events[i].selector) {
-
-                //Check if the clicked element matches the event selector
-                if($(event.target).is(events[i].selector)) {
-                    events[i].handler.call(event.target, event);
-                }
-
-                // Check if any of the clicked element parents matches the
-                // delegated event selector (Emulating propagation)
-                $(event.target).parents(events[i].selector).each(function(){
-                    events[i].handler.call(this, event);
-                });
-            }
-        }
-
-        event.stopPropagation();
-    });
 })();
 
 
@@ -446,4 +425,3 @@ function livesearch() {
         }
     });
 }
-  

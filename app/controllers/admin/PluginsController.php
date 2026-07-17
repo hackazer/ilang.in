@@ -23,6 +23,7 @@ use Core\View;
 use Core\Request;
 use Core\Response;
 use Core\Helper;
+use Helpers\ArchiveValidator;
 use Models\User;
 
 class Plugins {	
@@ -34,10 +35,6 @@ class Plugins {
      * @return void
      */
     public function index(Request $request){
-
-        if($request->activated){            
-            \Core\Plugin::dispatch('admin.plugin.activate', $request->activated);
-        }
 
         $plugins = [];
 
@@ -92,7 +89,9 @@ class Plugins {
         $settings->var = json_encode($plugins);
         $settings->save();
 
-        return Helper::redirect()->to(route('admin.plugins', ['activated' => $id]))->with('success', e('Plugin was successfully activated.'));
+        \Core\Plugin::dispatch('admin.plugin.activate', $id);
+
+        return Helper::redirect()->to(route('admin.plugins'))->with('success', e('Plugin was successfully activated.'));
     }
 
      /**
@@ -136,40 +135,31 @@ class Plugins {
 
         if($file = $request->file('file')){       
 
-            if(!$file->mimematch || !in_array($file->ext, ['zip'])) return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The file is not valid. Only .zip files are accepted.'));    
+            if(!$file->isvalid || !$file->mimematch || $file->ext !== 'zip') return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The file is not valid. Only .zip files are accepted.'));
 
-            $name = str_replace('.'.$file->ext, '', $file->name);
-
-            $exists = file_exists(PLUGIN.'/'.$name);
-
-            $request->move($file, PLUGIN);
-
-            $zip = new \ZipArchive();
-
-            $f = $zip->open(PLUGIN.'/'.$file->name);
-        
-            if($f === true) {
-
-                if(!$exists) mkdir(PLUGIN.'/'.$name);
-              
-                if(!$zip->extractTo(PLUGIN."/".$name."/")){
-                    return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The file was downloaded but cannot be extracted due to permission.'));
-                }
-        
-                $zip->close();
-
-                if(!file_exists(PLUGIN.'/'.$name.'/config.json')){
-                    \Helpers\App::deleteFolder(PLUGIN.'/'.$name);
-                    unlink(PLUGIN.'/'.$file->name);
-                    return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('Invalid plugin. Please make sure the plugin is up to date and includes a config.json file.'));
-                }
-              
-            } else {
-                return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The file cannot be extracted. You can extract it manually.'));
+            try {
+                $name = ArchiveValidator::packageName($file->name);
+            } catch (\InvalidArgumentException $exception) {
+                return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The plugin filename is not valid.'));
             }
 
-            if(file_exists(PLUGIN.'/'.$file->name)){
-                unlink(PLUGIN.'/'.$file->name);
+            $exists = file_exists(PLUGIN.'/'.$name);
+            $archive = PLUGIN.'/'.$name.'.zip';
+
+            if(!$request->move($file, PLUGIN, $name.'.zip')){
+                return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The plugin could not be uploaded.'));
+            }
+
+            try {
+                (new ArchiveValidator())->extract($archive, PLUGIN.'/'.$name, ArchiveValidator::TYPE_PLUGIN);
+            } catch (\Throwable $exception) {
+                if(!$exists && file_exists(PLUGIN.'/'.$name)){
+                    \Helpers\App::deleteFolder(PLUGIN.'/'.$name);
+                }
+
+                return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('Invalid plugin archive. The package was not installed.'));
+            } finally {
+                if(file_exists($archive)) unlink($archive);
             }
 
             return Helper::redirect()->to(route('admin.plugins'))->with('success', $exists ? e('Plugin has been updated successfully.') : e('Plugin has been uploaded successfully.')); 
@@ -189,10 +179,6 @@ class Plugins {
 
         if(!config('purchasecode')){
             return Helper::redirect()->to(route('admin.update'))->with('danger', e('Please update your purchase code in the sidebar.'));
-        }
-
-        if($request->install){
-            return $this->install($request);            
         }
 
         if($request->q){
@@ -249,14 +235,19 @@ class Plugins {
      *
      * @author GemPixel <https://gempixel.com> 
      * @version 6.2
-     * @param [type] $request
+     * @param \Core\Request $request
+     * @param string $id
      * @return void
      */
-    public function install($request){
+    public function install(Request $request, string $id){
 
         \Gem::addMiddleware('DemoProtect');
 
-        $name = $request->install;
+        try {
+            $name = ArchiveValidator::packageName($id);
+        } catch (\InvalidArgumentException $exception) {
+            return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The plugin name is not valid.'));
+        }
  
         $exists = file_exists(PLUGIN.'/'.$name);
 
@@ -276,36 +267,22 @@ class Plugins {
             return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('An unexpected error occurred. Please try again.'));
         }
 
-        if(!copy($data->file, PLUGIN."/{$name}.zip")){
+        $archive = PLUGIN."/{$name}.zip";
+
+        if(!copy($data->file, $archive)){
             return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('An error ocurred. Plugin was not downloaded.')); 
         }
 
-        $zip = new \ZipArchive();
-
-        $f = $zip->open(PLUGIN.'/'.$name.'.zip');
-    
-        if($f === true) {
-
-            if(!$exists) mkdir(PLUGIN.'/'.$name);
-            
-            if(!$zip->extractTo(PLUGIN."/".$name."/")){
-                return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The file was downloaded but cannot be extracted due to permission.'));
-            }
-    
-            $zip->close();
-
-            if(!file_exists(PLUGIN.'/'.$name.'/config.json')){
+        try {
+            (new ArchiveValidator())->extract($archive, PLUGIN.'/'.$name, ArchiveValidator::TYPE_PLUGIN);
+        } catch (\Throwable $exception) {
+            if(!$exists && file_exists(PLUGIN.'/'.$name)){
                 \Helpers\App::deleteFolder(PLUGIN.'/'.$name);
-                unlink(PLUGIN.'/'.$name.'.zip');
-                return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('Invalid plugin. Please make sure the plugin is up to date and includes a config.json file.'));
             }
-            
-        } else {
-            return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('The file cannot be extracted. You can extract it manually.'));
-        }
 
-        if(file_exists(PLUGIN.'/'.$name.'.zip')){
-            unlink(PLUGIN.'/'.$name.'.zip');
+            return Helper::redirect()->to(route('admin.plugins'))->with('danger', e('Invalid plugin archive. The package was not installed.'));
+        } finally {
+            if(file_exists($archive)) unlink($archive);
         }
 
         return Helper::redirect()->to(route('admin.plugins'))->with('success', $exists ? e('Plugin has been installed & updated successfully.') : e('Plugin has been installed successfully.')); 

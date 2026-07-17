@@ -2,19 +2,19 @@
     <div>
         <h1 class="h3 mb-5"><?php echo \Core\View::$title ?></h1>
     </div>
-    <div class="ms-auto">            
+    <div class="ms-auto">
       <a href="<?php echo route('admin.users.new') ?>" class="btn btn-primary"><i data-feather="plus"></i> <?php ee('Add User') ?></a>
       <form method="post" action="" class="d-inline" data-trigger="options">
         <?php echo csrf() ?>
         <button type="button" class="btn btn-default bg-white shadow" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
         <input type="hidden" name="selected">
-        <ul class="dropdown-menu">				
+        <ul class="dropdown-menu">
           <li><a class="dropdown-item" href="<?php echo route('admin.users.emailall') ?>" data-trigger="submitchecked"><i data-feather="send"></i> <?php ee('Send Email') ?></span></a></li>
           <li><a class="dropdown-item" href="<?php echo route('admin.users.banall') ?>" data-trigger="submitchecked"><i data-feather="x-circle"></i> <?php ee('Ban Selected') ?></span></a></li>
           <li><div class="dropdown-divider"></div></li>
           <li><a class="dropdown-item" href="<?php echo route('admin.users.deleteall') ?>" data-trigger="submitchecked"><i data-feather="trash"></i> <?php ee('Delete Selected') ?></span></a></li>
         </ul>
-      </form> 
+      </form>
     </div>
 </div>
 <div class="card flex-fill">
@@ -40,7 +40,7 @@
                         <td><input class="form-check-input me-2" type="checkbox" data-dynamic="1" value="<?php echo $user->id ?>"></td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <?php echo ($user->admin)?"<strong>{$user->email}</strong>":$user->email ?> <?php echo ($user->trial)?"(".e('Free Trial').")":"" ?>
                                     <?php echo ($user->teamid)?"<strong class=\"badge bg-primary\">".e("Team")."</strong>":'' ?>
@@ -48,10 +48,10 @@
                                 </div>
                             </div>
                         </td>
-                        <td><?php echo ($user->active ? '<span class="badge bg-success">'.e('Active').'</span>':'<span class="badge bg-danger">'.e('Not Active').'</span>') ?> <?php echo $user->banned ? '<span class="badge bg-danger">'.e('Banned').'</span>':'' ?></td>                
+                        <td><?php echo ($user->active ? '<span class="badge bg-success">'.e('Active').'</span>':'<span class="badge bg-danger">'.e('Not Active').'</span>') ?> <?php echo $user->banned ? '<span class="badge bg-danger">'.e('Banned').'</span>':'' ?></td>
                         <td><?php echo date("F d, Y",strtotime($user->date)) ?></td>
                         <td><?php echo ($user->pro ? '<span class="badge bg-success">'.$user->pro.'</span>':'<span class="badge bg-warning">'.e('Free').'</span>') ?></td>
-                        <td><?php echo ($user->pro ? date("F d, Y",strtotime($user->expiration)):"n/a") ?></td>                
+                        <td><?php echo ($user->pro ? date("F d, Y",strtotime($user->expiration)):"n/a") ?></td>
                         <td><a href="<?php echo route('admin.users.view', [$user->id]) ?>" class="btn btn-success btn-sm"><?php echo $user->count ?></a></td>
                         <td>
                             <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
@@ -59,14 +59,14 @@
                                 <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#loginModal" href="<?php echo route('admin.users.login', [$user->id, \Core\Helper::nonce('user.login.'.$user->id)]) ?>" target="_blank"><i data-feather="log-in"></i> <?php ee('Login as User') ?></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.view', [$user->id]) ?>"><i data-feather="user"></i> <?php ee('User Profile') ?></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
-                                <li><a class="dropdown-item" href="<?php echo route('admin.users.ban', [$user->id]) ?>"><i data-feather="x-circle"></i> <?php echo $user->banned ? e('Unban') : e('Ban') ?></a></li>
+                                <li><form action="<?php echo route('admin.users.ban', [$user->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x-circle"></i> <?php echo $user->banned ? e('Unban') : e('Ban') ?></button></form></li>
                                 <?php if(!$user->verified): ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>"><i data-feather="check-circle" class="text-primary"></i> <?php ee('Verify User') ?></a></li>
+                                <li><form action="<?php echo route('admin.users.verify', [$user->id, \Core\Helper::nonce('verify-'.$user->id)]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle" class="text-primary"></i> <?php ee('Verify User') ?></button></form></li>
                                 <?php endif ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.users.delete', [$user->id, \Core\Helper::nonce('user.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete User') ?></a></li>                                
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.users.delete.all', [$user->id, \Core\Helper::nonce('user.delete')]) ?>"><i data-feather="trash-2"></i> <?php ee('Delete User + Data') ?></a></li>
+                                <li><form action="<?php echo route('admin.users.delete', [$user->id, \Core\Helper::nonce('user.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete User') ?></button></form></li>
+                                <li><form action="<?php echo route('admin.users.delete.all', [$user->id, \Core\Helper::nonce('user.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash-2"></i> <?php ee('Delete User + Data') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>

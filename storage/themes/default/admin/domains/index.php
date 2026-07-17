@@ -44,13 +44,13 @@
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="<?php echo route('admin.domains.edit', [$domain->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit Domain') ?></a></li>
                                     <?php if($domain->status == "1"): ?>
-                                        <li><a class="dropdown-item" href="<?php echo route('admin.domains.disable', [$domain->id]) ?>"><i data-feather="x-circle"></i> <?php ee('Disable Domain') ?></a></li>
+                                        <li><form action="<?php echo route('admin.domains.disable', [$domain->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x-circle"></i> <?php ee('Disable Domain') ?></button></form></li>
                                     <?php else: ?>
-                                        <li><a class="dropdown-item" href="<?php echo route('admin.domains.activate', [$domain->id]) ?>"><i data-feather="check-circle"></i> <?php ee('Activate Domain') ?></a></li>
+                                        <li><form action="<?php echo route('admin.domains.activate', [$domain->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Activate Domain') ?></button></form></li>
                                     <?php endif ?>
-                                        <li><a class="dropdown-item" href="<?php echo route('admin.domains.pending', [$domain->id]) ?>"><i data-feather="check-circle"></i> <?php ee('Set to pending') ?></a></li>
+                                        <li><form action="<?php echo route('admin.domains.pending', [$domain->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="clock"></i> <?php ee('Set to pending') ?></button></form></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.domains.delete', [$domain->id, \Core\Helper::nonce('domain.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('admin.domains.delete', [$domain->id, \Core\Helper::nonce('domain.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>

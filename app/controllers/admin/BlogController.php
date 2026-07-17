@@ -53,9 +53,7 @@ class Blog {
 
         CDN::load('editor');
         View::push("<script>                        
-                        CKEDITOR.replace('editor', {
-                            allowedContent: true                            
-                        });
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();
 
         return View::with('admin.blog.new')->extend('admin.layouts.main');
@@ -114,9 +112,7 @@ class Blog {
 
         CDN::load('editor');
         View::push("<script>                        
-                        CKEDITOR.replace('editor', {
-                            allowedContent: true                            
-                        });
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();
 
         View::set('title', e('Edit Post'));

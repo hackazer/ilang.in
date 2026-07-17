@@ -17,27 +17,27 @@
                     <?php echo csrf() ?>                                        
                     <h4><?php ee('Slack Integration') ?></h4>
                     <p><?php ee('To enable slack integration, setup the following fields. If you leave the following fields empty, slack integration will be disabled. For documentation on how to setup Slack, please see <a href="https://gemp.me/docs" target="_blank">https://gemp.me/docs</a>') ?></p>
-                    <div class="form-group">
+                    <div class="mb-3">
 					    <label class="form-label"><?php ee('Slack Request URL') ?></label>
                         <input type="text" class="form-control" value="<?php echo route("webhook", ['slack']) ?>" disabled>
                         <p class="form-text"><?php ee('You need to add this in the the slack "Apps".') ?></p>
                     </div>							
-                    <div class="form-group">
+                    <div class="mb-3">
 					    <label for="slackclientid" class="form-label"><?php ee('Slack Client ID') ?></label>
                         <input type="text" class="form-control" name="slackclientid" value="<?php echo config('slackclientid') ?>">
                         <p class="form-text"><?php ee('You can find your slack client id in the slack "Apps".') ?></p>
                     </div>	
-                    <div class="form-group">
+                    <div class="mb-3">
 					    <label for="slacksecretid" class="form-label"><?php ee('Slack Client Secret') ?></label>
                         <input type="text" class="form-control" name="slacksecretid" value="<?php echo config('slacksecretid') ?>">
                         <p class="form-text"><?php ee('You can find your slack secret id in the slack "Apps".') ?></p>
                     </div>
-                    <div class="form-group">
+                    <div class="mb-3">
 					    <label for="slacksigningsecret" class="form-label"><?php ee('Slack Signing Secret') ?></label>
                         <input type="text" class="form-control" name="slacksigningsecret" value="<?php echo config('slacksigningsecret') ?>">
                         <p class="form-text"><?php ee('You can find your slack secret id in the slack "Apps". This is used to validate requests from Slack.') ?></p>
                     </div>					  	
-                    <div class="form-group">
+                    <div class="mb-3">
 					    <label for="slackcommand" class="form-label"><?php ee('Slack Command') ?></label>
                         <input type="text" class="form-control" name="slackcommand" value="<?php echo config('slackcommand') ?>">
                         <p class="form-text"><?php ee('Insert the command that you choose in the slack app settings. It has to be the same as the one you choose. For more information, please see docs.') ?></p>

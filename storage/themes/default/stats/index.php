@@ -17,9 +17,9 @@
                         <div>
                             <h5 class="card-title mb-0 fw-bold"><?php ee('Clicks') ?></h5>
                         </div>
-                        <div class="ml-auto">
+                        <div class="ms-auto">
                             <input type="text" name="customreport" data-action="customreport" class="form-control" placeholder="<?php echo e("Choose a date range to update stats") ?>">
-                        </div> 
+                        </div>
                     </div>
                     <div class="card-body py-3">
                         <div>
@@ -38,38 +38,38 @@
                     <div class="card-body no-checkbox">
                         <?php foreach($recentActivity as $stats): ?>
                             <div class="d-flex align-items-start">
-                                <div class="flex-grow-1">                                    
+                                <div class="flex-grow-1">
                                     <?php if($stats->country): ?>
-                                        <img src="<?php echo \Helpers\App::flag($stats->country) ?>" width="16" class="rounded mr-1" alt=" <?php echo ucfirst($stats->country) ?>">
-                                        <small class="mr-2"><?php echo $stats->city ? ucfirst($stats->city).',': e('Somewhere from') ?> <?php echo ucfirst($stats->country) ?></small>
+                                        <img src="<?php echo \Helpers\App::flag($stats->country) ?>" width="16" class="rounded me-1" alt=" <?php echo ucfirst($stats->country) ?>">
+                                        <small class="me-2"><?php echo $stats->city ? ucfirst($stats->city).',': e('Somewhere from') ?> <?php echo ucfirst($stats->country) ?></small>
                                     <?php endif ?>
                                     <?php if($stats->os): ?>
-                                        <img src="<?php echo \Helpers\App::os($stats->os) ?>" width="16" class="rounded mr-1" alt=" <?php echo ucfirst($stats->os) ?>">
-                                        <small class="mr-2 text-navy"><?php echo $stats->os ?></small> 
+                                        <img src="<?php echo \Helpers\App::os($stats->os) ?>" width="16" class="rounded me-1" alt=" <?php echo ucfirst($stats->os) ?>">
+                                        <small class="me-2 text-navy"><?php echo $stats->os ?></small>
                                     <?php endif ?>
                                     <?php if($stats->browser): ?>
-                                        <img src="<?php echo \Helpers\App::browser($stats->browser) ?>" width="16" class="rounded mr-1" alt=" <?php echo ucfirst($stats->browser) ?>">
-                                        <small class="mr-2 text-navy"><?php echo $stats->browser ?></small>
+                                        <img src="<?php echo \Helpers\App::browser($stats->browser) ?>" width="16" class="rounded me-1" alt=" <?php echo ucfirst($stats->browser) ?>">
+                                        <small class="me-2 text-navy"><?php echo $stats->browser ?></small>
                                     <?php endif ?>
                                     <?php if($stats->domain): ?>
-                                        <i data-feather="globe" class="mr-1"></i>
-                                        <a href="<?php echo $stats->referer ?>" rel="nofollow" target="_blank"><small class="mr-2 text-navy"><?php echo $stats->domain ?></small></a>
+                                        <i data-feather="globe" class="me-1"></i>
+                                        <a href="<?php echo $stats->referer ?>" rel="nofollow" target="_blank"><small class="me-2 text-navy"><?php echo $stats->domain ?></small></a>
                                     <?php else: ?>
-                                        <i data-feather="globe" class="mr-1"></i>
-                                        <small class="mr-2 text-navy"><?php echo ee('Direct, email or others') ?></small>
+                                        <i data-feather="globe" class="me-1"></i>
+                                        <small class="me-2 text-navy"><?php echo ee('Direct, email or others') ?></small>
                                     <?php endif ?>
                                     <?php if($stats->language): ?>
-                                        <i data-feather="user" class="mr-1"></i>
-                                        <small class="mr-2 text-navy"><?php echo strtoupper($stats->language) ?></small>
-                                    <?php endif ?>    
+                                        <i data-feather="user" class="me-1"></i>
+                                        <small class="me-2 text-navy"><?php echo strtoupper($stats->language) ?></small>
+                                    <?php endif ?>
                                     <br>
-                                    <small class="mr-1"><?php echo \Core\Helper::timeago($stats->date) ?></small>
+                                    <small class="me-1"><?php echo \Core\Helper::timeago($stats->date) ?></small>
                                 </div>
-                            </div>          
-                            <hr class="my-2"> 
-                        <?php endforeach ?>            
+                            </div>
+                            <hr class="my-2">
+                        <?php endforeach ?>
                     </div>
-                </div> 
+                </div>
             </div>
         </div>
     </div>

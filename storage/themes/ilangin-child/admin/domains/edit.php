@@ -11,13 +11,13 @@
             <?php echo csrf() ?>
             <div class="row">
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="domain" class="form-label"><?php ee('Domain') ?></label>
                         <input type="text" class="form-control p-2" name="domain" id="domain" value="<?php echo $domain->domain ?>" placeholder="https://domain.com">
                     </div>	
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="user" class="form-label"><?php ee('Assign to User') ?></label>
                         <select name="user" id="user" class="form-control p-2" data-toggle="select">
                             <?php foreach($users as $user): ?>
@@ -27,7 +27,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="status" class="form-label"><?php ee('Status') ?></label>
                         <select name="status" id="status" class="form-control p-2" data-toggle="select">
                             <option value="0" <?php echo $domain->status == '0' ? 'selected' : '' ?>><?php ee('Disabled') ?></option>
@@ -39,13 +39,13 @@
             </div>
             <div class="row">
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="root" class="form-label"><?php ee('Domain Root') ?></label>
                         <input type="text" class="form-control p-2" name="root" id="root" value="<?php echo $domain->redirect ?>" placeholder="https://mycompany.com">
                     </div>	
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="root404" class="form-label"><?php ee('Domain 404') ?></label>
                         <input type="text" class="form-control p-2" name="root404" id="root404" value="<?php echo $domain->redirect404 ?>" placeholder="https://mycompany.com/404">
                     </div>	

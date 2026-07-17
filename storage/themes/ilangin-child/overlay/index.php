@@ -30,7 +30,7 @@
                                             <?php endif ?>
                                             <?php if(\Core\Auth::user()->teamPermission('overlay.delete')): ?>
                                                 <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item" href="<?php echo route('overlay.delete', [$overlay->id, \Core\Helper::nonce('overlay.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                                                <li><form action="<?php echo route('overlay.delete', [$overlay->id, \Core\Helper::nonce('overlay.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                             <?php endif ?>
                                             </ul>                        
                                         </div>

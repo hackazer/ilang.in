@@ -24,6 +24,7 @@ use Core\Request;
 use Core\Response;
 use Core\Helper;
 use Core\Email;
+use Helpers\SafeBackup;
 use Models\User;
 
 class Dashboard {
@@ -52,17 +53,12 @@ class Dashboard {
         
         $payments = \Helpers\App::isExtended() ? DB::payment()->orderByDesc('date')->limit(5)->findMany() : [];
 
-        $subscriptions = \Helpers\App::isExtended() ? DB::subscription()->orderByDesc('date')->limit(5)->map(function($subscription){
-            if($user = User::where('id', $subscription->userid)->first()){
-                if(_STATE == "DEMO") $user->email = "demo@demo.com";
-                $subscription->user = $user->email;
-                $subscription->useravatar = $user->avatar();
-            }
-            if($plan = DB::plans()->where('id', $subscription->planid)->first()){
-                $subscription->plan = $plan->name;
-            }
-            return $subscription;
-        }) : [];
+        $subscriptions = \Helpers\App::isExtended()
+            ? self::withSubscriptionDetails(
+                DB::subscription()->orderByDesc('date')->limit(5)->findMany(),
+                _STATE == "DEMO"
+            )
+            : [];
 
         $counts = [];
         $counts['urls'] = ['name' => e('Links'), 'count' => DB::url()->count(), 'count.today' => DB::url()->whereRaw('`date` >= CURDATE()')->count()];
@@ -78,6 +74,55 @@ class Dashboard {
 
         return View::with('admin.index', compact('urls', 'users', 'reports', 'payments', 'subscriptions', 'counts'))->extend('admin.layouts.main');
     }    
+
+    private static function withSubscriptionDetails(
+        array $subscriptions,
+        bool $demo,
+        ?callable $loadUsers = null,
+        ?callable $loadPlans = null
+    ): array {
+        $userIds = [];
+        $planIds = [];
+
+        foreach($subscriptions as $subscription){
+            $userIds[(string) $subscription->userid] = $subscription->userid;
+            $planIds[(string) $subscription->planid] = $subscription->planid;
+        }
+
+        if(!$subscriptions) return $subscriptions;
+
+        $users = $loadUsers
+            ? $loadUsers(array_values($userIds))
+            : User::whereIn('id', array_values($userIds))->findMany();
+        $plans = $loadPlans
+            ? $loadPlans(array_values($planIds))
+            : DB::plans()->whereIn('id', array_values($planIds))->findMany();
+        $usersById = [];
+        $plansById = [];
+
+        foreach($users as $user){
+            $usersById[(string) $user->id] = $user;
+        }
+
+        foreach($plans as $plan){
+            $plansById[(string) $plan->id] = $plan;
+        }
+
+        foreach($subscriptions as $subscription){
+            if(isset($usersById[(string) $subscription->userid])){
+                $user = $usersById[(string) $subscription->userid];
+                if($demo) $user->email = "demo@demo.com";
+                $subscription->user = $user->email;
+                $subscription->useravatar = $user->avatar();
+            }
+            if(isset($plansById[(string) $subscription->planid])){
+                $subscription->plan = $plansById[(string) $subscription->planid]->name;
+            }
+        }
+
+        return $subscriptions;
+    }
+
     /**
      * Search database
      *
@@ -127,11 +172,10 @@ class Dashboard {
         $activeusers = DB::user()->where('active', 1)->count();
         $allusers = DB::user()->count();
         
-        View::push(assets('frontend/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js'), 'js')->toFooter();
         \Helpers\CDN::load('editor');
 
         View::push("<script>                        
-                        CKEDITOR.replace('editor');
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();
 
         return View::with('admin.email', compact('newsletterusers', 'activeusers', 'allusers'))->extend('admin.layouts.main');
@@ -246,11 +290,11 @@ class Dashboard {
 
         \Helpers\CDN::load('simpleeditor');    
         View::push("<script>
-                         CKEDITOR.replace('email.registration');
-                         CKEDITOR.replace('email.activation');
-                         CKEDITOR.replace('email.activated');
-                         CKEDITOR.replace('email.reset');
-                         CKEDITOR.replace('email.invitation');
+                         EditorAdapter.create('email.registration');
+                         EditorAdapter.create('email.activation');
+                         EditorAdapter.create('email.activated');
+                         EditorAdapter.create('email.reset');
+                         EditorAdapter.create('email.invitation');
                     </script>", "custom")->toFooter();  
 
         return View::with('admin.email_templates')->extend('admin.layouts.main');
@@ -264,7 +308,7 @@ class Dashboard {
      */
     public function tools(){
         
-        \Helpers\CDN::load('datetimepicker');
+        \Helpers\CDN::load('airdatepicker');
         
         View::set('title', e('Tools'));
 
@@ -576,18 +620,6 @@ class Dashboard {
      * @return void
      */
     public function update(Request $request){
-        
-        if($request->newcode){
-            \Gem::addMiddleware('DemoProtect');
-                        
-            $setting = DB::settings()->where('config', 'purchasecode')->first();
-    
-            $setting->var = Helper::RequestClean($request->newcode);
-            $setting->save();
-
-            return Helper::redirect()->back()->with('success', e('Purchase code has been updated successfully.')); 
-        }
-
         $update = \Helpers\App::newUpdate(true);
         $log = \Helpers\App::updateChangelog();
 
@@ -606,6 +638,20 @@ class Dashboard {
 
         return View::with('admin.update', compact('update', 'changes'))->extend('admin.layouts.main'); 
     }
+
+    public function purchaseCode(Request $request){
+        \Gem::addMiddleware('DemoProtect');
+
+        if(!$request->newcode){
+            return Helper::redirect()->back()->with('danger', e('Please enter a purchase code.'));
+        }
+
+        $setting = DB::settings()->where('config', 'purchasecode')->first();
+        $setting->var = Helper::RequestClean((string) $request->newcode);
+        $setting->save();
+
+        return Helper::redirect()->back()->with('success', e('Purchase code has been updated successfully.'));
+    }
     /**
      * Process Update
      *
@@ -623,6 +669,9 @@ class Dashboard {
         try {
 
             $update->install();
+
+            $migrator = new \Update();
+            $migrator->process();
             
             $setting = DB::settings()->where('config', 'purchasecode')->first();
 
@@ -739,6 +788,13 @@ class Dashboard {
         if($request->taxrates){
             $data['taxrates'] = DB::taxrates()->findArray();
         }
+
+        if($request->payment){
+            $data['nowpayments_plans'] = DB::table('nowpayments_plans')->findArray();
+            $data['nowpayments_customers'] = DB::table('nowpayments_customers')->findArray();
+            $data['nowpayments_transactions'] = DB::table('nowpayments_transactions')->findArray();
+            $data['nowpayments_events'] = DB::table('nowpayments_events')->findArray();
+        }
         
         \Core\File::contentDownload('backup-'.date('Y-m-d').'.gem', function() use ($data){
             return serialize($data);
@@ -760,21 +816,17 @@ class Dashboard {
             return back()->with('danger', e('Incorrect format or empty file. Please upload .gem file.'));
         }
 
-        if($file->ext != 'gem'){
+        if(strtolower((string) $file->ext) !== 'gem'){
             return back()->with('danger', e('Incorrect format or empty file. Please upload .gem file.'));
         }
 
-        $content = unserialize(file_get_contents($file->location));
-
-        foreach($content as $table => $data){
-
-            DB::truncate($table);
-        
-            foreach($data as $rows){
-                $record = DB::table($table)->create($rows);                
-                $record->save();
-            }
+        try {
+            $content = SafeBackup::read((string) $file->location, isset($file->size) ? (int) $file->size : null);
+            SafeBackup::restore(DB::get_db(), $content, defined('DBprefix') ? DBprefix : '');
+        } catch (\InvalidArgumentException | \RuntimeException $exception) {
+            return back()->with('danger', e('The backup file is invalid or could not be restored safely. No data was changed.'));
         }
+
         return back()->with('success', e('Data has been successfully restored.'));
     }
 

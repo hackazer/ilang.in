@@ -134,9 +134,9 @@ class Bank{
             if($coupon->maxuse > 0 && $coupon->used >= $coupon->maxuse) $valid = false;
 
 			if($valid) {	
-				$coupon->used++;
-				$coupon->save();
 				$price = round((1 - ($coupon->discount / 100)) * $price, 2);
+			} else {
+				$coupon = null;
 			}
 		}
 
@@ -166,7 +166,7 @@ class Bank{
 
         }elseif($type == "lifetime"){
 
-            $new_expiry = date("Y-m-d H:i:s", strtotime("+10 year"));
+            $new_expiry = date("Y-m-d H:i:s", strtotime("+20 years"));
 
         }else{
 
@@ -180,11 +180,103 @@ class Bank{
         $payment->userid =  $user->id;
         $payment->status = "Pending";
         $payment->expiry =  $new_expiry;
-        $payment->data =  "";
+        $payment->data = json_encode([
+            'paymentmethod' => 'bank',
+            'subscription_id' => (int) $sub->id(),
+            'coupon_id' => $coupon ? (int) $coupon->id : null,
+        ], JSON_THROW_ON_ERROR);
 
         $payment->save();
 
         return Helper::redirect()->to(route('billing'))->with('success', e('Your subscription is currently pending. Once we receive the money, we will activate your subscription.'));
+    }
+
+    /**
+     * Run confirmation-side mutations once within a database transaction.
+     */
+    public static function applyConfirmationTransaction(\PDO $pdo, callable $alreadyConsumed, callable $consume): bool{
+        $pdo->beginTransaction();
+
+        try {
+            if($alreadyConsumed()) {
+                $pdo->commit();
+                return false;
+            }
+
+            $consume();
+            $pdo->commit();
+
+            return true;
+        } catch (\Throwable $exception) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $exception;
+        }
+    }
+
+    /**
+     * Consume the coupon attached to a completed bank payment exactly once.
+     */
+    public static function consumeCouponOnConfirmation(object $payment): bool{
+        if((string) ($payment->status ?? '') !== 'Completed') return false;
+
+        $data = json_decode((string) ($payment->data ?? ''), true);
+
+        if(
+            !is_array($data)
+            || ($data['paymentmethod'] ?? null) !== 'bank'
+            || (int) ($data['coupon_id'] ?? 0) < 1
+            || !empty($data['coupon_consumed_at'])
+        ) {
+            return false;
+        }
+
+        $paymentId = method_exists($payment, 'id') ? (int) $payment->id() : (int) ($payment->id ?? 0);
+
+        if($paymentId < 1) return false;
+
+        $pdo = DB::get_db();
+        $lockName = 'bank-coupon:'.substr(hash('sha256', (string) $paymentId), 0, 48);
+        $acquire = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $acquire->execute(['lock_name' => $lockName]);
+
+        if((int) $acquire->fetchColumn() !== 1) {
+            throw new \RuntimeException('Unable to acquire bank coupon confirmation lock.');
+        }
+
+        try {
+            return self::applyConfirmationTransaction(
+                $pdo,
+                static function () use ($paymentId): bool {
+                    $fresh = DB::payment()->where('id', $paymentId)->first();
+                    $freshData = $fresh ? json_decode((string) ($fresh->data ?? ''), true) : null;
+
+                    return !$fresh
+                        || (string) ($fresh->status ?? '') !== 'Completed'
+                        || !is_array($freshData)
+                        || ($freshData['paymentmethod'] ?? null) !== 'bank'
+                        || (int) ($freshData['coupon_id'] ?? 0) < 1
+                        || !empty($freshData['coupon_consumed_at']);
+                },
+                static function () use ($paymentId): void {
+                    $fresh = DB::payment()->where('id', $paymentId)->first();
+                    $freshData = json_decode((string) ($fresh->data ?? ''), true);
+                    $couponId = (int) ($freshData['coupon_id'] ?? 0);
+                    $coupon = DB::coupons()->where('id', $couponId)->first();
+
+                    if(!$coupon) throw new \RuntimeException('Bank payment coupon no longer exists.');
+
+                    $coupon->set_expr('used', '`used` + 1');
+                    $coupon->save();
+
+                    $freshData['coupon_consumed_at'] = Helper::dtime();
+                    $fresh->data = json_encode($freshData, JSON_THROW_ON_ERROR);
+                    $fresh->save();
+                }
+            );
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
+        }
     }
 
 }

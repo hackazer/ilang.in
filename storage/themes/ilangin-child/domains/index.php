@@ -43,7 +43,7 @@
                                         <li><a class="dropdown-item" href="<?php echo route('domain.edit', [$domain->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit Domain') ?></a></li>    
                                     <?php endif ?>
                                     <?php if(\Core\Auth::user()->teamPermission('domain.delete')): ?>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('domain.delete', [$domain->id, \Core\Helper::nonce('domain.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('domain.delete', [$domain->id, \Core\Helper::nonce('domain.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     <?php endif ?>
                                     </ul>
                                 </td>

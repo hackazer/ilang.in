@@ -11,9 +11,9 @@
                             <a href="#" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Select All") ?>" data-trigger="selectall" class="fa fa-check-square btn px-3 py-2"></a>
                             <?php if(user()->teamPermission('links.edit')): ?>
                                 <?php if(\Gem::currentRoute() == 'archive'): ?>
-                                    <a href="<?php echo route('links.unarchive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Unarchive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></a>
+                                    <button type="submit" formaction="<?php echo route('links.unarchive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Unarchive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></button>
                                 <?php else: ?>
-                                    <a href="<?php echo route('links.archive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Archive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></a>
+                                    <button type="submit" formaction="<?php echo route('links.archive') ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Archive Selected") ?>" data-trigger="archiveselected" class="fa fa-briefcase btn px-3 py-2 border-start"></button>
                                 <?php endif ?>
                             <?php endif ?>
                             <?php if(user()->teamPermission('links.edit')): ?>
@@ -138,7 +138,7 @@
                 </div>
             </div>
             <div class="mt-2">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="short" class="form-label"><?php ee('Short Link') ?></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="modal-input" name="shortlink" value="">
@@ -199,7 +199,7 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
+            <div class="mb-3 rounded input-select">
                 <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>

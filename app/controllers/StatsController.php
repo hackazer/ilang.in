@@ -27,7 +27,7 @@ use Helpers\App;
 
 class Stats {
     
-    use Traits\Links;
+    use Traits\Links, Traits\DateRangePicker;
     /**
      * Simple Redirect
      *
@@ -107,36 +107,10 @@ class Stats {
             View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
         }
 
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
-		\Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
 		return View::with('stats.index', compact('url', 'top', 'recentActivity'))->extend('layouts.main');
     }
@@ -166,19 +140,9 @@ class Stats {
 
         $response = ['label' => e('Clicks')];
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -197,11 +161,10 @@ class Stats {
             }
         }  
         if($diff->y >= 1 || $diff->m > 3){
-            $results = DB::stats()
+            $results = self::applyDateRange(DB::stats()
                         ->selectExpr('COUNT(MONTH(date))', 'count')
                         ->selectExpr('DATE(date)', 'date')
-                        ->where('urlid', $id)
-                        ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                        ->where('urlid', $id), $start, $end)
                         ->groupByExpr('YEAR(date)')
                         ->groupByExpr('MONTH(date)')
                         ->findArray();
@@ -210,11 +173,10 @@ class Stats {
                 $response['data'][Helper::dtime($data['date'], 'F Y')] = (int) $data['count'];
             }   
         }  else {
-            $results = DB::stats()
+            $results = self::applyDateRange(DB::stats()
                         ->selectExpr('COUNT(DATE(date))', 'count')
                         ->selectExpr('DATE(date)', 'date')
-                        ->where('urlid', $id)
-                        ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                        ->where('urlid', $id), $start, $end)
                         ->groupByExpr('DATE(date)')
                         ->findArray();
             
@@ -286,33 +248,7 @@ class Stats {
         View::push(assets('frontend/libs/jsvectormap/dist/maps/world.js'), "script")->tofooter();
         View::push(assets('frontend/libs/jsvectormap/dist/css/jsvectormap.min.css'), "css")->toHeader();
         View::push(assets('charts.min.js'), "script")->tofooter();
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
         return View::with('stats.countries', compact('url', 'top'))->extend('layouts.main');
     }
@@ -340,19 +276,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -364,11 +290,10 @@ class Stats {
         $period = new \DatePeriod($start, $interval, $end);
 
 
-        $countries = DB::stats()
+        $countries = self::applyDateRange(DB::stats()
                         ->selectExpr('COUNT(id)', 'count')
                         ->selectExpr('country', 'country')
-                        ->where('urlid', $id)
-                        ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                        ->where('urlid', $id), $start, $end)
                         ->groupByExpr('country')
                         ->orderByDesc('count')
                         ->findArray();
@@ -510,36 +435,10 @@ class Stats {
 		View::set("description", e("Platform statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');	        
 
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
 		return View::with('stats.platforms', compact('url', 'top'))->extend('layouts.main');
     }
@@ -566,19 +465,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -589,11 +478,10 @@ class Stats {
         $interval = \DateInterval::createFromDateString('1 day');
         $period = new \DatePeriod($start, $interval, $end);
 
-        $platform = DB::stats()
+        $platform = self::applyDateRange(DB::stats()
                     ->selectExpr('COUNT(id)', 'count')
                     ->selectExpr('os', 'os')
-                    ->where('urlid', $id)
-                    ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                    ->where('urlid', $id), $start, $end)
                     ->groupByExpr('os')
                     ->orderByDesc('count')
                     ->findArray();
@@ -667,35 +555,9 @@ class Stats {
 		View::set("description", e("Browser statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
 		
-        \Helpers\CDN::load("daterangepicker");
+		$this->loadDateRangePicker($url->date);
 
-		View::push("<script>$(document).ready(function(){ 		            
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
-
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
 		return View::with('stats.browsers', compact('url', 'top'))->extend('layouts.main');
@@ -723,19 +585,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -744,11 +596,10 @@ class Stats {
         }
         
 
-        $browsers = DB::stats()
+        $browsers = self::applyDateRange(DB::stats()
                     ->selectExpr('COUNT(id)', 'count')
                     ->selectExpr('browser', 'browser')
-                    ->where('urlid', $id)
-                    ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                    ->where('urlid', $id), $start, $end)
                     ->groupByExpr('browser')
                     ->orderByDesc('count')
                     ->findArray();
@@ -822,35 +673,9 @@ class Stats {
 		View::set("description", e("Language statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
 		
-        \Helpers\CDN::load("daterangepicker");
+		$this->loadDateRangePicker($url->date);
 
-		View::push("<script>$(document).ready(function(){             		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
-
-		View::push(assets('Chart.min.js'), "script")->toHeader();
+		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
 		return View::with('stats.languages', compact('url', 'top'))->extend('layouts.main');
@@ -878,19 +703,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -898,11 +713,10 @@ class Stats {
             $interval = \DateInterval::createFromDateString('1 day');
         }
 
-        $languages = DB::stats()
+        $languages = self::applyDateRange(DB::stats()
                     ->selectExpr('COUNT(id)', 'count')
                     ->selectExpr('language', 'language')
-                    ->where('urlid', $id)
-                    ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                    ->where('urlid', $id), $start, $end)
                     ->groupByExpr('language')
                     ->orderByDesc('count')
                     ->findArray();
@@ -974,11 +788,20 @@ class Stats {
                             ->limit(10)
                             ->findArray();
         
-        $social = [];
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%facebook.%' OR domain LIKE '%fb.%')")->count();
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%twitter.%' OR domain LIKE '%t.co')")->count();
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%instagram.%')")->count();
-        $social[] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%linkedin.%')")->count();
+        $socialCounts = DB::stats()
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%facebook.%' OR domain LIKE '%fb.%' THEN 1 ELSE 0 END)", 'social_facebook')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%twitter.%' OR domain LIKE '%t.co%' THEN 1 ELSE 0 END)", 'social_twitter')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%instagram.%' THEN 1 ELSE 0 END)", 'social_instagram')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%linkedin.%' THEN 1 ELSE 0 END)", 'social_linkedin')
+                            ->where('urlid', $url->id)
+                            ->first();
+
+        $social = [
+            (int) ($socialCounts->social_facebook ?? 0),
+            (int) ($socialCounts->social_twitter ?? 0),
+            (int) ($socialCounts->social_instagram ?? 0),
+            (int) ($socialCounts->social_linkedin ?? 0),
+        ];
         
         if($url->qrid && $qr = DB::qrs()->where('id', $url->qrid)->first()){    
             View::set("title",e("Referrers Stats for")." ".$qr->name);
@@ -993,11 +816,57 @@ class Stats {
 
 		View::set("description", e("Country statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
-        View::push(assets('Chart.min.js'), "script")->toHeader();
+        View::push(assets('Chart.min.js'), "script")->toFooter();
         View::push(assets('charts.min.js'), "script")->tofooter();
 
-        View::push("<script>new Chart($('canvas'), {type: 'pie',data: {labels: ['Facebook', 'Twitter', 'Instagram', 'Linkedin'],datasets: [{data: ".json_encode($social).",borderWidth: 5,backgroundColor: ['#3b5998','#1DA1F2', '#fbad50', '#0077b5']}]},options: {responsive: !window.MSInputMethodContext,maintainAspectRatio: false,plugins:{legend: {position: 'bottom',display: true}},cutoutPercentage: 75}})</script>", 'custom')->tofooter();
+        View::push("<script>new Chart($('canvas'), {type: 'doughnut',data: {labels: ['Facebook', 'Twitter', 'Instagram', 'Linkedin'],datasets: [{data: ".json_encode($social).",borderWidth: 5,backgroundColor: ['#3b5998','#1DA1F2', '#fbad50', '#0077b5']}]},options: {responsive: !window.MSInputMethodContext,maintainAspectRatio: false,plugins:{legend: {position: 'bottom',display: true}},cutout: '75%'}})</script>", 'custom')->tofooter();
 
         return View::with('stats.referrers', compact('url', 'top', 'topReferrer'))->extend('layouts.main');
+    }
+
+    /**
+     * @return array{\DateTimeImmutable, \DateTimeImmutable}
+     */
+    private static function reportDateRange(
+        ?string $from,
+        ?string $to,
+        ?\DateTimeImmutable $today = null
+    ): array {
+        $today = ($today ?? new \DateTimeImmutable('today'))->setTime(0, 0, 0);
+        $start = self::parseReportDate($from);
+        $end = self::parseReportDate($to);
+
+        if(!$start || !$end || $start > $end){
+            return [$today->modify('-14 days'), $today->modify('+1 day')];
+        }
+
+        return [$start, $end->modify('+1 day')];
+    }
+
+    private static function parseReportDate(?string $value): ?\DateTimeImmutable
+    {
+        $value = trim((string) $value);
+        $date = \DateTimeImmutable::createFromFormat('!m/d/Y', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if(
+            !$date ||
+            ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+            $date->format('m/d/Y') !== $value
+        ){
+            return null;
+        }
+
+        return $date;
+    }
+
+    private static function applyDateRange(
+        $query,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end
+    ) {
+        return $query
+            ->whereGte('date', $start->format('Y-m-d H:i:s'))
+            ->whereLt('date', $end->format('Y-m-d H:i:s'));
     }
 }

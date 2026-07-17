@@ -28,6 +28,9 @@ use Core\Localization;
 class Subscription {
 
     use Traits\Payments;
+
+    private const CHECKOUT_ATTEMPTS_SESSION = '__checkout_attempts';
+    private const CHECKOUT_ATTEMPT_TTL = 900;
     /**
      * Constructor
      *
@@ -58,6 +61,8 @@ class Subscription {
 
         $settings = ['monthly' => false, 'yearly' => false, 'lifetime' =>  false, 'discount' => 0];
 
+        $hasUsedTrial = Auth::logged() && DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first();
+
         foreach(DB::plans()->where('status', 1)->where('free', 1)->find() as $plan){
             $plans[$plan->id] = [
                 "free" => $plan->free,
@@ -85,8 +90,8 @@ class Subscription {
                     $plans[$plan->id]['planurl'] = '#';
                     $plans[$plan->id]['plantext'] = e('Current');
                 } else {
-                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, 'monthly']).($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '?trial=1': '');
-                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
+                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, 'monthly']).($plan->trial_days && !$hasUsedTrial ? '?trial=1': '');
+                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !$hasUsedTrial ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
                 }
             } else {
                 $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, 'monthly']).($plan->trial_days ? '?trial=1': '');
@@ -142,8 +147,8 @@ class Subscription {
                     $plans[$plan->id]['planurl'] = '#';
                     $plans[$plan->id]['plantext'] = e('Current');
                 } else {
-                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, $default]).($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '?trial=1': '');
-                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !DB::payment()->where('userid', Auth::id())->whereNotNull('trial_days')->first() ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
+                    $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, $default]).($plan->trial_days && !$hasUsedTrial ? '?trial=1': '');
+                    $plans[$plan->id]['plantext'] = ($plan->trial_days && !$hasUsedTrial ? '<span class="mb-2 d-block">'.e('{d}-Day Free Trial', null, ['d' => $plan->trial_days ]).'</span>': '').e('Upgrade');
                 }
             } else {
                 $plans[$plan->id]['planurl'] =  route('checkout', [$plan->id, $default]).($plan->trial_days ? '?trial=1': '');
@@ -179,16 +184,6 @@ class Subscription {
         if(!Auth::logged()){
             $request->session('redirect', route('checkout', [$id, $type]));
             return Helper::redirect()->to(route('register'));
-        }
-
-        if(\Helpers\App::isExtended()){
-            $user =  Auth::user();
-            if($subscription = DB::subscription()->where('userid', $user->id)->where('status', 'Active')->first()){
-                foreach( $this->processor() as $name => $processor){
-                    if(!config($name) || !config($name)->enabled || !$processor['cancel']) continue;
-                    call_user_func_array($processor['cancel'], [$user, $subscription]);
-                }
-            }
         }
 
         if(!in_array($type, ['monthly', 'yearly', 'lifetime'])) $type = "monthly";
@@ -245,6 +240,8 @@ class Subscription {
 
         View::set('title', 'Checkout');
 
+        $checkoutAttempt = $this->issueCheckoutAttempt((int) $user->id, $id, $type);
+
         \Core\View::push("<script type='text/javascript'>
 
         $('input[name=payment]').change(function(){
@@ -253,6 +250,7 @@ class Subscription {
         });
         $('.paymentOptions').hide();
         $('.paymentOptions').filter(':first').show();
+        $('<input>', {type: 'hidden', name: 'checkout_attempt', value: '{$checkoutAttempt}'}).appendTo('#payment-form');
         
         </script>", "custom")->tofooter();
 
@@ -295,33 +293,271 @@ class Subscription {
 
         \Gem::addMiddleware('DemoProtect');
 
-        if(\Helpers\App::isExtended()){
-            $user =  Auth::user();
-            if($subscription = DB::subscription()->where('userid', $user->id)->where('status', 'Active')->first()){
-                foreach( $this->processor() as $name => $processor){
-                    if(!config($name) || !config($name)->enabled || !$processor['cancel']) continue;
-                    call_user_func_array($processor['cancel'], [$user, $subscription]);
+        if(!in_array($type, ['monthly', 'yearly', 'lifetime'], true)) $type = 'monthly';
+
+        $user = Auth::user();
+        $attempt = trim((string) ($request->checkout_attempt ?? ''));
+
+        if(!$this->claimCheckoutAttempt($attempt, (int) $user->id, $id, $type)){
+            return back()->with('warning', e('This checkout attempt has already been submitted. Please reload the checkout page before trying again.'));
+        }
+
+        $couponLock = null;
+
+        try {
+            $payment = trim((string) ($request->payment ?? ''));
+            $process = $this->processor($payment, 'payment');
+            $subscription = null;
+
+            if(\Helpers\App::isExtended()){
+                $subscription = DB::subscription()->where('userid', $user->id)->where('status', 'Active')->first();
+            }
+
+            if(!empty(config('saleszapier'))){
+                \Core\Http::url(config('saleszapier'))
+                            ->with('content-type', 'application/json')
+                            ->body([
+                                    "type" 			=> "sales",
+                                    "name"			=> user()->name,
+                                    "email"			=> user()->email,
+                                    "country" 	    => $request->country()['country'],
+                                    "plan"			=> $id,
+                                    "type"          => $type,
+                                    "date"			=> date("Y-m-d H:i:s")
+                            ])->post();
+            }
+
+            $couponCode = trim((string) ($request->coupon ?? ''));
+
+            if($couponCode !== ''){
+                $couponLock = $this->couponLockName($couponCode);
+
+                if(!$this->acquireCouponLock($couponLock)){
+                    $this->resetCheckoutAttempt($attempt);
+                    return back()->with('warning', e('The promo code is currently being used by another checkout. Please try again.'));
                 }
+
+                $coupon = DB::coupons()->where('code', clean($couponCode))->first();
+                $reservations = $coupon ? $this->couponReservations(
+                    $coupon,
+                    $payment,
+                    (string) ($request->nowpayments_attempt ?? ''),
+                    (int) $user->id,
+                    $id
+                ) : 0;
+
+                if(!$coupon || !$this->couponIsValid($coupon) || !$this->couponHasCapacity((int) $coupon->used, (int) $coupon->maxuse, $reservations)){
+                    $this->resetCheckoutAttempt($attempt);
+                    return back()->with('danger', e('Promo code has expired. Please try again.'));
+                }
+            }
+
+            $messageBefore = $_SESSION[Helper::SESSIONMESSAGE] ?? null;
+            $creationFailed = false;
+            $result = $this->executeCheckoutHandover(
+                static fn () => call_user_func_array($process, [$request, $id, $type]),
+                fn () => $this->cancelExistingSubscription($user, $subscription),
+                function () use ($messageBefore, &$creationFailed): bool {
+                    return $creationFailed = $this->checkoutCreationFailed($messageBefore);
+                }
+            );
+
+            if($creationFailed){
+                $this->resetCheckoutAttempt($attempt);
+            } else {
+                $this->completeCheckoutAttempt($attempt);
+            }
+
+            return $result;
+        } catch(\Throwable $exception) {
+            $this->resetCheckoutAttempt($attempt);
+            throw $exception;
+        } finally {
+            if($couponLock !== null) $this->releaseCouponLock($couponLock);
+        }
+    }
+
+    private function executeCheckoutHandover(callable $createCheckout, callable $cancelExisting, callable $creationFailed): mixed{
+        $result = $createCheckout();
+
+        if($creationFailed()) return $result;
+
+        $cancelExisting();
+
+        return $result;
+    }
+
+    private function issueCheckoutAttempt(int $userId, int $planId, string $type, ?int $now = null): string{
+        $now ??= time();
+        $fingerprint = $this->checkoutFingerprint($userId, $planId, $type);
+        $attempts = is_array($_SESSION[self::CHECKOUT_ATTEMPTS_SESSION] ?? null)
+            ? $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION]
+            : [];
+
+        foreach($attempts as $token => $attempt){
+            if(!is_array($attempt) || $now - (int) ($attempt['created_at'] ?? 0) >= self::CHECKOUT_ATTEMPT_TTL){
+                unset($attempts[$token]);
+                continue;
+            }
+
+            if(hash_equals((string) ($attempt['fingerprint'] ?? ''), $fingerprint)){
+                $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION] = $attempts;
+                return (string) $token;
             }
         }
 
-        $process = $this->processor($request->payment, 'payment');        
+        $token = bin2hex(random_bytes(16));
+        $attempts[$token] = [
+            'fingerprint' => $fingerprint,
+            'state' => 'ready',
+            'created_at' => $now,
+        ];
+        $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION] = $attempts;
 
-        if(!empty(config('saleszapier'))){
-            \Core\Http::url(config('saleszapier'))
-                        ->with('content-type', 'application/json')
-                        ->body([
-                                "type" 			=> "sales",
-                                "name"			=> user()->name,
-                                "email"			=> user()->email,
-                                "country" 	    => $request->country()['country'],
-                                "plan"			=> $id,
-                                "type"          => $type,
-                                "date"			=> date("Y-m-d H:i:s")
-                        ])->post();
+        return $token;
+    }
+
+    private function claimCheckoutAttempt(string $token, int $userId, int $planId, string $type, ?int $now = null): bool{
+        if(!preg_match('/^[a-f0-9]{32}$/', $token)) return false;
+
+        $now ??= time();
+        $attempt = $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token] ?? null;
+
+        if(!is_array($attempt)) return false;
+
+        if($now - (int) ($attempt['created_at'] ?? 0) >= self::CHECKOUT_ATTEMPT_TTL
+            || !hash_equals((string) ($attempt['fingerprint'] ?? ''), $this->checkoutFingerprint($userId, $planId, $type))){
+            unset($_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token]);
+            return false;
         }
 
-        return call_user_func_array($process, [$request, $id, $type]);
+        if(($attempt['state'] ?? null) !== 'ready') return false;
+
+        $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token]['state'] = 'processing';
+        return true;
+    }
+
+    private function resetCheckoutAttempt(string $token): void{
+        if(($_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token]['state'] ?? null) === 'processing'){
+            $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token]['state'] = 'ready';
+        }
+    }
+
+    private function completeCheckoutAttempt(string $token): void{
+        if(($_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token]['state'] ?? null) === 'processing'){
+            $_SESSION[self::CHECKOUT_ATTEMPTS_SESSION][$token]['state'] = 'completed';
+        }
+    }
+
+    private function checkoutFingerprint(int $userId, int $planId, string $type): string{
+        return hash('sha256', $userId.':'.$planId.':'.$type);
+    }
+
+    private function checkoutCreationFailed(mixed $messageBefore): bool{
+        $message = $_SESSION[Helper::SESSIONMESSAGE] ?? null;
+
+        if(!is_array($message) || $message === $messageBefore) return false;
+
+        return in_array((string) ($message['type'] ?? ''), ['danger', 'error', 'warning'], true);
+    }
+
+    private function cancelExistingSubscription(object $user, ?object $subscription): void{
+        if(!$subscription || (string) ($subscription->status ?? '') !== 'Active') return;
+
+        foreach($this->processor() as $name => $processor){
+            if(!config($name) || !config($name)->enabled || !$processor['cancel']) continue;
+
+            try {
+                call_user_func_array($processor['cancel'], [$user, $subscription]);
+            } catch(\Throwable $exception) {
+                \GemError::log('Subscription handover cancellation failed: '.$exception::class);
+            }
+        }
+    }
+
+    private function couponLockName(string $code): string{
+        return 'coupon:'.substr(hash('sha256', strtolower(trim($code))), 0, 57);
+    }
+
+    private function acquireCouponLock(string $lock): bool{
+        try {
+            $statement = DB::get_db()->prepare('SELECT GET_LOCK(:coupon_lock, 10)');
+            $statement->execute(['coupon_lock' => $lock]);
+            return (int) $statement->fetchColumn() === 1;
+        } catch(\Throwable $exception) {
+            \GemError::log('Coupon reservation lock failed: '.$exception::class);
+            return false;
+        }
+    }
+
+    private function releaseCouponLock(string $lock): void{
+        try {
+            $statement = DB::get_db()->prepare('SELECT RELEASE_LOCK(:coupon_lock)');
+            $statement->execute(['coupon_lock' => $lock]);
+        } catch(\Throwable $exception) {
+            \GemError::log('Coupon reservation unlock failed: '.$exception::class);
+        }
+    }
+
+    private function couponIsValid(object $coupon): bool{
+        $validUntil = strtotime((string) ($coupon->validuntil ?? ''));
+
+        return $validUntil !== false && time() <= strtotime(date('Y-m-d 11:59:00', $validUntil));
+    }
+
+    private function couponHasCapacity(int $used, int $maxUse, int $reservations = 0): bool{
+        return $maxUse <= 0 || $used + $reservations < $maxUse;
+    }
+
+    private function couponReservations(object $coupon, string $payment, string $providerAttempt, int $userId, int $planId): int{
+        if($payment !== 'nowpayments' || (int) ($coupon->maxuse ?? 0) <= 0) return 0;
+
+        $query = DB::table('nowpayments_transactions')
+            ->whereIn('status', ['pending', 'confirming', 'partial', 'paid'])
+            ->whereNull('entitlement_applied_at')
+            ->whereRaw("CAST(JSON_UNQUOTE(JSON_EXTRACT(`metadata`, '$.coupon_id')) AS UNSIGNED) = ?", [(int) $coupon->id]);
+
+        if(preg_match('/^[a-f0-9]{32}$/', $providerAttempt)){
+            $query->whereRaw(
+                "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(`metadata`, '$.attempt_id')), '') <> ? OR `userid` <> ? OR `planid` <> ?)",
+                [$providerAttempt, $userId, $planId]
+            );
+        }
+
+        return (int) $query->count();
+    }
+
+    public function cryptoStatus(Request $request, string $order){
+        $transaction = DB::table('nowpayments_transactions')
+            ->where('order_id', clean($order))
+            ->where('userid', Auth::id())
+            ->first();
+
+        if(!$transaction) return stop(404);
+
+        $transaction->metadata = json_decode((string) $transaction->metadata);
+
+        View::set('title', e('Crypto Payment Status'));
+
+        return View::with('pricing.crypto-status', compact('transaction'))->extend('layouts.main');
+    }
+
+    public function cryptoStatusJson(Request $request, string $order){
+        $transaction = DB::table('nowpayments_transactions')
+            ->where('order_id', clean($order))
+            ->where('userid', Auth::id())
+            ->first();
+
+        if(!$transaction){
+            return Response::factory(['error' => 'not_found'], 404, ['Content-Type' => 'application/json'])->json();
+        }
+
+        return Response::factory([
+            'status' => (string) $transaction->status,
+            'provider_status' => (string) $transaction->provider_status,
+            'terminal' => \Helpers\Payments\Nowpayments\Status::isTerminal((string) $transaction->status),
+            'updated_at' => (string) $transaction->updated_at,
+        ], 200, ['Content-Type' => 'application/json'])->json();
     }
     /**
      * Add coupon

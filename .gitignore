@@ -6,6 +6,7 @@
 /storage/plugins
 /FILES
 /vendor
+/node_modules/
 /.vscode
 config.php
 workspace.code-workspace

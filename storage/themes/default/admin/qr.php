@@ -25,7 +25,7 @@
                         <td><a href="<?php echo route('qr.generate', [$qr->alias]) ?>" target="_blank"><img src="<?php echo route('qr.generate', [$qr->alias]) ?>" width="100" class="rounded"></a></td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $qr->user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $qr->user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <?php echo ($qr->user->admin)?"<strong>{$qr->user->email}</strong>":$qr->user->email ?>
                                 </div>
@@ -40,13 +40,13 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="<?php echo route('admin.users.view', [$qr->user->id]) ?>"><i data-feather="user"></i> <?php ee('View User') ?></span></a></li>
                                 <li><a class="dropdown-item" href="<?php echo route('stats', [$qr->url->id]) ?>"><i data-feather="bar-chart"></i> <?php ee('View Stats') ?></span></a></li>
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.qr.delete', [$qr->id, \Core\Helper::nonce('qr.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                <li><form action="<?php echo route('admin.qr.delete', [$qr->id, \Core\Helper::nonce('qr.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                             </ul>
                         </td>
                     </tr>
                 <?php endforeach ?>
             </tbody>
-        </table>    
+        </table>
     </div>
     <?php echo pagination('pagination') ?>
 </div>

@@ -27,12 +27,12 @@ class IpnListener {
     public $use_curl = true;     
     
     /**
-     *  If true, explicitly sets cURL to use SSL version 3. Use this if cURL
-     *  is compiled with GnuTLS SSL.
+     *  If true, pins cURL to TLS 1.2. The default lets cURL negotiate the
+     *  strongest protocol supported by both peers.
      *
      *  @var boolean
      */
-    public $force_ssl_v3 = true;     
+    public $force_ssl_v3 = false;
    
     /**
      *  If true, cURL will use the CURLOPT_FOLLOWLOCATION to follow any 
@@ -87,32 +87,16 @@ class IpnListener {
      */
     protected function curlPost($encoded_data) {
 
-        if ($this->use_ssl) {
-            $uri = 'https://'.$this->getPaypalHost().'/cgi-bin/webscr';
-            $this->post_uri = $uri;
-        } else {
-            $uri = 'http://'.$this->getPaypalHost().'/cgi-bin/webscr';
-            $this->post_uri = $uri;
+        if (!$this->use_ssl) {
+            throw new Exception('PayPal IPN verification requires TLS.');
         }
+
+        $uri = 'https://'.$this->getPaypalHost().'/cgi-bin/webscr';
+        $this->post_uri = $uri;
         
         $ch = curl_init();
 
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($ch, CURLOPT_CAINFO, STORAGE."/app/api_cert_chain.crt");
-        curl_setopt($ch, CURLOPT_URL, $uri);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $encoded_data);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $this->follow_location);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, true);
-
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Connection: Close', 'User-Agent: premium-url-shortener'));
-        
-        if ($this->force_ssl_v3) {
-            curl_setopt($ch, CURLOPT_SSLVERSION, 6);
-        }
+        curl_setopt_array($ch, $this->curlOptions($uri, $encoded_data));
         
         $this->response = curl_exec($ch);
         $this->response_status = strval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
@@ -122,6 +106,38 @@ class IpnListener {
             $errstr = curl_error($ch);
             throw new Exception("cURL error: [$errno] $errstr");
         }
+    }
+
+    /**
+     * Build the secure cURL options used for PayPal verification.
+     *
+     * @param string $uri
+     * @param string $encoded_data
+     * @return array<int, mixed>
+     */
+    protected function curlOptions($uri, $encoded_data) {
+
+        $options = [
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_URL => $uri,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $encoded_data,
+            CURLOPT_FOLLOWLOCATION => $this->follow_location,
+            CURLOPT_CONNECTTIMEOUT => min(10, $this->timeout),
+            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADER => true,
+            CURLOPT_HTTPHEADER => ['Connection: Close', 'User-Agent: premium-url-shortener'],
+        ];
+
+        if ($this->force_ssl_v3) {
+            $options[CURLOPT_SSLVERSION] = CURL_SSLVERSION_TLSv1_2;
+        }
+
+        return $options;
     }
     
     /**
@@ -136,17 +152,28 @@ class IpnListener {
      */
     protected function fsockPost($encoded_data) {
     
-        if ($this->use_ssl) {
-            $uri = 'ssl://'.$this->getPaypalHost();
-            $port = '443';
-            $this->post_uri = $uri.'/cgi-bin/webscr';
-        } else {
-            $uri = $this->getPaypalHost(); // no "http://" in call to fsockopen()
-            $port = '80';
-            $this->post_uri = 'http://'.$uri.'/cgi-bin/webscr';
+        if (!$this->use_ssl) {
+            throw new Exception('PayPal IPN verification requires TLS.');
         }
 
-        $fp = fsockopen($uri, $port, $errno, $errstr, $this->timeout);
+        $host = $this->getPaypalHost();
+        $this->post_uri = 'https://'.$host.'/cgi-bin/webscr';
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'peer_name' => $host,
+                'SNI_enabled' => true,
+            ],
+        ]);
+        $fp = stream_socket_client(
+            'tls://'.$host.':443',
+            $errno,
+            $errstr,
+            $this->timeout,
+            STREAM_CLIENT_CONNECT,
+            $context
+        );
         
         if (!$fp) { 
             // fsockopen error
@@ -287,13 +314,16 @@ class IpnListener {
         if ($this->use_curl) $this->curlPost($encoded_data); 
         else $this->fsockPost($encoded_data);
         
-        if (strpos($this->response_status, '200') === false) {
+        if ((int) $this->response_status !== 200) {
             throw new Exception("Invalid response status: ".$this->response_status);
         }
-        
-        if (strpos($this->response, "VERIFIED") !== false) {
+
+        $parts = preg_split("/\r?\n\r?\n/", $this->response);
+        $responseBody = trim((string) end($parts));
+
+        if ($responseBody === 'VERIFIED') {
             return true;
-        } elseif (strpos($this->response, "INVALID") !== false) {
+        } elseif ($responseBody === 'INVALID') {
             return false;
         } else {
             throw new Exception("Unexpected response from PayPal.");
@@ -308,7 +338,7 @@ class IpnListener {
      */    
     public function requirePostMethod() {
         // require POST requests
-        if ($_SERVER['REQUEST_METHOD'] && $_SERVER['REQUEST_METHOD'] != 'POST') {
+        if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? '')) !== 'POST') {
             header('Allow: POST', true, 405);
             throw new Exception("Invalid HTTP request method.");
         }

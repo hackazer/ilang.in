@@ -6,15 +6,15 @@
                 <li><a class="dropdown-item" href="<?php echo route('stats', [$url->id]) ?>"><i data-feather="bar-chart-2"></i> <?php ee('Statistics') ?></span></a></li>
                 <li><a class="dropdown-item" href="<?php echo route('admin.links.edit', [$url->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></span></a></li>
                 <?php if(!$url->status): ?>
-                    <li><a class="dropdown-item" href="<?php echo route('admin.links.approve', [$url->id]) ?>"><i data-feather="check-circle"></i> <?php ee('Approve') ?></span></a></li>  
+                    <li><form action="<?php echo route('admin.links.approve', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Approve') ?></button></form></li>
                 <?php else: ?>
-                    <li><a class="dropdown-item" href="<?php echo route('admin.links.disable', [$url->id]) ?>"><i data-feather="x-circle"></i> <?php ee('Disable') ?></span></a></li>  
+                    <li><form action="<?php echo route('admin.links.disable', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x-circle"></i> <?php ee('Disable') ?></button></form></li>
                 <?php endif ?>
                 <?php if($url->userid): ?>
                     <li><a class="dropdown-item" href="<?php echo route('admin.users.view', [$url->userid]) ?>"><i data-feather="user"></i> <?php ee('View User') ?></span></a></li>
                 <?php endif ?>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                <li><form action="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
             </ul>                        
         </div>
         <div class="mb-2 d-block">
@@ -68,4 +68,4 @@
         </div> 
     </div>
 </div>          
-<hr> 
+<hr>

@@ -50,7 +50,7 @@ class Tax {
 
         $rates = DB::taxrates()->orderByDesc('id')->paginate(15);
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Tax Rates'));
 

@@ -160,19 +160,17 @@ class Teams {
      *
      * @author GemPixel <https://gempixel.com> 
      * @version 6.0
-     * @param integer $team
      * @param integer $id
-     * @param string $nonce
      * @return void
      */
-    public function delete(int $team, int $id, string $nonce){
+    public function delete(int $id){
         \Gem::addMiddleware('DemoProtect');
 
-        if(!Helper::validateNonce($nonce, 'team.delete')){
-            return Helper::redirect()->back()->with('danger', e('An unexpected error occurred. Please try again.'));
+        if(Auth::user()->teamid){
+            return back()->with('danger', e('You do not have this permission. Please contact your team administrator.'));
         }
 
-        if(!$user = DB::user()->where('id', $id)->where('teamid', $team)->first()){
+        if(!$user = DB::user()->where('id', $id)->where('teamid', Auth::user()->rID())->first()){
             return back()->with('danger', 'Team member does not exist.');
         }    
 

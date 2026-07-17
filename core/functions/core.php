@@ -60,6 +60,25 @@ function autoloadCore($class){
 spl_autoload_register("autoloadCore");
 
 /**
+ * Autoload application traits from the legacy trait directory.
+ *
+ * Traits are not Composer classes in this application, but controllers use
+ * the `Traits\\...` namespace directly. Keeping this loader beside the
+ * controller loader makes new first-party traits available in production and
+ * in isolated test runs without manual includes.
+ */
+function autoloadTraits($class){
+  if(!str_starts_with($class, 'Traits\\')) return;
+
+  $name = substr($class, strlen('Traits\\'));
+  if($name === '' || str_contains($name, '\\')) return;
+
+  $filename = APP.'/traits/'.$name.'.php';
+  if(is_readable($filename)) require_once($filename);
+}
+spl_autoload_register("autoloadTraits");
+
+/**
  * Autoload Controllers
  * @author GemPixel <https://gempixel.com>
  * @version 1.0

@@ -28,6 +28,8 @@ Gem::get('/checkout/{id}/{type}', 'Subscription@checkout')->name('checkout');
 Gem::post('/checkout/{id}/{type}', 'Subscription@process')->middleware('Auth')->name('checkout.process');
 Gem::get('/checkout/{id}/{type}/coupon', 'Subscription@coupon')->middleware('Auth')->name('checkout.coupon');
 Gem::get('/checkout/{id}/{type}/tax', 'Subscription@tax')->middleware('Auth')->name('checkout.tax');
+Gem::get('/checkout/crypto/{order}', 'Subscription@cryptoStatus')->middleware('Auth')->name('checkout.crypto.status');
+Gem::get('/checkout/crypto/{order}/status', 'Subscription@cryptoStatusJson')->middleware('Auth')->name('checkout.crypto.status.json');
 
 // Custom Page
 Gem::get('/page/{page}', 'Page@index')->name('page')->middleware('CheckDomain')->middleware('CheckMaintenance');
@@ -95,21 +97,21 @@ Gem::group('/user', function(){
     Gem::get('/links/fetch', 'User\Dashboard@fetch')->name('links.fetch');
     Gem::get('/links/refresh', 'User\Dashboard@refresh')->name('links.refresh');
     Gem::get('/links/refresh/archive', 'User\Dashboard@refreshArchive')->name('links.refresh.archive');
-    Gem::get('/links/{id}/delete/{token}', 'Link@delete')->name('links.delete');
+    Gem::post('/links/{id}/delete/{token}', 'Link@delete')->name('links.delete');
     Gem::post('/links/deleteselected', 'Link@deleteMany')->name('links.deleteall');
-    Gem::get('/links/archiveselected', 'Link@archiveSelected')->name('links.archive');
-    Gem::get('/links/unarchiveselected', 'Link@unarchiveSelected')->name('links.unarchive');
-    Gem::get('/links/publicselected', 'Link@publicSelected')->name('links.public');
-    Gem::get('/links/privateselected', 'Link@privateSelected')->name('links.private');    
+    Gem::post('/links/archiveselected', 'Link@archiveSelected')->name('links.archive');
+    Gem::post('/links/unarchiveselected', 'Link@unarchiveSelected')->name('links.unarchive');
+    Gem::post('/links/publicselected', 'Link@publicSelected')->name('links.public');
+    Gem::post('/links/privateselected', 'Link@privateSelected')->name('links.private');
     Gem::post('/links/addtocampaign', 'Link@addtocampaign')->name('links.addtocampaign');    
     Gem::get('/links/{id}/edit', 'Link@edit')->name('links.edit');
     Gem::post('/links/{id}/update', 'Link@update')->name('links.update');
-    Gem::get('/links/{id}/reset/{token}', 'Link@reset')->name('links.reset');
+    Gem::post('/links/{id}/reset/{token}', 'Link@reset')->name('links.reset');
     
     Gem::get('/campaigns', 'User\Campaigns@index')->name('campaigns');
     Gem::post('/campaigns/save', 'User\Campaigns@save')->name('campaigns.save');
     Gem::post('/campaigns/{id}/update', 'User\Campaigns@update')->name('campaigns.update');
-    Gem::get('/campaigns/{id}/delete/{token}', 'User\Campaigns@delete')->name('campaigns.delete');
+    Gem::post('/campaigns/{id}/delete/{token}', 'User\Campaigns@delete')->name('campaigns.delete');
     Gem::get('/campaigns/{id}/stats', 'User\Campaigns@stats')->name('campaigns.stats');
     Gem::get('/campaigns/{id}/statistics/clicks', 'User\Campaigns@statsClicks')->name('campaigns.stats.clicks');
     Gem::get('/campaigns/{id}/statistics/map', 'User\Campaigns@statsMap')->name('campaigns.stats.map');
@@ -139,33 +141,33 @@ Gem::group('/user', function(){
     Gem::post('/splash/save', 'User\Splash@save')->name('splash.save');
     Gem::get('/splash/{id}/edit', 'User\Splash@edit')->name('splash.edit');
     Gem::post('/splash/{id}/update', 'User\Splash@update')->name('splash.update');
-    Gem::get('/splash/{id}/toggle', 'User\Splash@toggle')->name('splash.toggle');
-    Gem::get('/splash/{id}/delete/{nonce}', 'User\Splash@delete')->name('splash.delete');
+    Gem::post('/splash/{id}/toggle', 'User\Splash@toggle')->name('splash.toggle');
+    Gem::post('/splash/{id}/delete', 'User\Splash@delete')->name('splash.delete');
 
     Gem::get('/overlay/', 'User\Overlay@index')->name('overlay');
     Gem::get('/overlay/create[/{action}]', 'User\Overlay@create')->name('overlay.create');
     Gem::post('/overlay/save/{action}', 'User\Overlay@save')->name('overlay.save');
     Gem::get('/overlay/{id}/edit', 'User\Overlay@edit')->name('overlay.edit');
     Gem::post('/overlay/{id}/update', 'User\Overlay@update')->name('overlay.update');
-    Gem::get('/overlay/{id}/delete/{nonce}', 'User\Overlay@delete')->name('overlay.delete');
+    Gem::post('/overlay/{id}/delete/{nonce}', 'User\Overlay@delete')->name('overlay.delete');
 
     Gem::get('/pixels/', 'User\Pixels@index')->name('pixel');
     Gem::get('/pixels/create', 'User\Pixels@create')->name('pixel.create');
     Gem::post('/pixels/save', 'User\Pixels@save')->name('pixel.save');
     Gem::get('/pixels/{id}/edit', 'User\Pixels@edit')->name('pixel.edit');
     Gem::post('/pixels/{id}/update', 'User\Pixels@update')->name('pixel.update');
-    Gem::get('/pixels/{id}/delete/{nonce}', 'User\Pixels@delete')->name('pixel.delete');
+    Gem::post('/pixels/{id}/delete/{nonce}', 'User\Pixels@delete')->name('pixel.delete');
 
     Gem::get('/domains/', 'User\Domains@index')->name('domain');
     Gem::get('/domains/create', 'User\Domains@create')->name('domain.create');
     Gem::post('/domains/save', 'User\Domains@save')->name('domain.save');
-    Gem::get('/domains/{id}/delete/{nonce}', 'User\Domains@delete')->name('domain.delete');
+    Gem::post('/domains/{id}/delete/{nonce}', 'User\Domains@delete')->name('domain.delete');
     Gem::get('/domains/{id}/edit', 'User\Domains@edit')->name('domain.edit');
     Gem::post('/domains/{id}/update', 'User\Domains@update')->name('domain.update');
 
     Gem::get('/teams/', 'User\Teams@index')->name('team');
     Gem::post('/teams/invite', 'User\Teams@invite')->name('team.save');
-    Gem::get('/teams/{team}/user/{id}/remove/{nonce}', 'User\Teams@delete')->name('team.delete');
+    Gem::post('/teams/user/{id}/remove', 'User\Teams@delete')->name('team.delete');
     Gem::get('/teams/{id}/edit', 'User\Teams@edit')->name('team.edit');
     Gem::post('/teams/{id}/update', 'User\Teams@update')->name('team.update');
 
@@ -176,8 +178,8 @@ Gem::group('/user', function(){
     Gem::post('/qr/save', 'User\QR@save')->name('qr.save');
     Gem::get('/qr/{id}/edit', 'User\QR@edit')->name('qr.edit');
     Gem::post('/qr/{id}/update', 'User\QR@update')->name('qr.update');
-    Gem::get('/qr/{id}/delete/{nonce}', 'User\QR@delete')->name('qr.delete');
-    Gem::get('/qr/{id}/duplicate', 'User\QR@duplicate')->name('qr.duplicate');
+    Gem::post('/qr/{id}/delete/{nonce}', 'User\QR@delete')->name('qr.delete');
+    Gem::post('/qr/{id}/duplicate', 'User\QR@duplicate')->name('qr.duplicate');
 
     Gem::get('/bio/', 'User\Bio@index')->name('bio');
     Gem::get('/bio/create', 'User\Bio@create')->name('bio.create');
@@ -185,9 +187,9 @@ Gem::group('/user', function(){
     Gem::post('/bio/save', 'User\Bio@save')->name('bio.save');
     Gem::get('/bio/{id}/edit', 'User\Bio@edit')->name('bio.edit');
     Gem::post('/bio/{id}/update', 'User\Bio@update')->name('bio.update');
-    Gem::get('/bio/{id}/delete/{nonce}', 'User\Bio@delete')->name('bio.delete');
-    Gem::get('/bio/{id}/default', 'User\Bio@default')->name('bio.default');
-    Gem::get('/bio/{id}/duplicate', 'User\Bio@duplicate')->name('bio.duplicate');
+    Gem::post('/bio/{id}/delete/{nonce}', 'User\Bio@delete')->name('bio.delete');
+    Gem::post('/bio/{id}/default', 'User\Bio@default')->name('bio.default');
+    Gem::post('/bio/{id}/duplicate', 'User\Bio@duplicate')->name('bio.duplicate');
     
     Gem::get('/statistics', 'User\Stats@index')->name('user.stats');
     Gem::get('/statistics/alllinks', 'User\Stats@statsLinks')->name('user.stats.links');
@@ -199,9 +201,9 @@ Gem::group('/user', function(){
     Gem::get('/channel/{id}', 'User\Channels@channel')->name('channel');
     Gem::post('/channel/save', 'User\Channels@save')->name('channel.save');
     Gem::post('/channel/{id}/update', 'User\Channels@update')->name('channel.update');
-    Gem::get('/channel/{id}/delete/{token}', 'User\Channels@delete')->name('channel.delete');
+    Gem::post('/channel/{id}/delete/{token}', 'User\Channels@delete')->name('channel.delete');
     Gem::post('/channel/add/{type}', 'User\Channels@addto')->name('channel.addto');
-    Gem::get('/channel/{id}/remove/{type}/{item}', 'User\Channels@removefrom')->name('channel.removefrom');
+    Gem::post('/channel/{id}/remove/{type}/{item}', 'User\Channels@removefrom')->name('channel.removefrom');
 
     Gem::get('/affiliate', 'User\Dashboard@affiliate')->name('user.affiliate');   
 
@@ -237,22 +239,22 @@ Gem::group('/admin', function(){
     Gem::get('/plans', 'Admin\Plans@index')->name('admin.plans');
     Gem::get('/plans/new', 'Admin\Plans@new')->name('admin.plans.new');
     Gem::post('/plans/save', 'Admin\Plans@save')->name('admin.plans.save');    
-    Gem::get('/plans/{id}/delete/{nonce}', 'Admin\Plans@delete')->name('admin.plans.delete');
+    Gem::post('/plans/{id}/delete/{nonce}', 'Admin\Plans@delete')->name('admin.plans.delete');
     Gem::get('/plans/{id}/edit', 'Admin\Plans@edit')->name('admin.plans.edit');
     Gem::post('/plans/{id}/update', 'Admin\Plans@update')->name('admin.plans.update');    
-    Gem::get('/plans/sync', 'Admin\Plans@sync')->name('admin.plans.sync');    
-    Gem::get('/plans/{id}/toggle', 'Admin\Plans@toggle')->name('admin.plans.toggle');    
+    Gem::post('/plans/sync', 'Admin\Plans@sync')->name('admin.plans.sync');
+    Gem::post('/plans/{id}/toggle', 'Admin\Plans@toggle')->name('admin.plans.toggle');
     Gem::get('/subscriptions', 'Admin\Membership@subscriptions')->name('admin.subscriptions');
     Gem::get('/payments', 'Admin\Membership@payments')->name('admin.payments');
     Gem::get('/payments/{id}/invoice','Admin\Membership@invoice')->name('admin.invoice');
-    Gem::get('/payments/{id}/delete/{nonce}','Admin\Membership@delete')->name('admin.payments.delete');
-    Gem::get('/payments/{id}/{action}','Admin\Membership@markAs')->name('admin.payments.markas');
+    Gem::post('/payments/{id}/delete/{nonce}','Admin\Membership@delete')->name('admin.payments.delete');
+    Gem::post('/payments/{id}/{action}','Admin\Membership@markAs')->name('admin.payments.markas');
     Gem::get('/finance', 'Admin\Finance@index')->name('admin.finance');
 
     // Coupons
     Gem::get('/coupons', 'Admin\Coupons@index')->name('admin.coupons');
     Gem::post('/coupons/save', 'Admin\Coupons@save')->name('admin.coupons.save');
-    Gem::get('/coupons/{id}/delete/{nonce}', 'Admin\Coupons@delete')->name('admin.coupons.delete');
+    Gem::post('/coupons/{id}/delete/{nonce}', 'Admin\Coupons@delete')->name('admin.coupons.delete');
     Gem::post('/coupons/{id}/update', 'Admin\Coupons@update')->name('admin.coupons.update');
 
     // Tax
@@ -261,11 +263,11 @@ Gem::group('/admin', function(){
     Gem::post('/tax/save', 'Admin\Tax@save')->name('admin.tax.save');
     Gem::get('/tax/{id}/edit', 'Admin\Tax@edit')->name('admin.tax.edit');    
     Gem::post('/tax/{id}/update', 'Admin\Tax@update')->name('admin.tax.update');
-    Gem::get('/tax/{id}/delete/{nonce}', 'Admin\Tax@delete')->name('admin.tax.delete');
+    Gem::post('/tax/{id}/delete/{nonce}', 'Admin\Tax@delete')->name('admin.tax.delete');
 
     // Links
     Gem::get('/links', 'Admin\Links@index')->name('admin.links');
-    Gem::get('/links/{id}/delete/{nonce}', 'Admin\Links@delete')->name('admin.links.delete');
+    Gem::post('/links/{id}/delete/{nonce}', 'Admin\Links@delete')->name('admin.links.delete');
     Gem::post('/links/delete/all', 'Admin\Links@deleteAll')->name('admin.links.deleteall');
     Gem::post('/links/disable/all', 'Admin\Links@disableAll')->name('admin.links.disableall');
     Gem::post('/links/enable/all', 'Admin\Links@enableAll')->name('admin.links.enableall');
@@ -277,12 +279,13 @@ Gem::group('/admin', function(){
     Gem::get('/links/anonymous', 'Admin\Links@anonymous')->name('admin.links.anonymous');
     Gem::get('/links/pending', 'Admin\Links@pending')->name('admin.links.pending');
     Gem::get('/links/report', 'Admin\Links@report')->name('admin.links.report');
-    Gem::get('/links/report/{id}/{action}', 'Admin\Links@reportAction')->name('admin.links.report.action');
+    Gem::post('/links/report/{id}/{action}', 'Admin\Links@reportAction')->name('admin.links.report.action');
     Gem::get('/links/bad', 'Admin\Links@bad')->name('admin.links.bad');
-    Gem::get('/links/bad/{id}/cancel', 'Admin\Links@badCancel')->name('admin.links.bad.cancel');
-    Gem::get('/links/{id}/disable', 'Admin\Links@disable')->name('admin.links.disable');
-    Gem::get('/links/{id}/approve', 'Admin\Links@approve')->name('admin.links.approve');
-    Gem::route(['GET', 'POST'], '/links/import', 'Admin\Links@import')->name('admin.links.import');
+    Gem::post('/links/bad/{id}/cancel', 'Admin\Links@badCancel')->name('admin.links.bad.cancel');
+    Gem::post('/links/{id}/disable', 'Admin\Links@disable')->name('admin.links.disable');
+    Gem::post('/links/{id}/approve', 'Admin\Links@approve')->name('admin.links.approve');
+    Gem::get('/links/import', 'Admin\Links@import')->name('admin.links.import');
+    Gem::post('/links/import', 'Admin\Links@import')->name('admin.links.import.process');
     // Users
     Gem::get('/users', 'Admin\Users@index')->name('admin.users');
     Gem::get('/users/new', 'Admin\Users@new')->name('admin.users.new');
@@ -292,20 +295,20 @@ Gem::group('/admin', function(){
     Gem::get('/users/admins', 'Admin\Users@admin')->name('admin.users.admin');
     Gem::get('/users/{id}/edit', 'Admin\Users@edit')->name('admin.users.edit');
     Gem::post('/users/{id}/update', 'Admin\Users@update')->name('admin.users.update');
-    Gem::get('/users/{id}/delete/{nonce}', 'Admin\Users@delete')->name('admin.users.delete');
-    Gem::get('/users/{id}/wipe/{nonce}', 'Admin\Users@wipe')->name('admin.users.delete.all');
+    Gem::post('/users/{id}/delete/{nonce}', 'Admin\Users@delete')->name('admin.users.delete');
+    Gem::post('/users/{id}/wipe/{nonce}', 'Admin\Users@wipe')->name('admin.users.delete.all');
     Gem::post('/user/delete/all', 'Admin\Users@deleteAll')->name('admin.users.deleteall');
-    Gem::get('/users/{id}/ban', 'Admin\Users@ban')->name('admin.users.ban');
+    Gem::post('/users/{id}/ban', 'Admin\Users@ban')->name('admin.users.ban');
     Gem::get('/users/{id}/view', 'Admin\Users@view')->name('admin.users.view');
     Gem::post('/user/ban/all', 'Admin\Users@banAll')->name('admin.users.banall');
     Gem::post('/user/email/all', 'Admin\Users@emailAll')->name('admin.users.emailall');
-    Gem::get('/user/verify/{id}/{token}', 'Admin\Users@verify')->name('admin.users.verify');  
+    Gem::post('/user/verify/{id}/{token}', 'Admin\Users@verify')->name('admin.users.verify');
 
     Gem::get('/users/testimonials', 'Admin\Users@testimonial')->name('admin.testimonial');
     Gem::post('/users/testimonial/save', 'Admin\Users@testimonialSave')->name('admin.testimonial.save');
     Gem::get('/users/testimonial/{id}/edit', 'Admin\Users@testimonialEdit')->name('admin.testimonial.edit');
     Gem::post('/users/testimonial/{id}/update', 'Admin\Users@testimonialUpdate')->name('admin.testimonial.update');
-    Gem::get('/users/testimonial/{id}/delete/{nonce}', 'Admin\Users@testimonialDelete')->name('admin.testimonial.delete');
+    Gem::post('/users/testimonial/{id}/delete/{nonce}', 'Admin\Users@testimonialDelete')->name('admin.testimonial.delete');
 
     Gem::get('/users/login/{id}/{nonce}', 'Admin\Users@loginAs')->name('admin.users.login');
 
@@ -315,13 +318,13 @@ Gem::group('/admin', function(){
     
     // Bio
     Gem::get('/bio', 'Admin\Bio@index')->name('admin.bio');
-    Gem::get('/bio/toggle/{type}/{id}', 'Admin\Bio@toggle')->name('admin.bio.toggle');
-    Gem::get('/bio/{id}/delete/{nonce}', 'Admin\Bio@delete')->name('admin.bio.delete'); 
+    Gem::post('/bio/toggle/{type}/{id}', 'Admin\Bio@toggle')->name('admin.bio.toggle');
+    Gem::post('/bio/{id}/delete/{nonce}', 'Admin\Bio@delete')->name('admin.bio.delete');
     
     // QR
 
     Gem::get('/qr', 'Admin\Qr@index')->name('admin.qr');
-    Gem::get('/qr/{id}/delete/{nonce}', 'Admin\Qr@delete')->name('admin.qr.delete'); 
+    Gem::post('/qr/{id}/delete/{nonce}', 'Admin\Qr@delete')->name('admin.qr.delete');
 
     //Pages
     Gem::get('/page', 'Admin\Pages@index')->name('admin.page');
@@ -329,43 +332,43 @@ Gem::group('/admin', function(){
     Gem::post('/page/save', 'Admin\Pages@save')->name('admin.page.save');
     Gem::get('/page/{id}/edit', 'Admin\Pages@edit')->name('admin.page.edit');
     Gem::post('/page/{id}/update', 'Admin\Pages@update')->name('admin.page.update');
-    Gem::get('/page/{id}/delete/{nonce}', 'Admin\Pages@delete')->name('admin.page.delete');    
+    Gem::post('/page/{id}/delete/{nonce}', 'Admin\Pages@delete')->name('admin.page.delete');
     // Blog
     Gem::get('/blog', 'Admin\Blog@index')->name('admin.blog');
     Gem::get('/blog/new', 'Admin\Blog@new')->name('admin.blog.new');
     Gem::post('/blog/save', 'Admin\Blog@save')->name('admin.blog.save');
     Gem::get('/blog/{id}/edit', 'Admin\Blog@edit')->name('admin.blog.edit');
     Gem::post('/blog/{id}/update', 'Admin\Blog@update')->name('admin.blog.update');
-    Gem::get('/blog/{id}/delete/{nonce}', 'Admin\Blog@delete')->name('admin.blog.delete');
+    Gem::post('/blog/{id}/delete/{nonce}', 'Admin\Blog@delete')->name('admin.blog.delete');
     // Domains
     Gem::get('/domains', 'Admin\Domains@index')->name('admin.domains');
     Gem::get('/domains/new', 'Admin\Domains@new')->name('admin.domains.new');
     Gem::post('/domains/save', 'Admin\Domains@save')->name('admin.domains.save');
     Gem::get('/domains/{id}/edit', 'Admin\Domains@edit')->name('admin.domains.edit');
     Gem::post('/domains/{id}/update', 'Admin\Domains@update')->name('admin.domains.update');    
-    Gem::get('/domains/{id}/disable', 'Admin\Domains@disable')->name('admin.domains.disable');
-    Gem::get('/domains/{id}/activate', 'Admin\Domains@activate')->name('admin.domains.activate');
-    Gem::get('/domains/{id}/pending', 'Admin\Domains@pending')->name('admin.domains.pending');
-    Gem::get('/domains/{id}/delete/{nonce}', 'Admin\Domains@delete')->name('admin.domains.delete');
+    Gem::post('/domains/{id}/disable', 'Admin\Domains@disable')->name('admin.domains.disable');
+    Gem::post('/domains/{id}/activate', 'Admin\Domains@activate')->name('admin.domains.activate');
+    Gem::post('/domains/{id}/pending', 'Admin\Domains@pending')->name('admin.domains.pending');
+    Gem::post('/domains/{id}/delete/{nonce}', 'Admin\Domains@delete')->name('admin.domains.delete');
     // FAQS
     Gem::get('/faq', 'Admin\Faqs@index')->name('admin.faq');
     Gem::get('/faq/new', 'Admin\Faqs@new')->name('admin.faq.new');
     Gem::post('/faq/save', 'Admin\Faqs@save')->name('admin.faq.save');
     Gem::get('/faq/{id}/edit', 'Admin\Faqs@edit')->name('admin.faq.edit');
     Gem::post('/faq/{id}/update', 'Admin\Faqs@update')->name('admin.faq.update');
-    Gem::get('/faq/{id}/delete/{nonce}', 'Admin\Faqs@delete')->name('admin.faq.delete');
+    Gem::post('/faq/{id}/delete/{nonce}', 'Admin\Faqs@delete')->name('admin.faq.delete');
     Gem::get('/faq/categories', 'Admin\Faqs@categories')->name('admin.faq.categories');
     Gem::post('/faq/categories/save', 'Admin\Faqs@categoriesSave')->name('admin.faq.categories.save');
     Gem::get('/faq/categories/{id}/edit', 'Admin\Faqs@categoriesEdit')->name('admin.faq.categories.edit');
     Gem::post('/faq/categories/{id}/update', 'Admin\Faqs@categoriesUpdate')->name('admin.faq.categories.update');
-    Gem::get('/faq/categories/{id}/delete/{nonce}', 'Admin\Faqs@categoriesDelete')->name('admin.faq.categories.delete');
+    Gem::post('/faq/categories/{id}/delete/{nonce}', 'Admin\Faqs@categoriesDelete')->name('admin.faq.categories.delete');
     
     // Affiliates
     Gem::get('/affiliates', 'Admin\Affiliates@index')->name('admin.affiliate');
     Gem::get('/affiliates/payments', 'Admin\Affiliates@payments')->name('admin.affiliate.payments');
-    Gem::get('/affiliates/{id}/delete/{nonce}', 'Admin\Affiliates@delete')->name('admin.affiliate.delete');
-    Gem::get('/affiliates/{id}/pay', 'Admin\Affiliates@pay')->name('admin.affiliate.pay');
-    Gem::get('/affiliates/{id}/{action}', 'Admin\Affiliates@update')->name('admin.affiliate.update');
+    Gem::post('/affiliates/{id}/delete/{nonce}', 'Admin\Affiliates@delete')->name('admin.affiliate.delete');
+    Gem::post('/affiliates/{id}/pay', 'Admin\Affiliates@pay')->name('admin.affiliate.pay');
+    Gem::post('/affiliates/{id}/{action}', 'Admin\Affiliates@update')->name('admin.affiliate.update');
 
     // Ads
     Gem::get('/ads', 'Admin\Ads@index')->name('admin.ads');
@@ -373,7 +376,7 @@ Gem::group('/admin', function(){
     Gem::post('/ads/save', 'Admin\Ads@save')->name('admin.ads.save');
     Gem::get('/ads/{id}/edit', 'Admin\Ads@edit')->name('admin.ads.edit');
     Gem::post('/ads/{id}/update', 'Admin\Ads@update')->name('admin.ads.update');
-    Gem::get('/ads/{id}/delete/{nonce}', 'Admin\Ads@delete')->name('admin.ads.delete');
+    Gem::post('/ads/{id}/delete/{nonce}', 'Admin\Ads@delete')->name('admin.ads.delete');
     // Themes
     Gem::get('/themes', 'Admin\Themes@index')->name('admin.themes');
     Gem::get('/themes/settings', 'Admin\Themes@settings')->name('admin.themes.settings');
@@ -382,15 +385,16 @@ Gem::group('/admin', function(){
     Gem::post('/themes/upload', 'Admin\Themes@upload')->name('admin.themes.upload');
     Gem::get('/themes/custom', 'Admin\Themes@custom')->name('admin.themes.custom');    
     Gem::post('/themes/custom/update', 'Admin\Themes@customUpdate')->name('admin.themes.custom.update');    
-    Gem::get('/themes/{id}/activate', 'Admin\Themes@activate')->name('admin.themes.activate');
-    Gem::get('/themes/{id}/delete/{nonce}', 'Admin\Themes@delete')->name('admin.themes.delete');
+    Gem::post('/themes/{id}/activate', 'Admin\Themes@activate')->name('admin.themes.activate');
+    Gem::post('/themes/{id}/delete/{nonce}', 'Admin\Themes@delete')->name('admin.themes.delete');
     Gem::get('/themes/{id}/clone/{nonce}', 'Admin\Themes@clone')->name('admin.themes.clone');
 
     Gem::get('/plugins', 'Admin\Plugins@index')->name('admin.plugins');
-    Gem::get('/plugins/{id}/activate', 'Admin\Plugins@activate')->name('admin.plugins.activate');
-    Gem::get('/plugins/{id}/disable', 'Admin\Plugins@disable')->name('admin.plugins.disable');
+    Gem::post('/plugins/{id}/activate', 'Admin\Plugins@activate')->name('admin.plugins.activate');
+    Gem::post('/plugins/{id}/disable', 'Admin\Plugins@disable')->name('admin.plugins.disable');
     Gem::post('/plugins/upload', 'Admin\Plugins@upload')->name('admin.plugins.upload');
     Gem::get('/plugins/directory', 'Admin\Plugins@directory')->name('admin.plugins.dir');
+    Gem::post('/plugins/directory/{id}/install', 'Admin\Plugins@install')->name('admin.plugins.install');
 
     // Settings
     Gem::get('/settings', 'Admin\Settings@index')->name('admin.settings');
@@ -402,21 +406,23 @@ Gem::group('/admin', function(){
     Gem::get('/languages/new', 'Admin\Languages@new')->name('admin.languages.new');
     Gem::post('/languages/save', 'Admin\Languages@save')->name('admin.languages.save');
     Gem::post('/languages/upload', 'Admin\Languages@upload')->name('admin.languages.upload');
-    Gem::get('/languages/{id}/delete/{nonce}', 'Admin\Languages@delete')->name('admin.languages.delete');
-    Gem::get('/languages/{id}/set', 'Admin\Languages@set')->name('admin.languages.set');
+    Gem::post('/languages/{id}/delete/{nonce}', 'Admin\Languages@delete')->name('admin.languages.delete');
+    Gem::post('/languages/{id}/set', 'Admin\Languages@set')->name('admin.languages.set');
     Gem::get('/languages/{id}/edit', 'Admin\Languages@edit')->name('admin.languages.edit');
     Gem::post('/languages/{id}/update', 'Admin\Languages@update')->name('admin.languages.update');   
     Gem::post('/languages/translate', 'Admin\Languages@translate')->name('admin.translate'); 
-    Gem::get('/languages/{id}/sync', 'Admin\Languages@sync')->name('admin.languages.sync'); 
-    Gem::get('/languages/{id}/auto', 'Admin\Languages@automatic')->name('admin.languages.auto'); 
+    Gem::post('/languages/{id}/sync', 'Admin\Languages@sync')->name('admin.languages.sync');
+    Gem::post('/languages/{id}/auto', 'Admin\Languages@automatic')->name('admin.languages.auto');
 
     //Tools
     Gem::get('/tools', 'Admin\Dashboard@tools')->name('admin.tools');
     Gem::get('/tools/{action}/{nonce}', 'Admin\Dashboard@toolsAction')->name('admin.toolsAction');
     Gem::get('/email', 'Admin\Dashboard@email')->name('admin.email');
     Gem::post('/email/send', 'Admin\Dashboard@emailSend')->name('admin.email.send');
-    Gem::route(['GET', 'POST'], '/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template');
-    Gem::route(['GET', 'POST'], '/update', 'Admin\Dashboard@update')->name('admin.update');
+    Gem::get('/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template');
+    Gem::post('/email/templates', 'Admin\Dashboard@emailTemplates')->name('admin.email.template.save');
+    Gem::get('/update', 'Admin\Dashboard@update')->name('admin.update');
+    Gem::post('/update/code', 'Admin\Dashboard@purchaseCode')->name('admin.update.code');
     Gem::post('/update/process', 'Admin\Dashboard@updateProcess')->name('admin.update.process');
     Gem::get('/tools/data', 'Admin\Dashboard@data')->name('admin.data');
     Gem::post('/tools/data/backup', 'Admin\Dashboard@backup')->name('admin.backup');
@@ -495,6 +501,7 @@ Gem::group('/crons', function(){
     Gem::get('/data/{id}', 'Cron@data')->name('crons.data');
     Gem::get('/urls/{id}', 'Cron@urls')->name('crons.urls');
     Gem::get('/remind/{days}/{id}', 'Cron@remind')->name('crons.remind');
+    Gem::get('/nowpayments/{id}', 'Cron@nowpayments')->name('crons.nowpayments');
 });
 
 Gem::get('/q', 'Link@quick')->name('quick');
@@ -505,7 +512,8 @@ Gem::get("/script.js", 'Link@scriptjs')->name('scriptjs');
 
 Gem::get('/sitemap.xml', 'Sitemap@index')->name('sitemap');
 
-Gem::route(['GET', 'POST'], '/update', 'Update@index');
+Gem::get('/update', 'Update@index');
+Gem::post('/update', 'Update@process');
 
 Gem::post('/server/contact', 'Server@contact')->name('server.contact');
 Gem::post('/server/subscribe', 'Server@subscribe')->name('server.subscribe');
@@ -513,11 +521,10 @@ Gem::post('/server/vote', 'Server@vote')->name('server.vote');
 Gem::get('/server/states', '\Helpers\App@states')->middleware('CheckDomain')->name('server.states');
 
 // Webhooks
-Gem::route(['GET', 'POST'], '/ipn', 'Webhook@ipn')->middleware('CheckDomain')->name('webhook.paypal');
+Gem::post('/ipn', 'Webhook@ipn')->middleware('CheckDomain')->name('webhook.paypal');
 
-Gem::route(['GET', 'POST'], '/webhook[/{provider}]', 'Webhook@index')->middleware('CheckDomain')->name('webhook');
-// Gem::route(['GET', 'POST'], '/webhook/paypal', 'Webhook@paypal')->middleware('CheckDomain')->name('webhook.paypalapi');
-// Gem::route(['GET', 'POST'], '/webhook/slack', 'Webhook@slack')->middleware('CheckDomain')->name('webhook.slack');
+Gem::post('/webhook[/{provider}]', 'Webhook@index')->middleware('CheckDomain')->name('webhook');
+Gem::post('/webhook/nowpayments', 'Webhook@nowpayments')->middleware('CheckDomain')->name('webhook.nowpayments');
 
 // QR Codes
 Gem::get('/qr/{id}', 'QR@generate')->name('qr.generate');
@@ -555,14 +562,3 @@ Gem::get('/{id}/qr[/{size}]', 'Link@qr')->name('link.qr');
 Gem::get('/{id}/qr/download/{format}[/{size}]', 'Link@qrDownload')->name('link.qrDownload');
 
 Gem::route(['GET', 'POST'], '/{alias}', 'Link@redirect')->name('redirect');
-
-Gem::get('/compile/1a589a9d55e6fff984', function(){
-    \Core\View::compile([
-         "frontend/libs/jquery/dist/jquery.min.js",
-         "frontend/libs/bootstrap/dist/js/bootstrap.bundle.min.js",
-         "frontend/libs/bootstrap-notify/bootstrap-notify.min.js",
-         "frontend/libs/svg-injector/dist/svg-injector.min.js",
-         "frontend/libs/feather-icons/dist/feather.min.js",
-         "frontend/libs/select2/dist/js/select2.min.js",                   
-    ], 'bundle.pack.js');
-});

@@ -38,11 +38,11 @@
                 <div class="list-group list-group-flush">                    
                     <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.edit', [$url->id]) ?>"><?php ee('Edit Link') ?></a>
                     <?php if($url->status): ?>
-                        <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.disable', [$url->id]) ?>"><?php ee('Disable Link') ?></a>
+                        <form action="<?php echo route('admin.links.disable', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Disable Link') ?></button></form>
                     <?php else: ?>
-                        <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.approve', [$url->id]) ?>"><?php ee('Approve Link') ?></a>
+                        <form action="<?php echo route('admin.links.approve', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Approve Link') ?></button></form>
                     <?php endif ?>
-                    <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><?php ee('Delete Link') ?></a>
+                    <form action="<?php echo route('admin.links.delete', [$url->id, \Core\Helper::nonce('link.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Delete Link') ?></button></form>
                 </div>
             </div>
         </div>               
@@ -72,7 +72,7 @@
                 <h5 class="card-title mb-0"><?php ee('Links') ?></h5>
             </div>
             <div class="card-body h-100">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="url" class="form-label"><?php ee('URL') ?></label>
                     <div class="input-group">
                         <div class="input-group-text"><i data-feather="link"></i></div>
@@ -81,7 +81,7 @@
                 </div>  
                 <div class="row">    
                     <div class="col-sm-4 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="alias" class="form-label"><?php ee('Alias') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="globe"></i></div>
@@ -90,7 +90,7 @@
                         </div>
                     </div>
                     <div class="col-sm-4 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="custom" class="form-label"><?php ee('Custom') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="globe"></i></div>
@@ -99,7 +99,7 @@
                         </div>
                     </div>
                     <div class="col-md-4 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="pass" class="form-label"><?php ee('Password Protection') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="lock"></i></div>
@@ -110,7 +110,7 @@
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="expiry" class="form-label"><?php ee('Link Expiration') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="lock"></i></div>
@@ -119,7 +119,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="expiry" class="form-label"><?php echo e("Description")?></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i data-feather="tag"></i></span>
@@ -133,13 +133,13 @@
                     <h4><?php echo e("Meta Tags")?></h4>
                     <div class="row">   
                         <div class="col-lg-4 col-md-6 mt-3">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="metatitle" class="form-label"><?php ee('Meta Title') ?></label>                    
                                 <input type="text" class="form-control p-2" readonly id="metatitle" placeholder="<?php echo e("Enter your custom meta title")?>" autocomplete="off">
                             </div>
                         </div>
                         <div class="col-lg-4 col-md-6 mt-3">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="metadescription" class="form-label"><?php ee('Meta Description') ?></label>                    
                                 <input type="text" class="form-control p-2" readonly id="metadescription" placeholder="<?php echo e("Enter your custom meta description")?>" autocomplete="off">
                             </div>

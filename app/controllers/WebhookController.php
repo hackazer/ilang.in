@@ -41,6 +41,21 @@ class Webhook {
 
 		if($provider == 'paypal') $provider = 'paypalapi';
 
+		$this->registerPaymentSuccessHook();
+
+		if($provider && $provider !== 'nowpayments' && method_exists(__CLASS__, $provider)){
+			return $this->{$provider}($request);
+		}
+
+		if($class = $this->processor($provider, 'webhook')){
+			return call_user_func($class, $request);
+		}
+
+		http_response_code(404);
+		return null;
+	}
+
+	protected function registerPaymentSuccessHook(): void{
 		\Core\Plugin::register('payment.success', function($data){
 			
 			if(!config('affiliate')->enabled) return;
@@ -55,16 +70,17 @@ class Webhook {
 				}
 			}
 		});
+	}
 
-		if($provider && method_exists(__CLASS__, $provider)){
-			return $this->{$provider}($request);
-		}
+	public function nowpayments(Request $request){
+		$this->registerPaymentSuccessHook();
 
-		if($class = $this->processor($provider, 'webhook')){
+		if($class = $this->processor('nowpayments', 'webhook')){
 			return call_user_func($class, $request);
 		}
 
-		die();
+		http_response_code(404);
+		return null;
 	}
 	/**
 	 * Slack Webhook

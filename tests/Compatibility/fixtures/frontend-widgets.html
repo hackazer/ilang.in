@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Frontend widget compatibility</title>
+    <link rel="stylesheet" href="/public/static/frontend/libs/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/public/static/frontend/libs/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="/public/static/frontend/libs/coloris/coloris.min.css">
+    <link rel="stylesheet" href="/public/static/frontend/libs/air-datepicker/air-datepicker.css">
+    <link rel="stylesheet" href="/public/static/icon-picker.min.css">
+</head>
+<body class="p-4">
+<main class="container" style="max-width:48rem">
+    <h1 class="h3">Frontend widget compatibility</h1>
+    <p id="result" role="status">Running</p>
+    <div class="vstack gap-3">
+        <label>Icon <input id="icon" class="form-control" value="fas fa-user"></label>
+        <label>Color <input id="color" class="form-control" value="#0f87ff"></label>
+        <label>Date <input id="date" class="form-control" value="2026-07-17"></label>
+        <label>Range <input id="range" class="form-control"></label>
+        <label>Font <input id="font" class="form-control" value="Open+Sans:600"></label>
+        <label>Code <input id="mask" class="form-control" data-mask="000 000"></label>
+    </div>
+</main>
+<script src="/public/static/frontend/libs/coloris/coloris.min.js"></script>
+<script src="/public/static/frontend/libs/air-datepicker/air-datepicker.js"></script>
+<script src="/public/static/frontend/libs/imask/imask.min.js"></script>
+<script src="/public/static/color-picker.min.js"></script>
+<script src="/public/static/date-picker.min.js"></script>
+<script src="/public/static/font-selector.min.js"></script>
+<script src="/public/static/input-mask.min.js"></script>
+<script src="/public/static/icon-picker.min.js"></script>
+<script>
+    window.widgetResults = [];
+    function check(name, condition) {
+        window.widgetResults.push({name: name, pass: Boolean(condition)});
+    }
+
+    const icon = IconPicker.init('#icon', {
+        icons: [
+            {name: 'user', label: 'User', styles: ['solid']},
+            {name: 'github', label: 'GitHub', styles: ['brands']}
+        ]
+    });
+    AppColorPicker.init('#color', {preferredFormat: 'hex', allowEmpty: true});
+    const date = AppDatePicker.init('#date', {dateFormat: 'yyyy-MM-dd'});
+    const range = AppDatePicker.initRange('#range', {applyLabel: 'Apply', cancelLabel: 'Cancel'});
+    const font = FontSelector.init('#font')[0];
+    const mask = AppMask.init(document.getElementById('mask'));
+
+    check('icon picker', icon && icon.panel.getAttribute('role') === 'dialog');
+    check('color picker', document.getElementById('color').hasAttribute('data-coloris'));
+    check('date picker', date && document.getElementById('date').value === '2026-07-17');
+    check('range picker', range && /^\d{2}\/\d{2}\/\d{4} - \d{2}\/\d{2}\/\d{4}$/.test(document.getElementById('range').value));
+    check('font selector', font && document.getElementById('font').style.fontWeight === '600');
+    check('input mask', Boolean(mask));
+
+    const passed = window.widgetResults.every(function(result) { return result.pass; });
+    const output = document.getElementById('result');
+    output.textContent = passed ? 'PASS' : 'FAIL';
+    output.className = passed ? 'text-success' : 'text-danger';
+    document.documentElement.dataset.testStatus = passed ? 'pass' : 'fail';
+</script>
+</body>
+</html>

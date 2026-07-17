@@ -10,19 +10,19 @@
                     <?php echo csrf() ?>                                        
                     <div class="custom-alert alert alert-info"><strong class="mx-2">Tip:</strong><?php ee('SMTP is recommend because it is much more reliable than the system mail module.') ?></div>
                     
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
 					    <label for="email" class="form-label"><?php ee('From Email') ?></label>
 					    <input type="text" class="form-control" name="email" id="email" value="<?php echo config('email') ?>">
 					    <p class="form-text"><?php ee('This email will be used to send emails and to receive emails. We recommend using an email at @yourdomain.') ?></p>
                     </div>
 
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
 					    <label for="smtp" class="form-label"><?php ee('SMTP Host') ?></label>
                         <input type="text" class="form-control" name="smtp[host]" value="<?php echo config('smtp')->host ?>">
                     </div>				
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group mb-3 input-select">
+                            <div class="mb-3 input-select">
                                 <label for="smtp" class="form-label"><?php ee('SMTP Security') ?></label>
                                 <select name="smtp[security]" id="smtp" class="form-control">
                                     <option value="none" <?php echo (config('smtp')->security == 'none' ? 'selected' : '') ?>>None</option>
@@ -32,17 +32,17 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="smtp" class="form-label"><?php ee('SMTP Port') ?></label>
                                 <input type="text" class="form-control" name="smtp[port]" value="<?php echo config('smtp')->port ?>">
                             </div>
                         </div>
                     </div>		
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
 					    <label for="smtp" class="form-label"><?php ee('SMTP User') ?></label>
                         <input type="text" class="form-control" name="smtp[user]" value="<?php echo config('smtp')->user ?>">
                     </div>		
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
 					    <label for="smtp" class="form-label"><?php ee('SMTP Pass') ?></label>
                         <input type="password" class="form-control" name="smtp[pass]" value="<?php echo config('smtp')->pass ?>">
                     </div>		

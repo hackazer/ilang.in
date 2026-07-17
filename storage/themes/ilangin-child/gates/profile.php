@@ -13,7 +13,7 @@
             <div id="social" class="text-center mt-3">
                 <?php foreach($profiledata['social'] as $key => $value): ?>
                     <?php if(empty($value)) continue ?>
-                    <a href="<?php echo $value ?>" class="mx-2" target="_blank" data-toggle="tooltip" data-placement="top" title="<?php echo ucfirst($key) ?>" rel="nofollow"><i class="fab fa-<?php echo $key ?>"></i></a>
+                    <a href="<?php echo $value ?>" class="mx-2" target="_blank" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo ucfirst($key) ?>" rel="nofollow"><i class="fab fa-<?php echo $key ?>"></i></a>
                 <?php endforeach ?>
             </div>
             <div id="content" class="mt-5">
@@ -45,13 +45,13 @@
                                     <?php echo $items ?>
                                 <?php else: ?>
                                     <?php foreach($items as $item): ?>
-                                        <div class="media mb-3">
+                                        <div class="d-flex mb-3">
                                             <?php if($item['image']): ?>
-                                                <img class="mr-3" src="<?php echo $item['image'] ?>" alt="<?php echo $item['title'] ?>">
+                                                <img class="me-3" src="<?php echo htmlspecialchars((string) $item['image'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" alt="<?php echo htmlspecialchars((string) $item['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">
                                             <?php endif ?>
-                                            <div class="media-body">
-                                                <h6 class="mt-3"><a href="<?php echo $item['link'] ?>" target="_blank"><?php echo $item['title'] ?></a></h6>
-                                                <?php echo $item['description'] ?>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mt-3"><a href="<?php echo htmlspecialchars((string) $item['link'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars((string) $item['title'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></a></h6>
+                                                <?php echo htmlspecialchars((string) $item['description'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
                                             </div>
                                         </div>
                                     <?php endforeach ?>
@@ -64,11 +64,11 @@
                         <?php endif ?>
 
                         <?php if($value['type'] == "whatsapp"): ?>
-                            <a href="https://wa.me/<?php echo str_replace(' ', '', $value['phone']) ?>" class="btn btn-block d-block p-3 btn-custom"><img src="<?php echo assets('images/whatsapp.svg') ?>" height="25" class="mr-3"> <?php echo isset($value['label']) && $value['label'] ? $value['label'] : $value['phone'] ?></a>
+                            <a href="https://wa.me/<?php echo str_replace(' ', '', $value['phone']) ?>" class="btn w-100 d-block p-3 btn-custom"><img src="<?php echo assets('images/whatsapp.svg') ?>" height="25" class="me-3"> <?php echo isset($value['label']) && $value['label'] ? $value['label'] : $value['phone'] ?></a>
                         <?php endif ?>
                         
                         <?php if($value['type'] == "link"): ?>
-                            <a href="<?php echo $value['link'] ?>" class="btn btn-block d-block p-3 btn-custom" style="background:<?php echo $value['bg']?? '' ?>!important;color:<?php echo $value['color'] ?? '' ?>!important;border-radius:<?php echo (isset($value['format']) && $value['format'] =='rounded' ? '50px' : '5px') ?>!important"><?php echo ($value['icon'] ?? '' ? '<i class="'.$value['icon'].' mr-2"></i>' : '') ?> <span class="align-top"><?php echo $value['text'] ?></span></a>
+                            <a href="<?php echo $value['link'] ?>" class="btn w-100 d-block p-3 btn-custom" style="background:<?php echo $value['bg']?? '' ?>!important;color:<?php echo $value['color'] ?? '' ?>!important;border-radius:<?php echo (isset($value['format']) && $value['format'] =='rounded' ? '50px' : '5px') ?>!important"><?php echo ($value['icon'] ?? '' ? '<i class="'.$value['icon'].' me-2"></i>' : '') ?> <span class="align-top"><?php echo $value['text'] ?></span></a>
                         <?php endif ?>
 
                         <?php if($value['type'] == "youtube"): ?>
@@ -91,7 +91,7 @@
                                 <input type="hidden" name="amount" value="<?php echo $value['amount'] ?>">
                                 <input type="hidden" name="currency_code" value="<?php echo $value['currency'] ?>">
 
-                                <button type="submit" name="submit" class="btn btn-block d-block p-3 btn-custom w-100"><?php echo $value['label'] ?></button>                            
+                                <button type="submit" name="submit" class="btn w-100 d-block p-3 btn-custom"><?php echo $value['label'] ?></button>
                             </form>
                         <?php endif ?>
                         <?php if($value['type'] == "spotify"): ?>
@@ -112,7 +112,7 @@
                                     <div>                         
                                         <input type="text" class="form-control border-0" name="email" placeholder="johnsmith@company.com">
                                     </div>		
-                                    <div class="ml-auto">
+                                    <div class="ms-auto">
                                         <button type="submit" class="btn btn-custom"><?php echo $value['text'] ?></button>
                                     </div>                                
                                 </div>	
@@ -123,12 +123,12 @@
 
                         <?php if($value['type'] == "contact"): ?>
                             <h3><?php $value['text'] ?></h3>
-                            <form method="post" action="" class="border rounded text-left p-3">
-                                <div class="form-group">
+                            <form method="post" action="" class="border rounded text-start p-3">
+                                <div class="mb-3">
                                     <label for="email" class="form-label"><?php ee('Email') ?></label>
                                     <input type="text" class="form-control" name="email" placeholder="johnsmith@company.com">
                                 </div>
-                                <div class="form-group">
+                                <div class="mb-3">
                                     <label for="email" class="form-label"><?php ee('Message') ?></label>
                                     <textarea class="form-control" name="message"></textarea>
                                 </div>
@@ -144,15 +144,15 @@
                                 <?php csrf() ?>
                                 <input type="hidden" name="action" value="vcard">
                                 <input type="hidden" name="blockid" value="<?php echo $id ?>">
-                                <button type="submit" class="btn btn-custom btn-block"><?php ee('Download vCard') ?></button>
+                                <button type="submit" class="btn btn-custom w-100"><?php ee('Download vCard') ?></button>
                             </form>
                         <?php endif ?>
                         <?php if($value['type'] == "product"): ?>
                             <a href="<?php echo $value['link'] ?>" target="_blank" class="d-flex border p-1 rounded mt-2" rel="nofollow">
-                                <div class="mr-3">
+                                <div class="me-3">
                                     <img src="<?php echo uploads($value['image'], 'profile') ?>" class="rounded" style="max-width: 130px">
                                 </div>
-                                <div class="text-left">
+                                <div class="text-start">
                                     <h3><?php echo $value['name'] ?></h3>
                                     <strong><?php echo $value['amount'] ?></strong>
                                     <p><?php echo $value['description'] ?></p>
@@ -165,7 +165,7 @@
         </div>
     </div>
     <div class="text-center mt-5 opacity-8">
-        <a class="navbar-brand mr-0" href="<?php echo route('home') ?>">
+        <a class="navbar-brand me-0" href="<?php echo route('home') ?>">
             <?php if(config('logo')): ?>
                 <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" width="80" id="navbar-logo">
             <?php else: ?>                

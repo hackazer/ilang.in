@@ -1,4 +1,4 @@
-<a href="<?php echo route('home') ?>" class="btn btn-white btn-icon-only rounded-circle position-absolute zindex-101 left-4 top-4 d-none d-lg-inline-flex" data-toggle="tooltip" data-placement="right" title="Go back">
+<a href="<?php echo route('home') ?>" class="btn btn-white btn-icon-only rounded-circle position-absolute zindex-101 left-4 top-4 d-none d-lg-inline-flex" data-bs-toggle="tooltip" data-bs-placement="right" title="Go back">
     <span class="btn-inner--icon">
         <i data-feather="arrow-left"></i>
     </span>
@@ -18,18 +18,16 @@
                             <?php message() ?>
                             <form method="post" action="<?php echo route('forgot.send') ?>">
                                 <?php echo csrf() ?>
-                                <div class="form-group">
-                                    <label class="form-control-label"><?php ee('Email') ?></label>
+                                <div class="mb-3">
+                                    <label class="form-label"><?php ee('Email') ?></label>
                                     <div class="input-group input-group-merge">
                                         <input type="email" class="form-control form-control-prepend" id="input-access" name="email" required>
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i data-feather="at-sign"></i></span>
-                                        </div>
+                                <span class="input-group-text"><i data-feather="at-sign"></i></span>
                                     </div>
                                 </div>
                                 <?php echo \Helpers\Captcha::display() ?>
                                 <div class="mt-4">
-                                    <button type="submit" class="btn btn-block btn-primary"><?php ee('Reset Password') ?></button>
+                                    <button type="submit" class="btn w-100 btn-primary"><?php ee('Reset Password') ?></button>
                                 </div>
                             </form>
                         </div>

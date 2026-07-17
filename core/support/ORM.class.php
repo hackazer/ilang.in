@@ -2587,7 +2587,7 @@
          */
         #[\ReturnTypeWillChange]
         public function unserialize($serialized) {
-            return unserialize($serialized);
+            return unserialize($serialized, ['allowed_classes' => false]);
         }
 
         /**

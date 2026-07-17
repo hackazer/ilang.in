@@ -23,8 +23,10 @@ namespace Core;
 
 use Core\Helper;
 use GemError;
+use Helpers\OutboundUrl;
 
 final class Http {
+	private const MAX_TEST_FIXTURE_BYTES = 2097152;
 	/**
 	 * URL to send request
 	 * @var null
@@ -42,12 +44,15 @@ final class Http {
 	private $_HTTPCURLPARAMS = [];
 
 	/**
-	 * CURL SSL
-	 *
-	 * @author GemPixel <https://gempixel.com> 
-	 * @version 6.0
+	 * Permit private network destinations for framework-owned internal calls.
+	 * User-controlled URLs must never enable this option.
+	 * @var bool
 	 */
-	private $_HTTPCURLSSL = true;
+	private $_HTTPAllowPrivateNetwork = false;
+	/** @var string */
+	private $_HTTPResponseBody = '';
+	/** @var bool */
+	private $_HTTPResponseLimitExceeded = false;
 	/**
 	 * Build Http Request
 	 * @author GemPixel <https://gempixel.com>
@@ -78,6 +83,13 @@ final class Http {
 	 */
 	public static function url(?string $url = null){
 		return new self($url);
+	}
+	/**
+	 * Explicitly permit a framework-owned request to reach a private network.
+	 */
+	public function allowPrivateNetwork(bool $allow = true){
+		$this->_HTTPAllowPrivateNetwork = $allow;
+		return $this;
 	}
 	/**
 	 * Get Request Body
@@ -169,20 +181,20 @@ final class Http {
 	 */
 	public function get($options = []){
 
-			if(isset($this->_HTTPCURLPARAMS["body"]) && !empty($this->_HTTPCURLPARAMS["body"])){
+		if(isset($this->_HTTPCURLPARAMS["body"]) && !empty($this->_HTTPCURLPARAMS["body"])){
 				
-				$this->_HTTPURL .= strpos($this->_HTTPURL, "?") ? "&" : "?";
+			$this->_HTTPURL .= strpos($this->_HTTPURL, "?") ? "&" : "?";
 
-				if(is_array($this->_HTTPCURLPARAMS["body"])){
-					$this->_HTTPURL .= http_build_query($this->_HTTPCURLPARAMS["body"]);
-				} else{
-					$this->_HTTPURL .= $this->_HTTPCURLPARAMS["body"];
-				}
+			if(is_array($this->_HTTPCURLPARAMS["body"])){
+				$this->_HTTPURL .= http_build_query($this->_HTTPCURLPARAMS["body"]);
+			} else{
+				$this->_HTTPURL .= $this->_HTTPCURLPARAMS["body"];
 			}
+		}
 
-			$curl = curl_init($this->_HTTPURL);
+		if($this->executePhpunitFixture()) return $this;
 
-			if(defined('DEBUG') && DEBUG || $this->_HTTPCURLSSL == false) curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		$curl = $this->prepareRequest($options);
 
 			if(isset($this->_HTTPCURLPARAMS["headers"])){
 				$headers = [];
@@ -196,26 +208,10 @@ final class Http {
 				curl_setopt($curl, CURLOPT_USERPWD, $this->_HTTPCURLPARAMS["auth"]);  
 			}
 
-			if(isset($options['timeout'])){
-				curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); 
-				curl_setopt($curl, CURLOPT_TIMEOUT, $options['timeout']);
-			}
-			
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-			
-			$response = curl_exec($curl);
-
-			$this->_HTTPCURLRESPONSE = curl_getinfo($curl);
-			$this->_HTTPCURLRESPONSE["curlbody"] = $response;
-
-			if($error = curl_error($curl)){
-				GemError::log($error);
-			}
-
-			curl_close($curl);
-			return $this;
+		$this->executeRequest($curl);
+		return $this;
 	}
-		/**
+	/**
 	 * Send a POST request
 	 * @author GemPixel <https://gempixel.com>
 	 * @version 1.0
@@ -223,9 +219,7 @@ final class Http {
 	 * @return  [type]          [description]
 	 */
 	public function post($options = []){    	
-			$curl = curl_init($this->_HTTPURL);
-
-			if(defined('DEBUG') && DEBUG || $this->_HTTPCURLSSL == false) curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		$curl = $this->prepareRequest($options);
 
 			if(isset($options["method"]) && in_array($options["method"], ["put", "patch", "delete"])){
 				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($options["method"]));
@@ -243,12 +237,7 @@ final class Http {
 				curl_setopt($curl, CURLOPT_USERPWD, $this->_HTTPCURLPARAMS["auth"]);  
 			}
 
-			if(isset($options['timeout'])){
-				curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $options['timeout']); 
-				curl_setopt($curl, CURLOPT_TIMEOUT, $options['timeout']);
-			}
-				
-			curl_setopt($curl, CURLOPT_POST, 1);
+		curl_setopt($curl, CURLOPT_POST, 1);
 
 			if(isset($this->_HTTPCURLPARAMS["body"]) && !empty($this->_HTTPCURLPARAMS["body"])){  		
 				if(is_array($this->_HTTPCURLPARAMS["body"])){
@@ -258,20 +247,107 @@ final class Http {
 				}
 			}
 
-			curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-			
-			$response = curl_exec($curl);
+		$this->executeRequest($curl);
+		return $this;
+	}
+	/**
+	 * Execute a bounded, non-network fixture only inside the PHPUnit CLI process.
+	 * This keeps compatibility tests off cURL without admitting extra production schemes.
+	 */
+	private function executePhpunitFixture(){
+		$phpunitProcess = defined('PHPUNIT_COMPOSER_INSTALL')
+			|| class_exists('PHPUnit\\Framework\\TestCase', false);
+		if(PHP_SAPI !== 'cli' || !$phpunitProcess) return false;
 
-			$this->_HTTPCURLRESPONSE = curl_getinfo($curl);
-			$this->_HTTPCURLRESPONSE["curlbody"] = $response;
+		$url = (string) $this->_HTTPURL;
+		$scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
 
-			if($error = curl_error($curl)){
-				GemError::log($error);
+		if(!in_array($scheme, ['file', 'data'], true)) return false;
+
+		if($scheme === 'file'){
+			$path = realpath(rawurldecode((string) parse_url($url, PHP_URL_PATH)));
+			$testsRoot = realpath(dirname(__DIR__).'/tests');
+
+			if($path === false || $testsRoot === false || !str_starts_with($path, $testsRoot.DIRECTORY_SEPARATOR) || !is_file($path)){
+				throw new \InvalidArgumentException('Local HTTP test fixture is not allowed.');
 			}
+		} elseif(!preg_match('~^data://text/plain(?:;charset=[a-z0-9._-]+)?(?:;base64)?,~i', $url)){
+			throw new \InvalidArgumentException('Inline HTTP test fixture is not allowed.');
+		}
 
-			curl_close($curl);
-			return $this;
-	}  
+		if(strlen($url) > self::MAX_TEST_FIXTURE_BYTES * 2){
+			throw new \InvalidArgumentException('HTTP test fixture exceeds the configured size limit.');
+		}
+
+		$stream = @fopen($url, 'rb');
+
+		if($stream === false) throw new \InvalidArgumentException('HTTP test fixture could not be opened.');
+
+		try {
+			$body = stream_get_contents($stream, self::MAX_TEST_FIXTURE_BYTES + 1);
+		} finally {
+			fclose($stream);
+		}
+
+		if($body === false || strlen($body) > self::MAX_TEST_FIXTURE_BYTES){
+			throw new \InvalidArgumentException('HTTP test fixture exceeds the configured size limit.');
+		}
+
+		$this->_HTTPCURLRESPONSE = [
+			'curlbody' => $body,
+			'http_code' => 200,
+			'test_fixture' => true,
+		];
+
+		return true;
+	}
+	/**
+	 * Build a bounded cURL request after validating and pinning its destination.
+	 */
+	private function prepareRequest(array $options){
+		if(!class_exists(OutboundUrl::class)){
+			require_once dirname(__DIR__).'/app/helpers/OutboundUrl.php';
+		}
+
+		$target = OutboundUrl::assertSafe((string) $this->_HTTPURL, $this->_HTTPAllowPrivateNetwork);
+		$timeout = isset($options['timeout']) ? (int) $options['timeout'] : OutboundUrl::DEFAULT_TOTAL_TIMEOUT;
+		$connectTimeout = isset($options['connect_timeout'])
+			? (int) $options['connect_timeout']
+			: (isset($options['timeout']) ? (int) $options['timeout'] : OutboundUrl::DEFAULT_CONNECT_TIMEOUT);
+		$curl = curl_init($this->_HTTPURL);
+
+		if($curl === false) throw new \RuntimeException('Unable to initialize outbound HTTP request.');
+
+		$this->_HTTPResponseBody = '';
+		$this->_HTTPResponseLimitExceeded = false;
+		$curlOptions = OutboundUrl::curlOptions($target, $connectTimeout, $timeout);
+		$curlOptions[CURLOPT_WRITEFUNCTION] = OutboundUrl::responseWriter(
+			$this->_HTTPResponseBody,
+			$this->_HTTPResponseLimitExceeded
+		);
+		curl_setopt_array($curl, $curlOptions);
+
+		return $curl;
+	}
+	/**
+	 * Execute a prepared request and retain the legacy response shape.
+	 */
+	private function executeRequest($curl){
+		$result = curl_exec($curl);
+		$this->_HTTPCURLRESPONSE = curl_getinfo($curl);
+		$this->_HTTPCURLRESPONSE["curlbody"] = $result === false ? false : $this->_HTTPResponseBody;
+
+		if($result === false){
+			$error = $this->_HTTPResponseLimitExceeded || curl_errno($curl) === CURLE_FILESIZE_EXCEEDED
+				? 'Outbound HTTP response exceeded the configured size limit.'
+				: curl_error($curl);
+			$this->_HTTPCURLRESPONSE['curl_error'] = $error;
+
+			if($error && class_exists(GemError::class)) GemError::log($error);
+		}
+
+		unset($curl);
+	}
 	/**
 	 * Delete Request
 	 * @author GemPixel <https://gempixel.com>
@@ -312,4 +388,4 @@ final class Http {
 		if(!is_null($name)) return isset($this->_HTTPCURLRESPONSE[$name]) ? $this->_HTTPCURLRESPONSE[$name] : null;
 		return $this->_HTTPCURLRESPONSE;
 	}
-}  
+}

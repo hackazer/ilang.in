@@ -23,7 +23,7 @@
                         <?php endif ?>
                         <?php if(\Core\Auth::user()->teamPermission('bundle.delete')): ?>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?php echo route('channel.delete', [$channel->id, \Core\Helper::nonce('channel.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                            <li><form action="<?php echo route('channel.delete', [$channel->id, \Core\Helper::nonce('channel.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                         <?php endif ?>
                         </ul>                        
                     </div>
@@ -51,7 +51,7 @@
                         <?php endif ?>
                         <?php if(\Core\Auth::user()->teamPermission('bundle.delete')): ?>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?php echo route('channel.delete', [$channel->id, \Core\Helper::nonce('channel.delete')]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><i data-feather="trash"></i> <?php ee('Delete') ?></span></a></li>
+                            <li><form action="<?php echo route('channel.delete', [$channel->id, \Core\Helper::nonce('channel.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                         <?php endif ?>
                         </ul>
                     </div>
@@ -75,15 +75,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="name" class="form-control">
                 </div> 
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Description") ?></label>			
                     <input type="text" value="" name="description" class="form-control">
                 </div>   
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
                     <input type="color" value="" name="color" class="form-control" data-trigger="colorpicker">
                 </div> 
@@ -117,15 +117,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="newname" id="newname" class="form-control">
                 </div> 
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Description") ?></label>			
                     <input type="text" value="" name="newdescription" id="newdescription" class="form-control">
                 </div>   
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
                     <input type="color" value="" name="newcolor" id="newcolor" class="form-control" data-trigger="colorpicker">
                 </div>

@@ -8,8 +8,8 @@
         <?php meta() ?>
 
         <link href="<?php echo assets('backend/css/app.css') ?>" rel="stylesheet">
-        <link href="<?php echo assets('frontend/libs/select2/dist/css/select2.min.css') ?>" rel="stylesheet">
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link href="<?php echo assets('backend/vendor.min.css') ?>" rel="stylesheet">
+        <link rel="stylesheet" href="<?php echo assets('frontend/libs/fontawesome-free/css/all.min.css') ?>">
         <link href="<?php echo assets('backend/css/style.min.css') ?>" rel="stylesheet">
         <?php if(config('font')): ?>
             <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -34,14 +34,14 @@
                 <div class="sidebar-content <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'sidebar-light', '') ?> js-simplebar">
                     <a class="sidebar-brand" href="<?php echo route('home') ?>">
                         <?php if(config('logo')): ?>
-                            <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" class="img-responsive w-50">
+                            <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" class="img-fluid w-50">
                         <?php else: ?>
                             <span class="align-middle"><?php echo config('title') ?></span>
                         <?php endif ?>
                         <?php if($user->teamid): ?>
                             <small class="badge bg-primary fs-6 ms-1"><?php ee('Teams') ?></small>
-                        <?php endif ?>                        
-                    </a>                    
+                        <?php endif ?>
+                    </a>
                     <?php view('partials.sidebar_menu', ['user' => \Models\User::first($user->rID())]) ?>
                 </div>
             </nav>
@@ -77,7 +77,7 @@
                                         <li class="list-inline-item">
                                             <a class="text-muted" href="<?php echo route('apidocs') ?>"><?php ee('Developer API') ?></a>
                                         </li>
-                                    <?php endif ?>      
+                                    <?php endif ?>
                                     <?php if(config('report')): ?>
                                     <li class="list-inline-item">
                                         <a class="text-muted" href="<?php echo route('report') ?>"><?php ee('Report') ?></a>
@@ -105,10 +105,7 @@
                 </footer>
             </div>
         </div>
-        <script src="<?php echo assets('backend/js/app.js') ?>"></script>
-        <script src="<?php echo assets('frontend/libs/jquery/dist/jquery.min.js') ?>"></script>
-        <script src="<?php echo assets('frontend/libs/select2/dist/js/select2.min.js') ?>"></script>    
-        <script src="<?php echo assets('frontend/libs/bootstrap-notify/bootstrap-notify.min.js') ?>"></script>                         
+        <script src="<?php echo assets('backend/vendor.min.js') ?>"></script>
         <?php block('footer') ?>
         <script type="text/javascript">
             var lang = <?php echo json_encode([
@@ -130,7 +127,7 @@
                     "close" => e("Close"),
                     "content" => e("Note that this action is permanent. Once you click proceed, you <strong>may not undo</strong> this. Click anywhere outside this modal or click <a href='#close' class='close-modal'>close</a> to close this.")
                 ]]) ?>
-        </script> 
+        </script>
         <script src="<?php echo assets('custom.min.js') ?>"></script>
         <script src="<?php echo assets('server.min.js') ?>"></script>
         <?php echo html_entity_decode(config('customfooter')) ?>

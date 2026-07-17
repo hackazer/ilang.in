@@ -96,12 +96,30 @@ class Gem {
      * @version 1.0
      */
     public static function preload(){
+        if(!headers_sent()){
+            foreach(self::securityHeaders() as $name => $value){
+                header($name.': '.$value);
+            }
+        }
+
         // Start Session
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.use_only_cookies', '1');
+        session_set_cookie_params(Request::cookieOptions(0));
         session_start();
 
         foreach(appConfig('boot') as $boot){
             if( call_user_func($boot) === false) exit;
-        }       
+        }
+    }
+
+    public static function securityHeaders(): array {
+        return [
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'SAMEORIGIN',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+            'Permissions-Policy' => 'camera=(), microphone=(), geolocation=(self)',
+        ];
     }
     /**
      * Bootstrap Routes
@@ -316,7 +334,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function get(string $path, $handler, string $name = NULL){
+    public static function get(string $path, $handler, ?string $name = NULL){
 
         self::$Name = $name ?: self::$routePrefix.$path;
 
@@ -334,7 +352,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function post(string $path, $handler, string $name = NULL){
+    public static function post(string $path, $handler, ?string $name = NULL){
         
         self::$Name = $name ?: self::$routePrefix.$path;
 
@@ -354,7 +372,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function put(string $path, $handler, string $name = NULL){
+    public static function put(string $path, $handler, ?string $name = NULL){
         
         self::$Name = $name ?: self::$routePrefix.$path;
 
@@ -372,7 +390,7 @@ class Gem {
      * @param   $handler Class callback
      * @param   string $name    Group name
      */
-    public static function delete(string $path, $handler, string $name = NULL){
+    public static function delete(string $path, $handler, ?string $name = NULL){
         
         self::$Name = $name ?: self::$routePrefix.$path;
 

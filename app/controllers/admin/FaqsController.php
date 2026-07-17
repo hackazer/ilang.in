@@ -53,7 +53,7 @@ class Faqs {
 
         CDN::load('editor');
         View::push("<script>                        
-                        CKEDITOR.replace('editor');
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();
 
         return View::with('admin.faq.new')->extend('admin.layouts.main');
@@ -105,7 +105,7 @@ class Faqs {
 
         CDN::load('editor');    
         View::push("<script>                        
-                        CKEDITOR.replace('editor');
+                        EditorAdapter.create('editor');
                     </script>", "custom")->toFooter();        
 
         return View::with('admin.faq.edit', compact('faq'))->extend('admin.layouts.main');

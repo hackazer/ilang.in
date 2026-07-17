@@ -556,8 +556,8 @@ final class Helper {
    * @return void
    */
   public static function username($user){
-    if(preg_match('/^\w{4,}$/', $user) && strlen($user)<=20 && filter_var($user,FILTER_SANITIZE_STRING)) {
-      return filter_var(trim($user),FILTER_SANITIZE_STRING);
+    if(is_string($user) && preg_match('/^\w{4,}$/', $user) && strlen($user) <= 20) {
+      return $user;
     }
     return false;    
   }
@@ -630,9 +630,9 @@ final class Helper {
    */
   public static function rand($length = 12, $api = ""){    
       $use = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"; 
-      srand((double)microtime()*1000000); 
+      $last = strlen($use) - 1;
       for($i=0; $i<$length; $i++) { 
-        $api.= $use[rand()%strlen($use)]; 
+        $api .= $use[random_int(0, $last)];
       } 
     return $api; 
   }  
@@ -665,13 +665,8 @@ final class Helper {
    * @return       mixed
    */
   public static function cacheConfig(?string $path = null){
-    if($path){
-      CacheManager::setDefaultConfig(new ConfigurationOption([
-          'path' => $path,
-      ]));
-    }
-
-    self::$cacheInstance = CacheManager::getInstance(self::CACHEDRIVER);
+    $config = $path ? new ConfigurationOption(['path' => $path]) : null;
+    self::$cacheInstance = CacheManager::getInstance(self::CACHEDRIVER, $config);
   }
   /**
    * Get Cache
@@ -825,10 +820,19 @@ final class Helper {
    * @param string $key
    * @return void
    */
-  public static function nonce($action = '', $duration = 60){
-    $i = ceil( time() / ( $duration*60 / 2 ) );
-    $nonce = md5( $i . $action . $action);
-    return substr($nonce, -12, 10);
+  public static function nonce($action = '', $duration = 60, ?int $time = null, ?string $secret = null, ?string $session = null){
+    $duration = max(1, (int) $duration);
+    $time ??= time();
+    $secret ??= defined('AuthToken') ? (string) AuthToken : (defined('EncryptionToken') ? (string) EncryptionToken : '');
+    $session ??= session_id() ?: 'no-session';
+
+    if($secret === ''){
+      throw new \RuntimeException('A server secret is required to generate an action nonce.');
+    }
+
+    $window = (int) floor($time / max(1, (int) (($duration * 60) / 2)));
+
+    return substr(hash_hmac('sha256', $window.'|'.$action.'|'.$session, $secret), 0, 32);
   }
   /**
    * Validate Nonce
@@ -839,10 +843,19 @@ final class Helper {
    * @param string $key
    * @return void
    */
-  public static function validateNonce($nonce, $action = ""){
-    if(substr(self::nonce($action), -12, 10) == $nonce){
-      return true;
+  public static function validateNonce($nonce, $action = "", $duration = 60, ?int $time = null, ?string $secret = null, ?string $session = null){
+    $nonce = (string) $nonce;
+    $time ??= time();
+    $windowSeconds = max(1, (int) ((max(1, (int) $duration) * 60) / 2));
+
+    foreach([$time, $time - $windowSeconds] as $candidateTime){
+      $expected = self::nonce($action, $duration, $candidateTime, $secret, $session);
+
+      if(strlen($nonce) === strlen($expected) && hash_equals($expected, $nonce)){
+        return true;
+      }
     }
+
     return false;
   } 
   /**

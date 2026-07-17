@@ -29,31 +29,31 @@
                             <?php else: ?>
                                 <li class="mb-2"><i class="me-2 text-success" data-feather="check-circle"></i>Document root is writable.</li>
                             <?php endif ?>
-                        </ul>                   
+                        </ul>
                     </p>
                     <form action="<?php echo route('admin.update.process') ?>" method="post" class="mt-5">
                         <?php echo csrf() ?>
-                        <div class="form-group mb-2">
+                        <div class="mb-2">
                             <label for="code" class="form-label"><?php ee('Purchase Code') ?></label>
                             <input type="text" class="form-control p-2" id="code" name="code" placeholder="Envato Purchase Code"  value="<?php echo config('purchasecode') ?>" autocomplete="off">
                         </div>
                         <button type="submit" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#Updating"><?php ee('Update') ?></button>
-                    </form>                
+                    </form>
                 <?php else: ?>
                     <h5 class="card-title fw-bold"><?php ee('No update available') ?></h5>
                     <p><?php ee('When a new update is available, you will see a notification in the sidebar and in the top menu. Please make sure you have enabled update notification in the admin') ?> <a href="<?php echo route('admin.settings.config', ['app']) ?>"><u><?php ee('settings') ?></u></a>. </p>
-                <?php endif ?>                
+                <?php endif ?>
             </div>
         </div>
-    </div> 
+    </div>
     <div class="col-md-5">
         <div class="card">
-            <div class="card-header"><h5 class="card-title"><?php ee('Script Information') ?></h5></div>      
-            <div class="card-body">             
+            <div class="card-header"><h5 class="card-title"><?php ee('Script Information') ?></h5></div>
+            <div class="card-body">
                 <p><strong><?php ee('Current Script Version') ?>:</strong> <?php echo config('version') ?></p>
                 <div class="d-flex">
                     <div>
-                        <strong><?php ee('Current PHP Version') ?>:</strong> <?php echo phpversion() ?> 
+                        <strong><?php ee('Current PHP Version') ?>:</strong> <?php echo phpversion() ?>
                     </div>
                     <div class="ms-auto">
                         <a href="<?php echo route('admin.phpinfo') ?>" class="badge bg-primary text-white" target="_blank"><?php ee('View PHP Info') ?></a>
@@ -72,31 +72,32 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-header"><?php ee('Enter Purchase Code') ?></div>      
-            <div class="card-body">             
+            <div class="card-header"><?php ee('Enter Purchase Code') ?></div>
+            <div class="card-body">
                 <p><?php ee('Enter your purchase code to receive automated updates and access our plugin directory.') ?></p>
-                <?php if(config('purchasecode') && $license = \Helpers\App::license()): ?> 
+                <?php if(config('purchasecode') && $license = \Helpers\App::license()): ?>
                     <span class="mb-2 d-block fw-bold"><?php ee('License Type') ?>: <?php echo $license->type ?></span>
                     <span class="mb-4 d-block fw-bold"><?php ee('Support Until') ?>: <?php echo \Core\Helper::dtime($license->support, 'F d Y') ?></span>
                 <?php endif ?>
-                <form method="post">
-                    <div class="form-group">
+                <form action="<?php echo route('admin.update.code') ?>" method="post">
+                    <?php echo csrf() ?>
+                    <div class="mb-3">
                         <label class="form-label"><?php ee('Envato Purchase Code') ?></label>
                         <input class="form-control p-2" name="newcode" placeholder="Envato Purchase Code" value="<?php echo config("purchasecode") ?>">
                     </div>
-                    <button type="submit" class="btn btn-success mt-2"><?php ee('Save') ?></button> 
+                    <button type="submit" class="btn btn-success mt-2"><?php ee('Save') ?></button>
                 </form>
             </div>
         </div>
         <div class="card">
-            <div class="card-header"><?php ee('Join the Community') ?></div>            
+            <div class="card-header"><?php ee('Join the Community') ?></div>
             <div class="card-body">
                 <p>Follow us on social media and be the first to benefit from news related to this product, new plugins and releases.</p>
                 <span class="text-primary mb-2 d-block"><i data-feather="twitter"></i> <a href="https://twitter.com/kbrmedia" target="_blank">Follow us on Twitter</a></span>
                 <span class="text-success mb-2 d-block"><i data-feather="mail"></i> <a href="https://gempixel.com/subscribe" target="_blank" class="text-success">Join our newsletter</a></span>
             </div>
         </div>
-    </div>  
+    </div>
 </div>
 <div class="modal fade" id="Updating" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="Updating" aria-hidden="true">
   <div class="modal-dialog">

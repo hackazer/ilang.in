@@ -23,9 +23,37 @@ use Core\Response;
 use Core\DB;
 use Models\User;
 use Helpers\Emails;
+use Helpers\Payments\Nowpayments\Client as NowPaymentsClient;
+use Helpers\Payments\Nowpayments\Credentials as NowPaymentsCredentials;
+use Helpers\Payments\Nowpayments\CurlTransport as NowPaymentsTransport;
+use Helpers\Payments\Nowpayments\Reconciler as NowPaymentsReconciler;
 
 class Cron {
     use Traits\Links;
+
+    private const URL_SCAN_LIMIT = 500;
+    private const URL_SCAN_INTERVAL_SECONDS = 3600;
+
+    public function nowpayments(string $token){
+        if(!hash_equals(md5('nowpayments'.AuthToken), $token)) return null;
+
+        $stored = config('nowpayments');
+        if(!$stored || empty($stored->enabled) || empty($stored->reconciliation_enabled)) return null;
+
+        try {
+            $settings = NowPaymentsCredentials::runtime($stored, static fn(string $secret): string => Helper::decrypt($secret));
+            $client = new NowPaymentsClient(
+                new NowPaymentsTransport(),
+                (string) ($settings['api_key'] ?? ''),
+                ($settings['environment'] ?? 'sandbox') === 'production' ? NowPaymentsClient::PRODUCTION_URL : NowPaymentsClient::SANDBOX_URL
+            );
+            $result = (new NowPaymentsReconciler($client, $settings))->run(50);
+            GemError::channel('Cron.nowpayments');
+            GemError::toChannel('Cron.nowpayments', json_encode($result));
+        } catch(\Throwable $exception) {
+            GemError::log('NOWPayments reconciliation failed: '.$exception::class);
+        }
+    }
 
     /**
      * Check User Cron Jobs
@@ -37,7 +65,7 @@ class Cron {
      */
     public function user(string $token){
         
-        if($token != md5('user'.AuthToken)) return null;    
+        if(!hash_equals(md5('user'.AuthToken), $token)) return null;
 
         if(!\Helpers\App::isExtended() || !config('pro')) return null;
 
@@ -69,7 +97,7 @@ class Cron {
      */
     public function data(string $token){
 
-        if($token != md5('data'.AuthToken)) return null;    
+        if(!hash_equals(md5('data'.AuthToken), $token)) return null;
 
         if(!config('pro')) return null;
 
@@ -83,7 +111,8 @@ class Cron {
             
             if($retention == 0) continue;
             
-            DB::stats()->where('urluserid', $user['id'])->whereRaw('DATE(date) < \''.date("Y-m-d 00:00:00", strtotime("-{$retention} days")).'\'')->deleteMany();
+            $cutoff = date('Y-m-d 00:00:00', strtotime("-{$retention} days"));
+            DB::stats()->where('urluserid', $user['id'])->whereLt('date', $cutoff)->deleteMany();
             $ids .= "#{$user['id']},";
         }
 
@@ -101,11 +130,11 @@ class Cron {
      */
     public function urls(string $token){
         
-        if($token != md5('url'.AuthToken)) return null;        
+        if(!hash_equals(md5('url'.AuthToken), $token)) return null;
 
         $i = 0;
         
-        foreach(DB::url()->whereNull('qrid')->whereNull('profileid')->where('status', 1)->orderByExpr('RAND()')->limit(500)->findMany() as $url){
+        foreach(self::safetyScanUrls() as $url){
             
             $detected = false;
             // Check blacklist domain
@@ -150,6 +179,96 @@ class Cron {
         GemError::channel('Cron.urls');
         GemError::toChannel('Cron.urls', $i > 0 ? "{$i} urls were blocked.": "Nothing to report.");
     }
+
+    /**
+     * Fetch a deterministic, bounded URL safety-scan window.
+     *
+     * The first range starts at an hourly rotating ID pivot. If sparse IDs leave
+     * the range short, a second indexed range wraps to the beginning of the table.
+     *
+     * @param callable|null $queryFactory Test seam returning an eligible URL query.
+     * @param int|null $bucket Deterministic rotation bucket.
+     * @param int|null $limit Maximum number of URLs to return.
+     * @return list<object>
+     */
+    private static function safetyScanUrls(?callable $queryFactory = null, ?int $bucket = null, ?int $limit = null): array
+    {
+        $queryFactory ??= static fn() => DB::url()
+            ->whereNull('qrid')
+            ->whereNull('profileid')
+            ->where('status', 1);
+
+        $limit = max(1, min(self::URL_SCAN_LIMIT, $limit ?? self::URL_SCAN_LIMIT));
+        $maxId = (int) $queryFactory()->max('id');
+
+        if($maxId < 1) return [];
+
+        $bucket ??= intdiv(time(), self::URL_SCAN_INTERVAL_SECONDS);
+        $startId = self::safetyScanStartId($maxId, $bucket);
+
+        $urls = self::resultArray(
+            $queryFactory()
+                ->whereGte('id', $startId)
+                ->orderByAsc('id')
+                ->limit($limit)
+                ->findMany()
+        );
+
+        $remaining = $limit - count($urls);
+
+        if($remaining > 0 && $startId > 1){
+            $urls = array_merge(
+                $urls,
+                self::resultArray(
+                    $queryFactory()
+                        ->whereLt('id', $startId)
+                        ->orderByAsc('id')
+                        ->limit($remaining)
+                        ->findMany()
+                )
+            );
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Map a rotation bucket across the full positive ID range without overflow.
+     */
+    private static function safetyScanStartId(int $maxId, int $bucket): int
+    {
+        if($maxId <= 1) return 1;
+
+        $secret = defined('AuthToken') ? (string) AuthToken : 'cron-url-safety-scan';
+        $bytes = unpack('C*', hash('sha256', $secret.':'.$bucket, true));
+        $remainder = 0;
+
+        foreach($bytes as $byte){
+            for($bit = 0; $bit < 8; $bit++){
+                $remainder = self::addModulo($remainder, $remainder, $maxId);
+            }
+
+            $remainder = self::addModulo($remainder, $byte % $maxId, $maxId);
+        }
+
+        return $remainder + 1;
+    }
+
+    /**
+     * Add two non-negative modular values without overflowing PHP integers.
+     */
+    private static function addModulo(int $left, int $right, int $modulus): int
+    {
+        return $left >= $modulus - $right
+            ? $left - ($modulus - $right)
+            : $left + $right;
+    }
+
+    /** @return list<object> */
+    private static function resultArray(iterable $rows): array
+    {
+        return is_array($rows) ? array_values($rows) : array_values(iterator_to_array($rows, false));
+    }
     /**
      * Remind Users
      *
@@ -161,7 +280,7 @@ class Cron {
      */
     public function remind(string $days, string $token){
         
-        if($token != md5('remind'.AuthToken)) return null;        
+        if(!hash_equals(md5('remind'.AuthToken), $token)) return null;
 
         $i = 0;
         
@@ -177,4 +296,3 @@ class Cron {
         GemError::toChannel('Cron.reminded', $i > 0 ? "{$i} users were reminded.": "Nothing to report.");
     }
 }
-

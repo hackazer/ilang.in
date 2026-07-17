@@ -8,8 +8,8 @@
         <?php meta() ?>
 
         <link href="<?php echo assets('backend/css/app.css') ?>" rel="stylesheet">
-        <link href="<?php echo assets('frontend/libs/select2/dist/css/select2.min.css') ?>" rel="stylesheet">
-        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        <link href="<?php echo assets('backend/vendor.min.css') ?>" rel="stylesheet">
+        <link rel="stylesheet" href="<?php echo assets('frontend/libs/fontawesome-free/css/all.min.css') ?>">
         <link href="<?php echo assets('backend/css/style.min.css') ?>" rel="stylesheet">
         <?php if(config('font')): ?>
             <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -34,7 +34,7 @@
                 <div class="sidebar-content <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'sidebar-light', '') ?> js-simplebar">
                     <a class="sidebar-brand" href="<?php echo route('home') ?>">
                         <?php if(config('logo')): ?>
-                            <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" class="img-responsive w-50">
+                            <img alt="<?php echo config('title') ?>" src="<?php echo uploads(config('logo')) ?>" class="img-fluid w-50">
                         <?php else: ?>
                             <span class="align-middle"><?php echo config('title') ?></span>
                         <?php endif ?>
@@ -105,10 +105,7 @@
                 </footer>
             </div>
         </div>
-        <script src="<?php echo assets('backend/js/app.js') ?>"></script>
-        <script src="<?php echo assets('frontend/libs/jquery/dist/jquery.min.js') ?>"></script>
-        <script src="<?php echo assets('frontend/libs/select2/dist/js/select2.min.js') ?>"></script>    
-        <script src="<?php echo assets('frontend/libs/bootstrap-notify/bootstrap-notify.min.js') ?>"></script>                         
+        <script src="<?php echo assets('backend/vendor.min.js') ?>"></script>
         <?php block('footer') ?>
         <script type="text/javascript">
             var lang = <?php echo json_encode([

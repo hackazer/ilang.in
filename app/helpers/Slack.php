@@ -20,6 +20,8 @@ namespace Helpers;
 
 class Slack {
 
+	public const STATE_SESSION_KEY = 'slack_oauth_state';
+
 	/**
 	 * Slack Client ID
 	 * @var null
@@ -39,6 +41,12 @@ class Slack {
 	private $redirectURI = NULL;
 
 	/**
+	 * Optional HTTP transport used by tests and alternate runtimes.
+	 * @var callable|null
+	 */
+	private $transport = NULL;
+
+	/**
 	 * Slack API Constant
 	 */
 	const slackURI = "https://slack.com/api";
@@ -47,11 +55,12 @@ class Slack {
 	 * @author KBRmedia <https://gempixel.com>
 	 * @version 1.0
 	 */
-	public function __construct($clientID, $clientSecret, $redirectURI){
+	public function __construct($clientID, $clientSecret, $redirectURI, ?callable $transport = NULL){
 
 		$this->clientID = $clientID;
 		$this->clientSecret = $clientSecret;
 		$this->redirectURI = $redirectURI;
+		$this->transport = $transport;
 
 	}
 	/**
@@ -62,6 +71,18 @@ class Slack {
 	 */
 	public function process(){
 		if(isset($_GET["code"])){
+			$expectedState = $_SESSION[self::STATE_SESSION_KEY] ?? NULL;
+			$providedState = $_GET['state'] ?? NULL;
+			unset($_SESSION[self::STATE_SESSION_KEY]);
+
+			if(!is_string($expectedState)
+				|| !is_string($providedState)
+				|| $expectedState === ''
+				|| $providedState === ''
+				|| !hash_equals($expectedState, $providedState)){
+				return false;
+			}
+
 			if($access = $this->http("oauth.access", ["code" => $_GET["code"], "client_id" => $this->clientID, "client_secret" => $this->clientSecret, "redirect_uri" => $this->redirectURI])){
 				return $access->user_id;
 			}			
@@ -116,8 +137,25 @@ class Slack {
 	 * @return  [type] [description]
 	 */
 	public function redirect(){
-		header("Location: https://slack.com/oauth/authorize?scope=commands&client_id={$this->clientID}&redirect_uri={$this->redirectURI}");
+		header('Location: '.$this->authorizationUrl());
 		exit;
+	}
+
+	/**
+	 * Build a Slack authorization URL and bind it to a one-time session state.
+	 *
+	 * @return string
+	 */
+	public function authorizationUrl(): string {
+		$state = bin2hex(random_bytes(32));
+		$_SESSION[self::STATE_SESSION_KEY] = $state;
+
+		return 'https://slack.com/oauth/authorize?'.http_build_query([
+			'scope' => 'commands',
+			'client_id' => $this->clientID,
+			'redirect_uri' => $this->redirectURI,
+			'state' => $state,
+		], '', '&', PHP_QUERY_RFC3986);
 	}
 	/**
 	 * Generate Authentication Button
@@ -186,6 +224,9 @@ class Slack {
 	 * @return  [type]       [description]
 	 */
   	private function http($endpoint, array $data){
+		if($this->transport !== NULL){
+			return ($this->transport)($endpoint, $data);
+		}
 
 		$parameters = http_build_query($data);
 
@@ -194,7 +235,8 @@ class Slack {
 		curl_setopt($curl, CURLOPT_POST, count($data));
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $parameters);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
 		
 		$response = curl_exec($curl);
 
@@ -202,7 +244,7 @@ class Slack {
 			error_log($error);
 		}
 
-		curl_close($curl);        
+		unset($curl);
 		return json_decode($response);
   	}	
 

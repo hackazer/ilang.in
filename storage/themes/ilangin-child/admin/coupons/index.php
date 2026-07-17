@@ -5,23 +5,23 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.coupons.save') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="name" class="form-label"><?php ee('Name') ?></label>
                         <input type="text" class="form-control p-2" name="name" id="name" value="" placeholder="My Sample Coupon" required>
                     </div>                    
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="description" class="form-label"><?php ee('Description') ?></label>
                         <textarea name="description" id="description" class="form-control"></textarea>
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="code" class="form-label"><?php ee('Promo Code') ?></label>
                         <input type="text" class="form-control p-2" name="code" id="code" value="" placeholder="e.g. SAVE20" required>
                     </div> 
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="discount" class="form-label"><?php ee('Discount Percentage') ?></label>
                         <input type="number" class="form-control p-2" name="discount" id="discount" value="" max="100" min="1" placeholder="e.g. 20" required>
                     </div> 
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="validuntil" class="form-label"><?php ee('Valid Until') ?></label>
                         <input type="text" class="form-control p-2" data-toggle="datetimepicker" name="validuntil" id="validuntil" value="" placeholder="e.g. 01-01-2020" required>
                     </div> 		                                         
@@ -58,7 +58,7 @@
                                     <ul class="dropdown-menu">
                                         <li><a class="dropdown-item" href="<?php echo route('admin.coupons.update', [$coupon->id]) ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#updateModal" data-toggle="updateFormContent" data-content='<?php echo json_encode(['newname' => $coupon->name,'newdescription' => $coupon->description, 'newvaliduntil' => \Core\Helper::dtime($coupon->validuntil, 'Y-m-d')]) ?>'><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                         <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal" href="<?php echo route('admin.coupons.delete', [$coupon->id, \Core\Helper::nonce('coupon.delete')]) ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></a></li>
+                                        <li><form action="<?php echo route('admin.coupons.delete', [$coupon->id, \Core\Helper::nonce('coupon.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>
@@ -80,15 +80,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newname" class="form-label"><?php ee('Name') ?></label>
                     <input type="text" class="form-control p-2" name="newname" id="newname" value="" placeholder="My Sample Coupon" required>
                 </div>                    
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newdescription" class="form-label"><?php ee('Description') ?></label>
                     <textarea name="newdescription" id="newdescription" class="form-control"></textarea>
                 </div>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newvaliduntil" class="form-label"><?php ee('Valid Until') ?></label>
                     <input type="text" class="form-control p-2" data-datepicker name="newvaliduntil" id="newvaliduntil" value="" placeholder="e.g. 01-01-2020" required>
                 </div> 

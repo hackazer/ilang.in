@@ -21,54 +21,58 @@
 
 return [
     'editor' => [
-        'version' => '4.16.1',
+        'version' => '4.13.5',
         'js' => [
-            'https://cdn.ckeditor.com/[version]/standard/ckeditor.js'
+            assets('vendor/jodit/jodit.min.js'),
+            assets('editor-adapter.js')
+        ],
+        'css' => [
+            assets('vendor/jodit/jodit.min.css')
         ]
     ],
     'simpleeditor' => [
-        'version' => '4.16.1',
+        'version' => '4.13.5',
         'js' => [
-            'https://cdn.ckeditor.com/[version]/basic/ckeditor.js'
-        ]
-    ],
-    'datetimepicker' => [
-        'version' => '0.6.4',
-        'js' => [
-            '//cdnjs.cloudflare.com/ajax/libs/datepicker/[version]/datepicker.min.js'
+            assets('vendor/jodit/jodit.min.js'),
+            assets('editor-adapter.js')
         ],
         'css' => [
-            '//cdnjs.cloudflare.com/ajax/libs/datepicker/[version]/datepicker.min.css'
+            assets('vendor/jodit/jodit.min.css')
+        ]
+    ],
+    'airdatepicker' => [
+        'version' => '3.6.0',
+        'js' => [
+            assets('frontend/libs/air-datepicker/air-datepicker.js'),
+            assets('date-picker.min.js')
+        ],
+        'css' => [
+            assets('frontend/libs/air-datepicker/air-datepicker.css')
         ]
     ],
     'codeeditor' => [
-        'version' => '1.4.12',
-        'js' => ['//cdnjs.cloudflare.com/ajax/libs/ace/[version]/ace.js']
+        'version' => '1.44.0',
+        'js' => [assets('frontend/libs/ace-builds/ace.js')]
     ],
-    'spectrum' => [
-        'version' => '1.8.1',        
-        'js'=> ['//cdnjs.cloudflare.com/ajax/libs/spectrum/[version]/spectrum.min.js'],
-        'css'=> ['//cdnjs.cloudflare.com/ajax/libs/spectrum/[version]/spectrum.min.css']
+    'coloris' => [
+        'version' => '0.25.0',
+        'js' => [
+            assets('frontend/libs/coloris/coloris.min.js'),
+            assets('color-picker.min.js')
+        ],
+        'css' => [assets('frontend/libs/coloris/coloris.min.css')]
     ],
     'autocomplete' => [
-        'version' => '1.4.11',
-        'js' => ['//cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/[version]/jquery.autocomplete.min.js']
-    ],
-    "daterangepicker" => [
-        "version" => "3.1",
-        "css" => ["//cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css"],
-        "js" => [
-            "//cdn.jsdelivr.net/momentjs/latest/moment.min.js",
-            "//cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"
-          ]
+        'version' => '2.0.4',
+        'js' => [assets('frontend/libs/devbridge-autocomplete/jquery.autocomplete.min.js')]
     ],
     "hljs" => [
-        "version" => "11.2.0",
-        "js" => ["//cdnjs.cloudflare.com/ajax/libs/highlight.js/[version]/highlight.min.js"],
-        "css" => ["//cdnjs.cloudflare.com/ajax/libs/highlight.js/[version]/styles/night-owl.min.css"]
+        "version" => "11.11.1",
+        "js" => [assets('frontend/libs/highlight.js/highlight.min.js')],
+        "css" => [assets('frontend/libs/highlight.js/night-owl.min.css')]
     ],
     'blockadblock' => [
         'version' => '3.2.1',
-        'js' => ['https://cdnjs.cloudflare.com/ajax/libs/blockadblock/[version]/blockadblock.min.js']
+        'js' => [assets('frontend/libs/blockadblock/blockadblock.min.js')]
     ]
 ];

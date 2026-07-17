@@ -23,6 +23,7 @@ use Core\Request;
 use Core\View;
 use Core\Helper;
 use Helpers\App;
+use Helpers\Payments\Nowpayments\Credentials as NowPaymentsCredentials;
 
 class Settings {
     
@@ -43,7 +44,7 @@ class Settings {
         \Helpers\CDN::load('simpleeditor');
 
         View::push("<script>
-                        CKEDITOR.replace('news');
+                        EditorAdapter.create('news');
                     </script>", "custom")->toFooter();        
 
         return View::with('admin.settings.index', compact('timezones'))->extend('admin.layouts.main');
@@ -68,8 +69,6 @@ class Settings {
         }
 
         View::set('title', ucfirst($config).' '.e('Settings').' - Admin');
-
-        View::push(assets('frontend/libs/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js'), 'js')->toFooter();    
 
         $paypal = null;
 
@@ -131,6 +130,14 @@ class Settings {
 
         foreach($settings as $key => $value){
             if($setting = DB::settings()->where('config', $key)->first()){
+                if($key === 'nowpayments' && is_array($value)){
+                    $value = NowPaymentsCredentials::prepareForStorage(
+                        $value,
+                        config('nowpayments') ?: [],
+                        static fn (string $secret): string => Helper::encrypt($secret)
+                    );
+                }
+
                 $setting->var = is_array($value) ? json_encode($value) : trim($value);
                 $setting->save();
             }

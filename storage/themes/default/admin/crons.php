@@ -1,25 +1,25 @@
 <h1 class="h3 mb-2"><?php ee('Cron Jobs') ?></h1>
-<p class="mb-5"><?php ee('You need to add the following cron jobs either through cPanel (or other control panel) or directly to your server cron jobs.') ?></p>     
+<p class="mb-5"><?php ee('You need to add the following cron jobs either through cPanel (or other control panel) or directly to your server cron jobs.') ?></p>
 <?php if(\Helpers\App::isExtended()): ?>
-<div class="row">    
+<div class="row">
     <div class="col-md-6 h-100">
         <div class="card">
             <div class="card-header"><?php ee('User Membership') ?></div>
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <p><?php ee('This cron will check all users and if they are expired, it will switch them to a free plan') ?></p>
-                    
+
                     <label for="date" class="form-label"><?php ee('Cron Link') ?></label>
                     <input type="text" class="form-control" value="<?php echo route('crons.user', [md5('user'.AuthToken)]) ?>" disabled>
                 </div>
                 <p class="mt-3"><?php ee('Cron Command') ?></p>
                 <pre class="bg-dark text-white p-3 rounded my-3">wget -q -O - <?php echo route('crons.user', [md5('user'.AuthToken)]) ?> >/dev/null 2>&1</pre>
-                
+
                 <p class="mt-3"><?php ee('The following command line will run every day at midnight. You can change it as per your needs.') ?></p>
-                <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.user', [md5('user'.AuthToken)]) ?> >/dev/null 2>&1</pre>                
+                <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.user', [md5('user'.AuthToken)]) ?> >/dev/null 2>&1</pre>
             </div>
         </div>
-    </div>    
+    </div>
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><?php ee('Logs') ?></div>
@@ -29,25 +29,25 @@
         </div>
     </div>
 </div>
-<div class="row">    
+<div class="row">
     <div class="col-md-6 h-100">
         <div class="card">
             <div class="card-header"><?php ee('Remind Trial Users') ?></div>
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <p><?php ee('This cron will check all trial users and if they are close to expiry, it will remind them to renew. The number of days is defined in the cron url. In the urls below, it is currently set to 1 so this means users will be reminded if their trial expires in 1 day.') ?></p>
-                    
+
                     <label for="date" class="form-label"><?php ee('Cron Link') ?></label>
                     <input type="text" class="form-control" value="<?php echo route('crons.remind', ['1', md5('remind'.AuthToken)]) ?>" disabled>
                 </div>
                 <p class="mt-3"><?php ee('Cron Command') ?></p>
                 <pre class="bg-dark text-white p-3 rounded my-3">wget -q -O - <?php echo route('crons.remind', ['1', md5('remind'.AuthToken)]) ?> >/dev/null 2>&1</pre>
-                
+
                 <p class="mt-3"><?php ee('The following command line will run every day at midnight. You can change it as per your needs.') ?></p>
-                <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.remind', ['1', md5('remind'.AuthToken)]) ?> >/dev/null 2>&1</pre>                
+                <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.remind', ['1', md5('remind'.AuthToken)]) ?> >/dev/null 2>&1</pre>
             </div>
         </div>
-    </div>    
+    </div>
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><?php ee('Logs') ?></div>
@@ -62,14 +62,14 @@
     <div class="col-md-6 h-100">
         <div class="card">
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <label for="date" class="form-label"><?php ee('Data Retention') ?></label>
                     <p><?php ee('This cron will remove data with respect to the data retention settings in the plan.') ?></p>
                     <input type="text" class="form-control" value="<?php echo route('crons.data', [md5('data'.AuthToken)]) ?>" disabled>
                 </div>
                 <p class="mt-3"><?php ee('Cron Command') ?></p>
                 <pre class="bg-dark text-white p-3 rounded my-3">wget -q -O - <?php echo route('crons.data', [md5('data'.AuthToken)]) ?> >/dev/null 2>&1</pre>
-                
+
                 <p class="mt-3"><?php ee('The following command line will run every day at midnight. You can change it as per your needs.') ?></p>
                 <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.data', [md5('data'.AuthToken)]) ?> >/dev/null 2>&1</pre>
             </div>
@@ -84,11 +84,11 @@
         </div>
     </div>
 </div>
-<div class="row">    
+<div class="row">
     <div class="col-md-6 h-100">
         <div class="card">
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <label for="date" class="form-label"><?php ee('URL Checks') ?> (Optional)</label>
                     <p><?php ee('This cron will check each URL in the database against active security checks like Web Risk, Phishtank, Virus Total or Blacklist.') ?></p>
                     <div class="alert bg-danger p-3 text-white rounded">
@@ -97,11 +97,11 @@
                     <input type="text" class="form-control" value="<?php echo route('crons.urls', [md5('url'.AuthToken)]) ?>" disabled>
 
                     <p class="mt-3"><?php ee('Cron Command') ?></p>
-                    <pre class="bg-dark text-white p-3 rounded my-3">wget -q -O - <?php echo route('crons.urls', [md5('urls'.AuthToken)]) ?> >/dev/null 2>&1</pre> 
+                    <pre class="bg-dark text-white p-3 rounded my-3">wget -q -O - <?php echo route('crons.urls', [md5('urls'.AuthToken)]) ?> >/dev/null 2>&1</pre>
 
                     <p class="mt-3"><?php ee('The following command line will run every day at midnight. You can change it as per your needs.') ?></p>
-                    <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.urls', [md5('urls'.AuthToken)]) ?> >/dev/null 2>&1</pre> 
-                </div>                
+                    <pre class="bg-dark text-white p-3 rounded my-3">0 0 * * * wget -q -O - <?php echo route('crons.urls', [md5('urls'.AuthToken)]) ?> >/dev/null 2>&1</pre>
+                </div>
             </div>
         </div>
     </div>

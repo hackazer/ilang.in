@@ -23,6 +23,7 @@ use \Core\Request;
 use \Core\Response;
 use \Core\DB;
 use \Core\Auth;
+use \Helpers\LinkPassword;
 use \Models\User;
 
 class Links {
@@ -186,10 +187,20 @@ class Links {
             }
         }  
 
-        $stats['socialCount']['facebook'] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%facebook.%' OR domain LIKE '%fb.%')")->count();
-        $stats['socialCount']['twitter'] = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%twitter.%' OR domain LIKE '%t.co%')")->count();
-        $stats['socialCount']['instagram']  = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%instagram.%')")->count();
-        $stats['socialCount']['linkedin']  = DB::stats()->where("urlid", $url->id)->whereRaw("(domain LIKE '%linkedin.%')")->count();
+        $socialCounts = DB::stats()
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%facebook.%' OR domain LIKE '%fb.%' THEN 1 ELSE 0 END)", 'social_facebook')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%twitter.%' OR domain LIKE '%t.co%' THEN 1 ELSE 0 END)", 'social_twitter')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%instagram.%' THEN 1 ELSE 0 END)", 'social_instagram')
+                            ->selectExpr("SUM(CASE WHEN domain LIKE '%linkedin.%' THEN 1 ELSE 0 END)", 'social_linkedin')
+                            ->where('urlid', $url->id)
+                            ->first();
+
+        $stats['socialCount'] = [
+            'facebook' => (int) ($socialCounts->social_facebook ?? 0),
+            'twitter' => (int) ($socialCounts->social_twitter ?? 0),
+            'instagram' => (int) ($socialCounts->social_instagram ?? 0),
+            'linkedin' => (int) ($socialCounts->social_linkedin ?? 0),
+        ];
     
         return Response::factory(['error' => 0, 'details' => $result, 'data' => $stats])->json();
     }
@@ -225,7 +236,7 @@ class Links {
 
         $link->custom = (isset($data->custom) && !empty($data->custom)) ? clean($data->custom) : null;
 
-		$link->pass = (isset($data->password) && !empty($data->password)) ? clean($data->password) : null;
+		$link->pass = LinkPassword::hash((isset($data->password) && !empty($data->password)) ? $data->password : null);
 
 		$link->domain = (isset($data->domain) && !empty($data->domain)) ? clean($data->domain) : null;
 
@@ -350,7 +361,7 @@ class Links {
 
         $link->custom = (isset($data->custom) && !empty($data->custom)) ? clean($data->custom) : null;
 
-		$link->pass = (isset($data->password) && !empty($data->password)) ? clean($data->password) : null;
+		$link->pass = LinkPassword::hash((isset($data->password) && !empty($data->password)) ? $data->password : null);
 
 		$link->domain = (isset($data->domain) && !empty($data->domain)) ? clean($data->domain) : null;
 

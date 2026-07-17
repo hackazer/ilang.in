@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.5/phpunit.xsd" bootstrap="tests/bootstrap.php" cacheResult="false" colors="true" failOnDeprecation="true" failOnNotice="true" failOnPhpunitDeprecation="true" failOnRisky="true" failOnWarning="true">
+  <testsuites>
+    <testsuite name="compatibility">
+      <directory>tests/Compatibility</directory>
+    </testsuite>
+    <testsuite name="nowpayments">
+      <directory>tests/Payments/NowPayments</directory>
+    </testsuite>
+    <testsuite name="security">
+      <directory>tests/Security</directory>
+    </testsuite>
+    <testsuite name="performance">
+      <directory>tests/Performance</directory>
+    </testsuite>
+  </testsuites>
+  <source ignoreIndirectDeprecations="true">
+    <include>
+      <directory>app</directory>
+      <directory>core</directory>
+    </include>
+  </source>
+</phpunit>

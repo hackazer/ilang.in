@@ -9,6 +9,7 @@ This living ExecPlan coordinates the PHP modernization, security and performance
 1. [PHP 8.3 and 8.5 Compatibility](../docs/superpowers/plans/2026-07-16-php-compatibility.md)
 2. [Security and Performance Hardening](../docs/superpowers/plans/2026-07-16-security-performance.md)
 3. [NOWPayments Gateway](../docs/superpowers/plans/2026-07-16-nowpayments-gateway.md)
+4. [Dependency and Frontend Runtime Modernization](../docs/superpowers/plans/2026-07-16-dependency-modernization.md)
 
 ## Progress
 
@@ -17,12 +18,13 @@ This living ExecPlan coordinates the PHP modernization, security and performance
 - [x] Exclude production uploads, logs, caches, secrets, and generated analysis data from Git.
 - [x] Approve the modular gateway and dedicated ledger architecture.
 - [x] Write and self-review the design specification.
-- [ ] Create and push the clean `main` baseline.
-- [ ] Create `dev` from `main`.
-- [ ] Execute PHP compatibility plan.
-- [ ] Execute security and performance plan.
-- [ ] Execute NOWPayments plan.
-- [ ] Run final verification and review.
+- [x] Create and push the clean `main` baseline.
+- [x] Create `dev` from `main`.
+- [x] Execute PHP compatibility plan.
+- [x] Execute security and performance plan.
+- [x] Execute NOWPayments plan.
+- [x] Execute dependency and frontend runtime modernization plan.
+- [x] Run final verification and review.
 - [ ] Push `dev`, merge into `main`, and push `main`.
 
 ## Decisions
@@ -46,6 +48,13 @@ No branch is merged until all of the following are fresh and successful:
 - CodeGraph synchronization
 - secret scan of tracked files
 - review of `git diff main...dev`
+
+## Current evidence
+
+- Browser runtime is pinned to Bootstrap 5.3.8, jQuery 4.0.0, Font Awesome 7.3.1, Jodit 4.13.5, Air Datepicker 3.6.0, Coloris 0.25.0, and IMask 7.6.1.
+- PHP 8.3 passes PHPUnit 12.5.31 and PHP 8.5 passes PHPUnit 13.2.4. Both runs pass 547 tests and 8,054 assertions.
+- `sh scripts/verify-release.sh` passes on PHP 8.5.7, and the equivalent PHP 8.3 lint, Composer, audit, platform, and full-test checks pass.
+- The PHP 8.3 minimum intentionally keeps the supported PHPUnit 12.5 line. PHPUnit 13 requires PHP 8.4+, so PHP 8.5 CI runs the newer test runner.
 
 ## Recovery
 
