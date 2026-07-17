@@ -129,8 +129,9 @@ PHP
 fi
 
 echo "Checking tracked secret and runtime files"
-if git ls-files | rg -q '(^|/)(config\.php|\.env($|\.)|.*\.(key|pem|p12|pfx|sql|log|gem)$)'; then
-    git ls-files | rg '(^|/)(config\.php|\.env($|\.)|.*\.(key|pem|p12|pfx|sql|log|gem)$)'
+tracked_secret_files=$(git ls-files | rg '(^|/)(config\.php|\.env($|\.)|.*\.(key|pem|p12|pfx|sql|log|gem)$)' | rg -v '(^|/)\.env\.example$' || true)
+if [ -n "$tracked_secret_files" ]; then
+    printf '%s\n' "$tracked_secret_files"
     exit 1
 fi
 
