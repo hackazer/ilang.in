@@ -51,10 +51,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -91,10 +88,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -131,10 +125,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -171,10 +162,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -211,10 +199,7 @@ class Links {
             ], 'LIKE ');
         }
 
-        if($request->date) {
-            $date = clean($request->date);
-            $query->whereRaw('DATE(date) < ?', Helper::dtime($date, 'Y-m-d'));
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
 
         if($request->sort == "old") $query->orderByAsc('date');
         if($request->sort == "most") $query->orderByDesc('click');
@@ -557,6 +542,24 @@ class Links {
         
         return Helper::redirect()->back()->with('success', e('Selected Links have been enabled.'));
     }   
+
+    private static function applyDateCutoff($query, ?string $value)
+    {
+        $value = trim((string) $value);
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if(
+            !$date ||
+            ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+            $date->format('Y-m-d') !== $value
+        ){
+            return $query;
+        }
+
+        return $query->whereLt('date', $date->format('Y-m-d H:i:s'));
+    }
+
     /**
      * Import Links
      *

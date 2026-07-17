@@ -109,9 +109,7 @@ class Dashboard {
             $query->whereLike('pixels', '%'.clean($request->pixel).'%');
         }
 
-        if($request->date && $date = date('Y-m-d 00:00:00', strtotime($request->date))){
-            $query->whereRaw("DATE(date) < DATE('{$date}')");
-        }
+        if($request->date) self::applyDateCutoff($query, (string) $request->date);
         $limit = 15;
 
         if($request->perpage && is_numeric($request->perpage) && $request->perpage > 15 && $request->perpage <= 100){
@@ -189,10 +187,12 @@ class Dashboard {
         }
             
 
+        $statsStart = date('Y-m-d 00:00:00', strtotime('-14 days'));
+
         $results = DB::stats()
                     ->selectExpr('COUNT(DATE(date))', 'count')
                     ->selectExpr('DATE(date)', 'date')
-                    ->whereRaw('date >= \''.date('Y-m-d', strtotime('-14 days')).'\'')
+                    ->whereGte('date', $statsStart)
                     ->where('urluserid',Auth::user()->rID())
                     ->orderByDesc('date')
                     ->groupByExpr('DATE(date)')
@@ -307,6 +307,23 @@ class Dashboard {
             }
             view('partials.links', compact('url'));
         }
+    }
+
+    private static function applyDateCutoff($query, ?string $value)
+    {
+        $value = trim((string) $value);
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if(
+            !$date ||
+            ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+            $date->format('Y-m-d') !== $value
+        ){
+            return $query;
+        }
+
+        return $query->whereLt('date', $date->format('Y-m-d H:i:s'));
     }
 
     private static function withBundleNames(array $urls, ?callable $loadBundles = null): array

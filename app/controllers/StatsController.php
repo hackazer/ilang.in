@@ -166,19 +166,9 @@ class Stats {
 
         $response = ['label' => e('Clicks')];
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -197,11 +187,10 @@ class Stats {
             }
         }  
         if($diff->y >= 1 || $diff->m > 3){
-            $results = DB::stats()
+            $results = self::applyDateRange(DB::stats()
                         ->selectExpr('COUNT(MONTH(date))', 'count')
                         ->selectExpr('DATE(date)', 'date')
-                        ->where('urlid', $id)
-                        ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                        ->where('urlid', $id), $start, $end)
                         ->groupByExpr('YEAR(date)')
                         ->groupByExpr('MONTH(date)')
                         ->findArray();
@@ -210,11 +199,10 @@ class Stats {
                 $response['data'][Helper::dtime($data['date'], 'F Y')] = (int) $data['count'];
             }   
         }  else {
-            $results = DB::stats()
+            $results = self::applyDateRange(DB::stats()
                         ->selectExpr('COUNT(DATE(date))', 'count')
                         ->selectExpr('DATE(date)', 'date')
-                        ->where('urlid', $id)
-                        ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                        ->where('urlid', $id), $start, $end)
                         ->groupByExpr('DATE(date)')
                         ->findArray();
             
@@ -340,19 +328,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -364,11 +342,10 @@ class Stats {
         $period = new \DatePeriod($start, $interval, $end);
 
 
-        $countries = DB::stats()
+        $countries = self::applyDateRange(DB::stats()
                         ->selectExpr('COUNT(id)', 'count')
                         ->selectExpr('country', 'country')
-                        ->where('urlid', $id)
-                        ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                        ->where('urlid', $id), $start, $end)
                         ->groupByExpr('country')
                         ->orderByDesc('count')
                         ->findArray();
@@ -566,19 +543,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -589,11 +556,10 @@ class Stats {
         $interval = \DateInterval::createFromDateString('1 day');
         $period = new \DatePeriod($start, $interval, $end);
 
-        $platform = DB::stats()
+        $platform = self::applyDateRange(DB::stats()
                     ->selectExpr('COUNT(id)', 'count')
                     ->selectExpr('os', 'os')
-                    ->where('urlid', $id)
-                    ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                    ->where('urlid', $id), $start, $end)
                     ->groupByExpr('os')
                     ->orderByDesc('count')
                     ->findArray();
@@ -723,19 +689,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -744,11 +700,10 @@ class Stats {
         }
         
 
-        $browsers = DB::stats()
+        $browsers = self::applyDateRange(DB::stats()
                     ->selectExpr('COUNT(id)', 'count')
                     ->selectExpr('browser', 'browser')
-                    ->where('urlid', $id)
-                    ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                    ->where('urlid', $id), $start, $end)
                     ->groupByExpr('browser')
                     ->orderByDesc('count')
                     ->findArray();
@@ -878,19 +833,9 @@ class Stats {
             if(Auth::user()->rID() != $url->userid) return (new Response(['error' => true, 'data' => null], 500))->json();  
 		}
 
-        if(!$request->from || !$request->to){
-            $from = date("Y-m-d", strtotime("-14 days"));
-            $to = date("Y-m-d", strtotime("+1 day"));
-        } else {
-            $from = date("Y-m-d H:i:s", strtotime($request->from.' 00:00:00'));
-            $to = date("Y-m-d H:i:s", strtotime($request->to.' 23:59:59'));					
-        }
-    
+        [$start, $end] = self::reportDateRange((string) $request->from, (string) $request->to);
 
-        $start = new \DateTime($from);
-        $end = new \DateTime($to);
-
-        $diff = $end->diff($start);
+        $diff = $end->modify('-1 second')->diff($start);
 
         if($diff->y >= 1 || $diff->m > 3){
             $interval = \DateInterval::createFromDateString('1 month');    
@@ -898,11 +843,10 @@ class Stats {
             $interval = \DateInterval::createFromDateString('1 day');
         }
 
-        $languages = DB::stats()
+        $languages = self::applyDateRange(DB::stats()
                     ->selectExpr('COUNT(id)', 'count')
                     ->selectExpr('language', 'language')
-                    ->where('urlid', $id)
-                    ->whereRaw("(date BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59')")
+                    ->where('urlid', $id), $start, $end)
                     ->groupByExpr('language')
                     ->orderByDesc('count')
                     ->findArray();
@@ -1008,5 +952,51 @@ class Stats {
         View::push("<script>new Chart($('canvas'), {type: 'doughnut',data: {labels: ['Facebook', 'Twitter', 'Instagram', 'Linkedin'],datasets: [{data: ".json_encode($social).",borderWidth: 5,backgroundColor: ['#3b5998','#1DA1F2', '#fbad50', '#0077b5']}]},options: {responsive: !window.MSInputMethodContext,maintainAspectRatio: false,plugins:{legend: {position: 'bottom',display: true}},cutout: '75%'}})</script>", 'custom')->tofooter();
 
         return View::with('stats.referrers', compact('url', 'top', 'topReferrer'))->extend('layouts.main');
+    }
+
+    /**
+     * @return array{\DateTimeImmutable, \DateTimeImmutable}
+     */
+    private static function reportDateRange(
+        ?string $from,
+        ?string $to,
+        ?\DateTimeImmutable $today = null
+    ): array {
+        $today = ($today ?? new \DateTimeImmutable('today'))->setTime(0, 0, 0);
+        $start = self::parseReportDate($from);
+        $end = self::parseReportDate($to);
+
+        if(!$start || !$end || $start > $end){
+            return [$today->modify('-14 days'), $today->modify('+1 day')];
+        }
+
+        return [$start, $end->modify('+1 day')];
+    }
+
+    private static function parseReportDate(?string $value): ?\DateTimeImmutable
+    {
+        $value = trim((string) $value);
+        $date = \DateTimeImmutable::createFromFormat('!m/d/Y', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        if(
+            !$date ||
+            ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) ||
+            $date->format('m/d/Y') !== $value
+        ){
+            return null;
+        }
+
+        return $date;
+    }
+
+    private static function applyDateRange(
+        $query,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end
+    ) {
+        return $query
+            ->whereGte('date', $start->format('Y-m-d H:i:s'))
+            ->whereLt('date', $end->format('Y-m-d H:i:s'));
     }
 }
