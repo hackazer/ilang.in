@@ -385,6 +385,12 @@ class Update {
             if(DB::hasIndex('stats', 'os') === false){
                 $table->change('os')->string('os')->index();
             }
+            if(DB::hasIndex('stats', 'stats_user_date') === false){
+                $table->multiindex('stats_user_date', ['urluserid', 'date']);
+            }
+            if(DB::hasIndex('stats', 'stats_url_ip') === false){
+                $table->multiindex('stats_url_ip', ['urlid', 'ip']);
+            }
         });
         
         DB::alter('url', function($table){

@@ -706,6 +706,23 @@ trait Links {
     }
 
     /**
+     * Return half-open month bounds so the stats date index remains usable.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function monthlyClickQuotaRange(?\DateTimeInterface $now = null): array {
+        $now ??= new \DateTimeImmutable('now');
+        $start = \DateTimeImmutable::createFromInterface($now)
+            ->modify('first day of this month')
+            ->setTime(0, 0);
+
+        return [
+            $start->format('Y-m-d H:i:s'),
+            $start->modify('first day of next month')->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
      * Run an accepted-click mutation only when the monthly quota allows it.
      */
     public static function applyMonthlyClickQuota(
@@ -832,12 +849,15 @@ trait Links {
 			$plan = DB::plans()->where('id', $user->planid)->first();
             $limit = $plan ? (int) $plan->numclicks : 0;
             $now = new \DateTimeImmutable('now');
+            [$monthStart, $nextMonthStart] = self::monthlyClickQuotaRange($now);
 
             if(!self::applyMonthlyClickQuota(
                 $user->id,
                 $limit,
                 static fn(): int => DB::stats()
-                    ->whereRaw("MONTH(date) = MONTH(NOW()) AND YEAR(date) = YEAR(NOW()) AND urluserid = ?", $url->userid)
+                    ->where('urluserid', $url->userid)
+                    ->whereGte('date', $monthStart)
+                    ->whereLt('date', $nextMonthStart)
                     ->count(),
                 fn(): mixed => $this->recordAcceptedClick($request, $url, $user),
                 now: $now
@@ -853,19 +873,20 @@ trait Links {
      * Persist an accepted click without changing redirect behavior.
      */
     private function recordAcceptedClick($request, $url, $user){
-        $url->click++;
-        $url->save();
+        if(config("tracking") != "1" && $url->userid == "0"){
+            self::withUrlClickReservation((int) $url->id, static function () use ($request, $url): void {
+                $isUnique = !DB::stats()
+                    ->where('urlid', $url->id)
+                    ->where('ip', $request->ip())
+                    ->first();
 
-		// Update clicks
-        $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
+                self::incrementUrlClick((int) $url->id, $isUnique);
+            });
 
-        // Update unique clicks
-		if(!DB::stats()->where("urlid", $url->id)->where("ip", $request->ip())->first()){
-            $url->uniqueclick++;
-            $url->save();
-		}
+            $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
 
-        if(config("tracking") != "1" && $url->userid == "0") return false;
+            return false;
+        }
 
         // System Analytics
         if($request->referer()){
@@ -899,7 +920,19 @@ trait Links {
         $stats->os = $request->device();
         $stats->browser = $request->browser();
         $stats->language = substr($request->server('http_accept_language') ?? '', 0, 2);
-        $stats->save();
+
+        self::withUrlClickReservation((int) $url->id, static function () use ($request, $stats, $url): void {
+            $isUnique = !DB::stats()
+                ->where('urlid', $url->id)
+                ->where('ip', $request->ip())
+                ->first();
+
+            self::incrementUrlClick((int) $url->id, $isUnique);
+
+            $stats->save();
+        });
+
+        $request->cookie("short_{$url->id}", 1, appConfig('app.antiflood'));
 
         if($user && !empty($user->zapview) && Helper::isURL($user->zapview)){
            \Core\Http::url($user->zapview)
@@ -914,6 +947,46 @@ trait Links {
                             "browser" 	=> $stats->browser,
                             "date" 		=> Helper::dtime()
                         ])->post();
+        }
+    }
+
+    private static function incrementUrlClick(int $urlId, bool $isUnique): void {
+        $table = (defined('DBprefix') ? DBprefix : '').'url';
+        DB::raw_execute(
+            "UPDATE `{$table}` SET `click` = `click` + 1, `uniqueclick` = `uniqueclick` + ? WHERE `id` = ?",
+            [$isUnique ? 1 : 0, $urlId]
+        );
+    }
+
+    /**
+     * Serialize counter and analytics writes for a URL when no outer quota
+     * transaction already owns the write sequence.
+     */
+    private static function withUrlClickReservation(int $urlId, callable $reservation): mixed {
+        $pdo = DB::get_db();
+
+        if($pdo->inTransaction()) return $reservation();
+
+        $lockName = 'url-clicks:'.substr(hash('sha256', (string) $urlId), 0, 48);
+        $lock = $pdo->prepare('SELECT GET_LOCK(:lock_name, 10)');
+        $lock->execute(['lock_name' => $lockName]);
+
+        if((int) $lock->fetchColumn() !== 1){
+            throw new \RuntimeException('Unable to acquire URL click lock.');
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $result = $reservation();
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:lock_name)');
+            $release->execute(['lock_name' => $lockName]);
         }
     }
     /**

@@ -821,6 +821,8 @@ class Setup {
             $table->text('referer');
             $table->string('browser')->index();
             $table->string('os')->index();
+            $table->multiindex('stats_user_date', ['urluserid', 'date']);
+            $table->multiindex('stats_url_ip', ['urlid', 'ip']);
         });
         
         DB::schema('url', function($table){            

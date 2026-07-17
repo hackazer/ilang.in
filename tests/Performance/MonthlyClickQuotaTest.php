@@ -31,6 +31,18 @@ final class MonthlyClickQuotaTest extends TestCase
         );
     }
 
+    public function testQuotaRangeUsesSargableHalfOpenCalendarMonthBounds(): void
+    {
+        self::assertTrue(method_exists(MonthlyClickQuotaHarness::class, 'monthlyClickQuotaRange'));
+
+        [$start, $end] = MonthlyClickQuotaHarness::monthlyClickQuotaRange(
+            new DateTimeImmutable('2026-07-31 23:59:59')
+        );
+
+        self::assertSame('2026-07-01 00:00:00', $start);
+        self::assertSame('2026-08-01 00:00:00', $end);
+    }
+
     public function testReachedQuotaIsCheckedBeforeAcceptedClickMutation(): void
     {
         self::assertTrue(method_exists(MonthlyClickQuotaHarness::class, 'applyMonthlyClickQuota'));
