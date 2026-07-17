@@ -882,11 +882,48 @@ final class App {
      * @param [type] $url
      * @return void
      */
-    public static function rss($url){
+    public static function rss($url, ?callable $resolver = null, ?callable $transport = null){
 
-        if(!$content = @file_get_contents($url)) return 'Invalid RSS';
+        if(!is_string($url) || !\Core\Helper::isURL($url)) return 'Invalid RSS';
 
-        if(!$feed = new \SimpleXMLElement($content)) return 'Invalid RSS';
+        if(!class_exists(OutboundUrl::class)){
+            require_once __DIR__.'/OutboundUrl.php';
+        }
+
+        try {
+            $target = OutboundUrl::assertSafe($url, false, $resolver);
+        } catch (\InvalidArgumentException) {
+            return 'Invalid RSS';
+        }
+
+        $content = '';
+        $limitExceeded = false;
+        $options = OutboundUrl::curlOptions($target, 3, 8);
+        $options[CURLOPT_USERAGENT] = 'Mozilla/5.0 (compatible; ilang.in-rss/1.0)';
+        $options[CURLOPT_HTTPHEADER] = ['Accept: application/rss+xml, application/xml, text/xml'];
+        $options[CURLOPT_WRITEFUNCTION] = OutboundUrl::responseWriter($content, $limitExceeded);
+
+        if($transport){
+            $result = $transport($url, $options);
+        } else {
+            $curl = curl_init($url);
+            if($curl === false || !curl_setopt_array($curl, $options)) return 'Invalid RSS';
+            $result = curl_exec($curl);
+            unset($curl);
+        }
+
+        if($result === false || $limitExceeded || $content === '') return 'Invalid RSS';
+
+        $previousXmlErrors = libxml_use_internal_errors(true);
+
+        try {
+            $feed = simplexml_load_string($content, \SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousXmlErrors);
+        }
+
+        if($feed === false || !isset($feed->channel->item)) return 'Invalid RSS';
 
         $items = [];
 
