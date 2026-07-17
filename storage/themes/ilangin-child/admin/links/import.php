@@ -14,12 +14,12 @@
                 <p><?php ee('When creating the CSV file, you need to keep the header but the column name can be anything as long as their position is respected. If the custom alias is taken, the importer will generate a random alias.') ?></p>
                 <form method="post" action="<?php echo route('admin.links.import.process') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="file" class="form-label"><?php ee('CSV File') ?> (.csv)</label>
                         <input type="file" class="form-control" name="file" id="file" accept=".csv">
                     </div>
 
-                    <div class="form-group mt-3">
+                    <div class="mb-3 mt-3">
                         <label for="user" class="form-label"><?php ee('User') ?></label>
                         <select name="user" id="user" class="form-control" data-toggle="select">
                             <option value="0">Public/Anonymous</option>

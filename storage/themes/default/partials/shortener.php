@@ -25,9 +25,9 @@
         <div class="row">
             <?php if($domains = \Helpers\App::domains()): ?>
             <div class="col-sm-6 mt-3">
-                <div class="form-group rounded input-select">
+                <div class="mb-3 rounded input-select">
                     <label for="domain" class="form-label"><?php ee('Domain') ?></label>
-                    <select name="domain" id="domain" class="form-control border-start-0 ps-0" data-toggle="select">
+                    <select name="domain" id="domain" class="form-select border-start-0 ps-0" data-toggle="select">
                         <?php foreach($domains as $domain): ?>
                             <option value="<?php echo $domain ?>" <?php echo user()->domain == $domain ? 'selected' : '' ?>><?php echo $domain ?></option>
                         <?php endforeach ?>
@@ -37,9 +37,9 @@
             <?php endif ?>
             <?php if($redirects = \Helpers\App::redirects()): ?>
             <div class="col-sm-6 mt-3">
-                <div class="form-group rounded input-select">
+                <div class="mb-3 rounded input-select">
                     <label for="type" class="form-label"><?php ee('Redirect') ?></label>
-                    <select name="type" id="type" class="form-control border-start-0 ps-0" data-toggle="select">
+                    <select name="type" id="type" class="form-select border-start-0 ps-0" data-toggle="select">
                         <?php foreach($redirects as $name => $redirect): ?>
                             <optgroup label="<?php echo $name ?>">
                             <?php foreach($redirect as $id => $name): ?>
@@ -49,14 +49,14 @@
                         <?php endforeach ?>
                     </select>
                 </div>
-            </div>         
-            <?php endif ?>   
+            </div>
+            <?php endif ?>
         </div>
         <hr>
         <div class="row">
             <?php if(\Core\Auth::user()->has("alias") !== false): ?>
             <div class="col-sm-6 mt-3">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="custom" class="form-label"><?php ee('Custom') ?></label>
                     <p class="form-text"><?php ee('If you need a custom alias, you can enter it below.') ?></p>
                     <div class="input-group">
@@ -67,7 +67,7 @@
             </div>
             <?php endif ?>
             <div class="col-md-6 mt-3">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="pass" class="form-label"><?php ee('Password Protection') ?></label>
                     <p class="form-text"><?php ee('By adding a password, you can restrict the access.') ?></p>
                     <div class="input-group">
@@ -79,7 +79,7 @@
         </div>
         <div class="row mt-3">
             <div class="col-md-6 mt-3">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="expiry" class="form-label"><?php ee('Link Expiration') ?></label>
                     <p class="form-text"><?php ee('Set an expiration date to disable the link.') ?></p>
                     <div class="input-group">
@@ -89,9 +89,9 @@
                 </div>
             </div>
             <div class="col-md-6 mt-3">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="expiry" class="form-label"><?php echo e("Description")?></label>
-                    <p class="form-text"><?php echo e('This can be used to identify URLs on your account.')?></p>                  
+                    <p class="form-text"><?php echo e('This can be used to identify URLs on your account.')?></p>
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i data-feather="tag"></i></span>
                         <input type="text" class="form-control border-start-0 ps-0" name="description" id="description" placeholder="<?php echo e("Type your description here")?>" autocomplete = "off">
@@ -122,22 +122,22 @@
         <div id="metatags" class="mt-4 collapse">
             <hr>
             <h4><?php echo e("Meta Tags")?></h4>
-            <div class="row">   
+            <div class="row">
                 <div class="col-lg-4 col-md-6 mt-3">
-                    <div class="form-group">
-                        <label for="metaimage" class="form-label"><?php ee('Custom Banner') ?></label>                                  
+                    <div class="mb-3">
+                        <label for="metaimage" class="form-label"><?php ee('Custom Banner') ?></label>
                         <input type="file" class="form-control" name="metaimage" id="metaimage" placeholder="<?php echo e("Enter your custom meta title")?>" autocomplete="off">
-                    </div>                 
+                    </div>
                 </div>
                 <div class="col-lg-4 col-md-6 mt-3">
-                    <div class="form-group">
-                        <label for="metatitle" class="form-label"><?php ee('Meta Title') ?></label>                    
+                    <div class="mb-3">
+                        <label for="metatitle" class="form-label"><?php ee('Meta Title') ?></label>
                         <input type="text" class="form-control" name="metatitle" id="metatitle" placeholder="<?php echo e("Enter your custom meta title")?>" autocomplete="off">
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6 mt-3">
-                    <div class="form-group">
-                        <label for="metadescription" class="form-label"><?php ee('Meta Description') ?></label>                    
+                    <div class="mb-3">
+                        <label for="metadescription" class="form-label"><?php ee('Meta Description') ?></label>
                         <input type="text" class="form-control" name="metadescription" id="metadescription" placeholder="<?php echo e("Enter your custom meta description")?>" autocomplete="off">
                     </div>
                 </div>
@@ -152,12 +152,12 @@
                         <a href="#" class="btn btn-sm btn-primary" data-trigger="addmore" data-for="geo"><?php echo e("+ Add")?></a>
                     </div>
                 </div>
-                <p class="form-text"><?php echo e('If you have different pages for different countries then it is possible to redirect users to that page using the same URL. Simply choose the country and enter the URL.')?></p>           
+                <p class="form-text"><?php echo e('If you have different pages for different countries then it is possible to redirect users to that page using the same URL. Simply choose the country and enter the URL.')?></p>
                 <div class="row" data-toggle="addable" data-label="geo" data-states="<?php echo route('server.states') ?>">
                     <div class="col col-sm-6 mt-3">
                         <div class="input-group input-select">
                             <span class="input-group-text bg-white"><i data-feather="globe"></i></span>
-                            <select name="location[]" class="form-control border-start-0 ps-0" data-trigger="getStates" data-toggle="select">
+                            <select name="location[]" class="form-select border-start-0 ps-0" data-trigger="getStates" data-toggle="select">
                                 <?php echo \Core\Helper::Country('United States', true) ?>
                             </select>
                         </div>
@@ -165,7 +165,7 @@
                     <div class="col col-sm-6 mt-3">
                         <div class="input-group input-select">
                             <span class="input-group-text bg-white"><i data-feather="globe"></i></span>
-                            <select name="state[]" class="form-control border-start-0 ps-0" data-toggle="select">
+                            <select name="state[]" class="form-select border-start-0 ps-0" data-toggle="select">
                                 <option value="0"><?php ee('All States') ?></option>
                                 <?php foreach(\Helpers\App::states('United States') as $state): ?>
                                     <option value="<?php echo strtolower($state->name) ?>"><?php echo $state->name ?></option>
@@ -198,10 +198,10 @@
                     <div class="col-sm-6 mt-3">
                         <div class="input-group input-select">
                             <span class="input-group-text bg-white"><i data-feather="smartphone"></i></span>
-                            <select name="device[]" class="form-control border-start-0 ps-0" data-toggle="select">
+                            <select name="device[]" class="form-select border-start-0 ps-0" data-toggle="select">
                                 <?php echo \Core\Helper::devices() ?>
                             </select>
-                        </div>              
+                        </div>
                     </div>
                     <div class="col-sm-6 mt-3">
                         <div class="input-group">
@@ -221,15 +221,15 @@
                         <a href="#" class="btn btn-sm btn-primary" data-trigger="addmore" data-for="language"><?php echo e("+ Add")?></a>
                     </div>
                 </div>
-                <p class="form-text"><?php echo e('If you have different pages for different languages then it is possible to redirect users to that page using the same URL. Simply choose the language and enter the URL.')?></p>           
+                <p class="form-text"><?php echo e('If you have different pages for different languages then it is possible to redirect users to that page using the same URL. Simply choose the language and enter the URL.')?></p>
                 <div class="row" data-toggle="addable" data-label="language">
                     <div class="col-sm-6 mt-3">
                         <div class="input-group input-select">
                             <span class="input-group-text bg-white"><i data-feather="type"></i></span>
-                            <select name="language[]" class="form-control border-start-0 ps-0" data-toggle="select">
+                            <select name="language[]" class="form-select border-start-0 ps-0" data-toggle="select">
                                 <?php echo \Helpers\App::languagelist('en') ?>
                             </select>
-                        </div>              
+                        </div>
                     </div>
                     <div class="col-sm-6 mt-3">
                         <div class="input-group">
@@ -248,10 +248,10 @@
                 <div class="input-group input-select">
                     <span class="input-group-text bg-white"><i data-feather="filter"></i></span>
                     <select name="pixels[]" data-placeholder="Your Pixels" multiple data-toggle="select">
-                        <?php foreach(\Core\Auth::user()->pixels() as $type => $pixels): ?>     
-                            <optgroup label="<?php echo ucwords($type) ?>">                       
+                        <?php foreach(\Core\Auth::user()->pixels() as $type => $pixels): ?>
+                            <optgroup label="<?php echo ucwords($type) ?>">
                             <?php foreach($pixels as $pixel): ?>
-                                <option value="<?php echo $pixel->type ?>-<?php echo $pixel->id ?>"><?php echo $pixel->name ?></option>                                
+                                <option value="<?php echo $pixel->type ?>-<?php echo $pixel->id ?>"><?php echo $pixel->name ?></option>
                             <?php endforeach ?>
                             </optgroup>
                         <?php endforeach ?>
@@ -276,8 +276,8 @@
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i data-feather="list"></i></span>
                             <input type="text" name="paramname[]" class="form-control border-start-0 ps-0" data-trigger="autofillparam" placeholder="<?php echo e("Parameter name")?>">
-                        </div>              
-                    </div>              
+                        </div>
+                    </div>
                     <div class="col-sm-6 mt-3">
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i data-feather="edit"></i></span>

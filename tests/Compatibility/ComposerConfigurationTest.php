@@ -48,7 +48,9 @@ final class ComposerConfigurationTest extends TestCase
     public function testDirectPackagesTrackCurrentStableCompatibilityLines(): void
     {
         self::assertSame('^8.2', $this->composer['require']['abraham/twitteroauth'] ?? null);
-        self::assertSame('^6.0', $this->composer['require']['endroid/qr-code'] ?? null);
+        self::assertSame('^3.1', $this->composer['require']['bacon/bacon-qr-code'] ?? null);
+        self::assertSame('^6.0', $this->composer['require']['chillerlan/php-qrcode'] ?? null);
+        self::assertArrayNotHasKey('endroid/qr-code', $this->composer['require']);
         self::assertSame('^3.10', $this->composer['require']['monolog/monolog'] ?? null);
         self::assertSame('^9.2', $this->composer['require']['phpfastcache/phpfastcache'] ?? null);
         self::assertSame('^7.1', $this->composer['require']['phpmailer/phpmailer'] ?? null);

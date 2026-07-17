@@ -51,12 +51,14 @@ class Plans {
      */
     public function new(){
         
-        View::push('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">', 'custom')->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css'))->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js'), 'script')->toFooter();
+        View::push(assets('frontend/libs/fontawesome-free/css/all.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.js'), 'script')->toFooter();
 
         View::push("<script>
-                        $('input[name=icon]').iconpicker();
+                        IconPicker.init('input[name=icon]', {
+                            catalogUrl: ".json_encode(assets('frontend/libs/fontawesome-free/metadata/icons.json'))."
+                        });
                     </script>", "custom")->toFooter();
         
         View::set('title', e('New Plan'));
@@ -186,12 +188,14 @@ class Plans {
         
         if(!$plan = DB::plans()->where('id', $id)->first()) return Helper::redirect()->back()->with('danger', e('Plan does not exist.'));
         
-        View::push('<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">', 'custom')->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css'))->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js'), 'script')->toFooter();
+        View::push(assets('frontend/libs/fontawesome-free/css/all.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.js'), 'script')->toFooter();
 
         View::push("<script>
-                        $('input[name=icon]').iconpicker();
+                        IconPicker.init('input[name=icon]', {
+                            catalogUrl: ".json_encode(assets('frontend/libs/fontawesome-free/metadata/icons.json'))."
+                        });
                     </script>", "custom")->toFooter();
         
 

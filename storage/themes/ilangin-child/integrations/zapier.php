@@ -15,12 +15,12 @@
 		<p><?php echo e("You can use Zapier to automate campaigns. By adding the URL to the zapier webhook, we will send you important information to that webhook so you can use them.") ?></p>
 		<p><strong><?php ee('Note') ?></strong> <?php ee('Although this tool is designed for Zapier, it can be used for any webhook system.') ?></p>
 		<form action="<?php echo route("user.zapier") ?>" method="post">
-			<div class="form-group">
+			<div class="mb-3">
 				<label for="zapurl" class="form-label"><?php echo e("URL Zapier Notification") ?></label>
 				<input type="text" id="zapurl" name="zapurl" class="form-control p-2" placeholder="e.g. https://" value="<?php echo user()->zapurl ?>">
 				<p class="form-text"><?php echo e("We will send a notification to this URL when you create a short URL.") ?></p>
 			</div>
-			<div class="form-group">
+			<div class="mb-3">
 				<label for="zapview" class="form-label"><?php echo e("Views Zapier Notification") ?></label>
 				<input type="text" id="zapview" name="zapview" class="form-control p-2" placeholder="e.g. https://" value="<?php echo user()->zapview ?>">
 				<p class="form-text"><?php echo e("We will send a notification to this URL when someone clicks your URL.") ?></p>

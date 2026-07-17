@@ -21,7 +21,7 @@
 
 return [
     'editor' => [
-        'version' => '4.13.3',
+        'version' => '4.13.5',
         'js' => [
             assets('vendor/jodit/jodit.min.js'),
             assets('editor-adapter.js')
@@ -31,7 +31,7 @@ return [
         ]
     ],
     'simpleeditor' => [
-        'version' => '4.13.3',
+        'version' => '4.13.5',
         'js' => [
             assets('vendor/jodit/jodit.min.js'),
             assets('editor-adapter.js')
@@ -40,35 +40,31 @@ return [
             assets('vendor/jodit/jodit.min.css')
         ]
     ],
-    'datetimepicker' => [
-        'version' => '1.0.10',
+    'airdatepicker' => [
+        'version' => '3.6.0',
         'js' => [
-            assets('frontend/libs/datepicker/datepicker.min.js')
+            assets('frontend/libs/air-datepicker/air-datepicker.js'),
+            assets('date-picker.min.js')
         ],
         'css' => [
-            assets('frontend/libs/datepicker/datepicker.min.css')
+            assets('frontend/libs/air-datepicker/air-datepicker.css')
         ]
     ],
     'codeeditor' => [
         'version' => '1.44.0',
         'js' => [assets('frontend/libs/ace-builds/ace.js')]
     ],
-    'spectrum' => [
-        'version' => '1.8.1',
-        'js' => [assets('frontend/libs/spectrum/spectrum.min.js')],
-        'css' => [assets('frontend/libs/spectrum/spectrum.min.css')]
+    'coloris' => [
+        'version' => '0.25.0',
+        'js' => [
+            assets('frontend/libs/coloris/coloris.min.js'),
+            assets('color-picker.min.js')
+        ],
+        'css' => [assets('frontend/libs/coloris/coloris.min.css')]
     ],
     'autocomplete' => [
         'version' => '2.0.4',
         'js' => [assets('frontend/libs/devbridge-autocomplete/jquery.autocomplete.min.js')]
-    ],
-    "daterangepicker" => [
-        "version" => "3.1.0",
-        "css" => [assets('frontend/libs/daterangepicker/daterangepicker.min.css')],
-        "js" => [
-            assets('frontend/libs/moment/moment.min.js'),
-            assets('frontend/libs/daterangepicker/daterangepicker.min.js')
-          ]
     ],
     "hljs" => [
         "version" => "11.11.1",

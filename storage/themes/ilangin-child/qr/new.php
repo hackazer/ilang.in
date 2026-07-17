@@ -33,11 +33,11 @@
         </div>
         <div class="col-md-6">
             <div class="card card-body">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="text" class="form-label"><?php ee('QR Code Name') ?></label>
                     <input type="text" class="form-control p-2" name="name" placeholder="e.g. For Instagram">
                 </div>
-                <div class="form-group mt-4">
+                <div class="mb-3 mt-4">
                     <label class="form-label"><?php ee('Domain') ?></label>
                     <div class="d-flex">
                         <div>
@@ -57,7 +57,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="type"></i> <?php ee('Text') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Your Text') ?></label>
                             <textarea class="form-control" name="text" placeholder="<?php ee('Your Text') ?>"></textarea>
                         </div>
@@ -68,7 +68,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="link"></i> <?php ee('Link') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Your Link') ?></label>
                             <input type="text" class="form-control p-2" name="link" placeholder="https://">
                         </div>
@@ -79,15 +79,15 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="mail"></i> <?php ee('Email') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Email') ?></label>
                             <input type="email" class="form-control" name="email[email]" placeholder="e.g. someone@domain.com">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Subject') ?></label>
                             <input type="text" class="form-control p-2" name="email[subject]" placeholder="e.g. <?php ee('Job Application') ?>">
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Message') ?></label>
                             <textarea class="form-control" name="email[body]" placeholder="e.g. <?php ee('Your message here to be sent as email') ?>"></textarea>
                         </div>
@@ -98,7 +98,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="phone"></i> <?php ee('Phone') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="phone" placeholder="e.g. 123456789">
                         </div>
@@ -109,11 +109,11 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="smartphone"></i> <?php ee('SMS & Message') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="sms[phone]" placeholder="e.g 123456789">
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Message') ?></label>
                             <input type="text" class="form-control p-2" name="sms[message]" placeholder="e.g. <?php ee('Job Application') ?>">
                         </div>
@@ -124,7 +124,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="smartphone"></i> <?php ee('SMS') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="smsonly[phone]" placeholder="e.g 123456789">
                         </div>
@@ -136,7 +136,7 @@
                     </div>
                     <div class="card-body">
                         <p><?php ee('This can be used to upload an image or a PDF. Most common uses are restaurant menu, promotional poster and resume.') ?></p>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="file" class="form-label"><?php ee('File') ?></label>
                             <input type="file" class="form-control p-2" name="file" accept=".jpg, .jpeg, .png, .gif, .pdf">
                             <p class="form-text"><?php ee('Acceptable file: jpg, png, gif, pdf. Max 2MB.') ?></p>
@@ -148,11 +148,11 @@
                         <h5 class="card-title fw-bold"><i class="me-2 fab fa-whatsapp"></i> <?php ee('Whatsapp') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="whatsapp[phone]" placeholder="e.g +123456789">
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Message') ?></label>
                             <textarea class="form-control" name="whatsapp[body]" placeholder="e.g. <?php ee('Your message here to be sent as email') ?>"></textarea>
                         </div>
@@ -163,27 +163,27 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="user"></i> <?php ee('vCard') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('First Name') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[fname]" placeholder="e.g. John">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Last Name') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[lname]" placeholder="e.g. Doe">
                         </div> 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Organization') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[org]" placeholder="e.g. Internet Inc">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[phone]" placeholder="e.g. +112345689">
                         </div>   
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Email') ?></label>
                             <input type="email" class="form-control" name="vcard[email]" placeholder="e.g. someone@domain.com">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Website') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[site]" placeholder="e.g. https://domain.com">
                         </div> 
@@ -193,42 +193,42 @@
                         </div>
                         <div id="vcard-address" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Street') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[street]" placeholder="e.g. 123 My Street">
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('City') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[city]" placeholder="e.g. My City">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('State') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[state]" placeholder="e.g. My State">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Zipcode') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[zip]" placeholder="e.g. 123456">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Country') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[country]" placeholder="e.g. My Country">
                             </div>
                         </div>
                         <div id="vcard-social" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Facebook') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[facebook]" placeholder="e.g. https://www.facebook.com/myprofile">
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Twitter') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[twitter]" placeholder="e.g. https://www.twitter.com/myprofile">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Instagram') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[instagram]" placeholder="e.g. https://www.instagram.com/myprofile">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Linekdin') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[linkedin]" placeholder="e.g. https://www.linkedin.com/myprofile">
                             </div> 
@@ -240,27 +240,27 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="user"></i> <?php ee('vCard') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('First Name') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[fname]" placeholder="e.g. John">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Last Name') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[lname]" placeholder="e.g. Doe">
                         </div> 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Organization') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[org]" placeholder="e.g. Internet Inc">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[phone]" placeholder="e.g. +112345689">
                         </div>   
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Email') ?></label>
                             <input type="email" class="form-control" name="staticvcard[email]" placeholder="e.g. someone@domain.com">
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Website') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[site]" placeholder="e.g. https://domain.com">
                         </div> 
@@ -270,42 +270,42 @@
                         </div>
                         <div id="vcard-address" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Street') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[street]" placeholder="e.g. 123 My Street">
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('City') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[city]" placeholder="e.g. My City">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('State') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[state]" placeholder="e.g. My State">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Zipcode') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[zip]" placeholder="e.g. 123456">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Country') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[country]" placeholder="e.g. My Country">
                             </div>
                         </div>
                         <div id="vcard-social" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Facebook') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[facebook]" placeholder="e.g. https://www.facebook.com/myprofile">
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Twitter') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[twitter]" placeholder="e.g. https://www.twitter.com/myprofile">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Instagram') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[instagram]" placeholder="e.g. https://www.instagram.com/myprofile">
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Linekdin') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[linkedin]" placeholder="e.g. https://www.linkedin.com/myprofile">
                             </div> 
@@ -317,15 +317,15 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="wifi"></i> <?php ee('WiFi') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Network SSID') ?></label>
                             <input type="text" class="form-control p-2" name="wifi[ssid]" placeholder="e.g 123456789">
                         </div>                        
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Password') ?></label>
                             <input type="text" class="form-control p-2" name="wifi[pass]" placeholder="Optional">
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Encryption') ?></label>
                             <select name="wifi[encryption]" class="form-control">
                                 <option value="wep">WEP</option>
@@ -340,7 +340,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2 fab fa-bitcoin"></i> <?php ee('Crypto') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <p><?php ee('Cryptocurrency') ?></p>
                             <label class="me-3">
                                 <input type="radio" name="crypto[currency]" value="btc" checked> <?php ee('Bitcoin') ?>
@@ -352,7 +352,7 @@
                                 <input type="radio" name="crypto[currency]" value="bch"> <?php ee('Bitcoin Cash') ?>
                             </label>
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Wallet Address') ?></label>
                             <input class="form-control p-2" name="crypto[wallet]" placeholder="e.g. <?php ee('Enter your public wallet address') ?>">
                         </div>
@@ -380,13 +380,13 @@
                     <div id="singlecolor" class="collapse show">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="bg"><?php ee("Background") ?></label><br>
                                     <input type="text" name="bg" id="bg" value="rgb(255,255,255)">
                                 </div>
                             </div>	
                             <div class="col-md-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="fg"><?php ee("Foreground") ?></label><br>
                                     <input type="text" name="fg" id="fg" value="rgb(0,0,0)">
                                 </div>
@@ -398,23 +398,23 @@
                             <input type="hidden" name="mode" value="simple">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="form-group mb-3">
+                                    <div class="mb-3">
                                         <label class="form-label" for="bg"><?php ee("Background") ?></label><br>
                                         <input type="text" name="gradient[bg]" id="gbg" value="rgb(255,255,255)">
                                     </div>
                                 </div>	
                                 <div class="col-md-12">
                                     <div class="row">
-                                        <div class="col form-group mb-3">
+                                        <div class="col mb-3">
                                             <label class="form-label" for="fg"><?php ee("Gradient Start") ?></label><br>
                                             <input type="text" name="gradient[start]" id="gfg" value="rgb(0,0,0)">
                                         </div>	
-                                        <div class="col form-group mb-3">
+                                        <div class="col mb-3">
                                             <label class="form-label" for="fgs"><?php ee("Gradient Stop") ?></label><br>
                                             <input type="text" name="gradient[stop]" id="gfgs" value="rgb(0,0,0)">
                                         </div>                                        
                                     </div>
-                                    <div class="form-group mb-3">
+                                    <div class="mb-3">
                                         <label class="form-label" for="fgd"><?php ee("Gradient Direction") ?></label><br>
                                         <select name="gradient[direction]" id="gfgd" class="form-control">
                                             <option value="vertical"><?php ee('Vertical') ?></option>
@@ -426,7 +426,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col form-group mb-3">
+                        <div class="col mb-3">
                             <label class="form-label" for="fgs"><?php ee("Eye Color") ?></label><br>
                             <input type="text" name="eyecolor" id="eyecolor" value="">
                         </div>                         
@@ -478,45 +478,45 @@
                     </div>
 					<div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="logo"><?php ee("Custom Logo") ?></label>
 								<input type="file" class="form-control" name="logo" id="logo">
 							</div>
 						</div>                    						
 					</div>
                     <?php if(\Helpers\QR::hasImagick()): ?>
-                        <div class="form-group mb-3">
-                            <label class="form-label d-block" for="fgd"><?php ee("Matrix Style") ?></label>                        
-                            <div class="btn-group btn-group-toggle mt-2 border rounded" data-toggle="buttons">
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="square"></i><br>
-                                    <input type="radio" name="matrix" value="square" class="me-2" autocomplete="off" checked> <?php ee('Square') ?>
+                        <div class="mb-3">
+                            <span class="form-label d-block"><?php ee("Matrix Style") ?></span>
+                            <div class="btn-group mt-2 border rounded" role="group" aria-label="<?php echo e('Matrix Style') ?>">
+                                <input type="radio" class="btn-check" name="matrix" id="matrix-square" value="square" autocomplete="off" checked>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="matrix-square">
+                                    <i class="mb-3" data-feather="square"></i><br><?php ee('Square') ?>
                                 </label>
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="circle"></i><br>
-                                    <input type="radio" name="matrix" value="circle" class="me-2" autocomplete="off">  <?php ee('Rounded') ?>
+                                <input type="radio" class="btn-check" name="matrix" id="matrix-circle" value="circle" autocomplete="off">
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="matrix-circle">
+                                    <i class="mb-3" data-feather="circle"></i><br><?php ee('Rounded') ?>
                                 </label>
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="more-horizontal"></i> <br>
-                                    <input type="radio" name="matrix" value="dot" class="me-2" autocomplete="off"> <?php ee('Dots') ?>
+                                <input type="radio" class="btn-check" name="matrix" id="matrix-dot" value="dot" autocomplete="off">
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="matrix-dot">
+                                    <i class="mb-3" data-feather="more-horizontal"></i><br><?php ee('Dots') ?>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label class="form-label d-block"><?php ee("Eye Style") ?></label>                        
-                            <div class="btn-group btn-group-toggle mt-2 border rounded" data-toggle="buttons">
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="square"></i> <br>
-                                    <input type="radio" name="eye" value="square" class="me-2" autocomplete="off" checked>  <?php ee('Square') ?>
+                            <div class="btn-group mt-2 border rounded" role="group" aria-label="<?php echo e('Eye Style') ?>">
+                                <input type="radio" class="btn-check" name="eye" id="eye-square" value="square" autocomplete="off" checked>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="eye-square">
+                                    <i class="mb-3" data-feather="square"></i><br><?php ee('Square') ?>
                                 </label>
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="circle"></i><br>
-                                    <input type="radio" name="eye" value="circle" class="me-2" autocomplete="off"> <?php ee('Circle') ?>
+                                <input type="radio" class="btn-check" name="eye" id="eye-circle" value="circle" autocomplete="off">
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="eye-circle">
+                                    <i class="mb-3" data-feather="circle"></i><br><?php ee('Circle') ?>
                                 </label>
                             </div>
                         </div>
                     <?php endif ?>
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label class="form-label d-block"><?php ee("Margin") ?></label>                        
                         <input type="number" value="" name="margin" placeholder="e.g. 10" class="form-control">
                     </div>
@@ -530,7 +530,7 @@
                 </div>
                 <div class="card-body">
                     <div id="return-ajax">
-                        <img src="<?php echo \Helpers\QR::factory('Sample QR', 400, 0)->format('png')->create('uri') ?>" class="img-responsive w-100 mw-50">
+                        <img src="<?php echo \Helpers\QR::factory('Sample QR', 400, 0)->format('png')->create('uri') ?>" class="img-fluid w-100 mw-50">
                     </div>    
                     <p class="mt-2"><button type="submit" class="btn btn-primary"><?php ee('Generate QR') ?></button>
                 </div>

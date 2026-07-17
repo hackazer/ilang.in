@@ -9,8 +9,8 @@
                         </div>
                         <div class="row align-items-center mt-5 pt-5 delimiter-top">
                             <div class="col mb-3 mb-lg-0">
-                                <div class="media align-items-center">
-                                    <div class="media-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
                                         <span class="text-sm text-muted"><?php ee('Last Updated') ?> <?php echo $page->lastupdated ?></span>
                                     </div>
                                 </div>

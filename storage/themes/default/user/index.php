@@ -46,7 +46,7 @@
         <?php if(user()->teamPermission('links.create')): ?>
             <?php if(config('manualapproval') && !user()->verified): ?>
                 <div class="alert bg-dark rounded p-3 text-white"><?php ee('We are currently manually approving links. As soon as the link is approved, you will be able to start using it.') ?></div>
-            <?php endif ?>        
+            <?php endif ?>
             <div class="card">
                 <div class="card-body">
                     <?php view('partials.shortener') ?>
@@ -54,7 +54,7 @@
             </div>
         <?php endif ?>
         <div class="card">
-            <div class="card-header d-flex align-items-center">                
+            <div class="card-header d-flex align-items-center">
                 <div>
                     <form method="post" action="" data-trigger="options">
                         <?php echo csrf() ?>
@@ -80,14 +80,14 @@
                                 <a data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Delete Selected") ?>" href="<?php echo route('links.deleteall') ?>" data-trigger="submitchecked" class="fa fa-trash btn px-3 py-2 border-start"></a>
                             <?php endif ?>
                         </div>
-                    </form>                    
+                    </form>
                 </div>
                 <div class="my-md-0 my-2 ms-auto">
                     <div class="rounded border">
                         <a href="#search" data-bs-toggle="collapse" class="btn btn-white bg-white"><i class="align-middle" data-feather="search"></i></a>
                     </div>
                 </div>
-            </div>            
+            </div>
             <div class="card-body border-top">
                 <form class="rounded border collapse mb-4 p-3" id="search" action="<?php echo route('search') ?>">
                     <div class="input-group input-group-navbar">
@@ -104,11 +104,11 @@
                 <div id="link-holder" data-refresh="<?php echo \Gem::currentRoute() == 'archive' ? route('links.refresh.archive') : route('links.refresh') ?>" data-fetch="<?php echo route('links.fetch')?>">
                     <?php if($urls): ?>
                         <?php foreach($urls as $url): ?>
-                            <?php view('partials.links', compact('url')) ?>      
-                        <?php endforeach ?>   
+                            <?php view('partials.links', compact('url')) ?>
+                        <?php endforeach ?>
                     <?php else: ?>
                         <p class="text-center"><?php ee('No links found. You can create some.') ?></p>
-                    <?php endif ?>                             
+                    <?php endif ?>
                 </div>
                 <?php if($urls): ?>
                     <div class="d-flex">
@@ -130,7 +130,7 @@
                     <div class="d-flex align-items-start">
                         <div class="flex-grow-1">
                             <div class="float-end">
-                                <?php echo \Core\Helper::timeago($stats->date) ?>                       
+                                <?php echo \Core\Helper::timeago($stats->date) ?>
                             </div>
                             <div class="mb-2">
                                 <?php if($stats->url->qrid): ?>
@@ -139,7 +139,7 @@
                                 <?php elseif($stats->url->profileid): ?>
                                     <span class="badge bg-success text-sm"><?php ee("Bio Page") ?></span>
                                     <strong><?php echo $stats->profile ?></strong></a>
-                                    <a href="<?php echo $stats->url->url ?>" target="_blank" rel="nofollow"><strong class="text-break"><?php echo \Core\Helper::truncate(\Core\Helper::empty($stats->url->meta_title, $stats->url->url), 30) ?></strong></a> 
+                                    <a href="<?php echo $stats->url->url ?>" target="_blank" rel="nofollow"><strong class="text-break"><?php echo \Core\Helper::truncate(\Core\Helper::empty($stats->url->meta_title, $stats->url->url), 30) ?></strong></a>
                                     <?php if($stats->url->alias || $stats->url->custom): ?>
                                         <small class="text-muted" data-href="<?php echo Helpers\App::shortRoute($stats->url->domain, $stats->url->alias.$stats->url->custom) ?>"><?php echo Helpers\App::shortRoute($stats->url->domain, $stats->url->alias.$stats->url->custom) ?></small>
                                     <?php endif ?>
@@ -157,7 +157,7 @@
                             <?php endif ?>
                             <?php if($stats->os): ?>
                                 <img src="<?php echo \Helpers\App::os($stats->os) ?>" width="16" class="rounded me-1 ms-2" alt=" <?php echo ucfirst($stats->os) ?>">
-                                <small class="text-navy"><?php echo $stats->os ?></small> 
+                                <small class="text-navy"><?php echo $stats->os ?></small>
                             <?php endif ?>
                             <?php if($stats->browser): ?>
                                 <img src="<?php echo \Helpers\App::browser($stats->browser) ?>" width="16" class="rounded me-1 ms-2" alt=" <?php echo ucfirst($stats->browser) ?>">
@@ -173,13 +173,13 @@
                             <?php if($stats->language): ?>
                                 <i data-feather="user" class="mx-1"></i>
                                 <small class="text-navy"><?php echo strtoupper($stats->language) ?></small>
-                            <?php endif ?>                            
+                            <?php endif ?>
                         </div>
-                    </div>          
-                    <hr> 
-                <?php endforeach ?>            
+                    </div>
+                    <hr>
+                <?php endforeach ?>
             </div>
-        </div> 
+        </div>
     </div>
 </div>
 <?php if(user()->teamPermission('links.delete')): ?>
@@ -241,7 +241,7 @@
                 </div>
             </div>
             <div class="mt-2">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="short" class="form-label"><?php ee('Short Link') ?></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="modal-input" name="shortlink" value="">
@@ -249,7 +249,7 @@
                             <button class="btn btn-primary copy" data-clipboard-text=""><?php ee('Copy') ?></button>
                         </div>
                     </div>
-                </div>    
+                </div>
                 <div class="mt-3" id="modal-share">
                     <?php echo \Helpers\App::share('--url--') ?>
                 </div>
@@ -263,7 +263,7 @@
   </div>
 </div>
 <div class="modal fade" id="bundleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">    
+  <div class="modal-dialog">
     <div class="modal-content">
       <form action="<?php echo route('links.addtocampaign') ?>" data-trigger="server-form">
         <?php echo csrf() ?>
@@ -273,8 +273,8 @@
         </div>
         <div class="modal-body">
             <label for="campaigns" class="form-label d-block mb-2"><?php ee('Campaigns') ?></label>
-            <div class="form-group rounded input-select">
-                <select name="campaigns" id="campaigns" class="form-control" data-toggle="select">
+            <div class="mb-3 rounded input-select">
+                <select name="campaigns" id="campaigns" class="form-select" data-toggle="select">
                     <option value="0"><?php ee('None') ?></option>
                     <?php foreach(\Core\DB::bundle()->where('userid', user()->rID())->findArray() as $campaign): ?>
                         <option value="<?php echo $campaign['id'] ?>"><?php echo $campaign['name'] ?></option>
@@ -286,13 +286,13 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
             <button type="submit" class="btn btn-success" class="btn btn-success" data-bs-dismiss="modal" data-trigger="addtocampaign"><?php ee('Add') ?></button>
-        </div>          
+        </div>
       </form>
     </div>
   </div>
 </div>
 <div class="modal fade" id="channelModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">    
+  <div class="modal-dialog">
     <div class="modal-content">
       <form action="<?php echo route('channel.addto', ['links', null]) ?>" data-trigger="server-form">
         <?php echo csrf() ?>
@@ -302,8 +302,8 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
-                <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
+            <div class="mb-3 rounded input-select">
+                <select name="channels[]" id="channels" class="form-select" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>
                     <?php endforeach ?>
@@ -314,7 +314,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
             <button type="submit" class="btn btn-success" class="btn btn-success" data-bs-dismiss="modal" data-trigger="addtocampaign"><?php ee('Add') ?></button>
-        </div>          
+        </div>
       </form>
     </div>
   </div>

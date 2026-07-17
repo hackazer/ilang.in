@@ -5,11 +5,11 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.faq.categories.save') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="title" class="form-label"><?php ee('Title') ?></label>
                         <input type="text" class="form-control p-2" name="title" id="title" value="<?php echo old('title') ?>" placeholder="My Sample Category" required>
                     </div>                    
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="description" class="form-label"><?php ee('Short Description') ?></label>
                         <textarea name="description" id="description" class="form-control"><?php echo old('description') ?></textarea>
                     </div>		                                         
@@ -62,11 +62,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newtitle" class="form-label"><?php ee('Title') ?></label>
                     <input type="text" class="form-control p-2" name="newtitle" id="newtitle" value="" placeholder="My Sample Category" required>
                 </div>                    
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newdescription" class="form-label"><?php ee('Short Description') ?></label>
                     <textarea name="newdescription" id="newdescription" class="form-control"></textarea>
                 </div>

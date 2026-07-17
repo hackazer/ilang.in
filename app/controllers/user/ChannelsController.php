@@ -52,7 +52,7 @@ class Channels {
 
         View::set('title', e('Channels'));
 
-        \Helpers\CDN::load('spectrum');
+        \Helpers\CDN::load('coloris');
 
         $starred = [];
         foreach(DB::channels()->where('userid', user()->rID())->where('starred', 1)->orderByAsc('name')->findMany() as $item){
@@ -143,7 +143,7 @@ class Channels {
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
 
-        \Helpers\CDN::load('spectrum');
+        \Helpers\CDN::load('coloris');
 
         View::set('title', $channel->name.' '.e('Channel'));
         

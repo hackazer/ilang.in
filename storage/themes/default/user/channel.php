@@ -11,7 +11,7 @@
     <?php foreach($items as $item): ?>
         <div class="col-md-4">
             <div class="card flex-fill">
-                <div class="card-body">        
+                <div class="card-body">
                     <div class="d-flex align-items-start">
                         <div class="me-3">
                             <?php if($item['type'] == "bio"): ?>
@@ -24,13 +24,13 @@
                         </div>
                         <div class="flex-grow-1">
                             <div class="float-end">
-                                <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>                                
+                                <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                 <ul class="dropdown-menu">
                                 <?php if(isset($item['urlid']) && $item['urlid']): ?>
                                     <li><a class="dropdown-item" href="<?php echo route('stats', [$item['urlid']]) ?>"><i data-feather="bar-chart-2"></i> <?php ee('Statistics') ?></a></li>
                                 <?php endif ?>
                                 <?php if(user()->teamPermission($item['type'].'.edit')): ?>
-                                    <li><a class="dropdown-item" href="<?php echo route($item['type'].'.edit', [$item['id']]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>    
+                                    <li><a class="dropdown-item" href="<?php echo route($item['type'].'.edit', [$item['id']]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                                 <?php endif ?>
                                 <?php if(user()->teamPermission('bundles.edit')): ?>
                                     <li><form action="<?php echo route('channel.removefrom', [$channel->id, $item['type'], $item['id']]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Remove from channel') ?></button></form></li>
@@ -41,14 +41,14 @@
                             <a href="<?php echo $item['preview'] ?>" target="_blank"><strong><?php echo $item['title'] ?: 'n\a' ?></strong></a><br>
                             <div>
                                 <small class="text-muted" data-href="<?php echo $item['link'] ?>"><?php echo $item['link'] ?></small>
-                                <a href="#copy" class="copy inline-copy" data-lang="<?php ee('Copied') ?>" data-clipboard-text="<?php echo $item['link'] ?>"><small><?php echo e("Copy")?></small></a>	
+                                <a href="#copy" class="copy inline-copy" data-lang="<?php ee('Copied') ?>" data-clipboard-text="<?php echo $item['link'] ?>"><small><?php echo e("Copy")?></small></a>
                             </div>
                             <?php else: ?>
                                <strong><?php echo $item['title'] ?: 'n\a' ?></strong><br><br>
                             <?php endif ?>
                             <small class="text-navy"><?php echo $item['date'] ?></small>
                         </div>
-                    </div> 
+                    </div>
                 </div>
             </div>
         </div>
@@ -83,16 +83,16 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>
                     <input type="text" value="" name="newname" id="newname" class="form-control">
-                </div> 
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Description") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Description") ?></label>
                     <input type="text" value="" name="newdescription" id="newdescription" class="form-control">
-                </div>   
-                <div class="form-group mb-3">
-                    <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block"><?php ee("Badge Color") ?></label>
                     <input type="color" value="" name="newcolor" id="newcolor" class="form-control" data-trigger="colorpicker">
                 </div>
                 <div class="d-flex">
@@ -102,7 +102,7 @@
                     </div>
                     <div class="form-check form-switch ms-auto">
                         <input class="form-check-input" type="checkbox" data-binary="true" id="newstarred" name="newstarred" value="1">
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

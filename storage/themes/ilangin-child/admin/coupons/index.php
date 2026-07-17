@@ -5,23 +5,23 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.coupons.save') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="name" class="form-label"><?php ee('Name') ?></label>
                         <input type="text" class="form-control p-2" name="name" id="name" value="" placeholder="My Sample Coupon" required>
                     </div>                    
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="description" class="form-label"><?php ee('Description') ?></label>
                         <textarea name="description" id="description" class="form-control"></textarea>
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="code" class="form-label"><?php ee('Promo Code') ?></label>
                         <input type="text" class="form-control p-2" name="code" id="code" value="" placeholder="e.g. SAVE20" required>
                     </div> 
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="discount" class="form-label"><?php ee('Discount Percentage') ?></label>
                         <input type="number" class="form-control p-2" name="discount" id="discount" value="" max="100" min="1" placeholder="e.g. 20" required>
                     </div> 
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="validuntil" class="form-label"><?php ee('Valid Until') ?></label>
                         <input type="text" class="form-control p-2" data-toggle="datetimepicker" name="validuntil" id="validuntil" value="" placeholder="e.g. 01-01-2020" required>
                     </div> 		                                         
@@ -80,15 +80,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newname" class="form-label"><?php ee('Name') ?></label>
                     <input type="text" class="form-control p-2" name="newname" id="newname" value="" placeholder="My Sample Coupon" required>
                 </div>                    
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newdescription" class="form-label"><?php ee('Description') ?></label>
                     <textarea name="newdescription" id="newdescription" class="form-control"></textarea>
                 </div>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="newvaliduntil" class="form-label"><?php ee('Valid Until') ?></label>
                     <input type="text" class="form-control p-2" data-datepicker name="newvaliduntil" id="newvaliduntil" value="" placeholder="e.g. 01-01-2020" required>
                 </div> 

@@ -308,7 +308,7 @@ class Dashboard {
      */
     public function tools(){
         
-        \Helpers\CDN::load('datetimepicker');
+        \Helpers\CDN::load('airdatepicker');
         
         View::set('title', e('Tools'));
 

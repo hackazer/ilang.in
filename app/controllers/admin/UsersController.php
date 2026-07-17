@@ -188,7 +188,7 @@ class Users {
 
         $plans = DB::plans()->findMany();
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         return View::with('admin.users.new', compact('plans'))->extend('admin.layouts.main');
     }
@@ -265,7 +265,7 @@ class Users {
 
         View::set('title', e('Edit User'));
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         if(_STATE == "DEMO") $user->email="demo@demo.com";
 

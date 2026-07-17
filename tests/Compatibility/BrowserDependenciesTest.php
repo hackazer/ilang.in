@@ -14,8 +14,13 @@ final class BrowserDependenciesTest extends TestCase
     {
         $package = json_decode((string) file_get_contents(self::ROOT.'/package.json'), true, 512, JSON_THROW_ON_ERROR);
 
-        $this->assertSame('3.7.1', $package['dependencies']['jquery']);
-        $this->assertSame('4.6.2', $package['dependencies']['bootstrap']);
+        $this->assertSame('4.0.0', $package['dependencies']['jquery']);
+        $this->assertSame('5.3.8', $package['dependencies']['bootstrap']);
+        $this->assertSame('7.3.1', $package['dependencies']['@fortawesome/fontawesome-free']);
+        $this->assertSame('3.6.0', $package['dependencies']['air-datepicker']);
+        $this->assertSame('0.25.0', $package['dependencies']['@melloware/coloris']);
+        $this->assertSame('7.6.1', $package['dependencies']['imask']);
+        $this->assertSame('4.13.5', $package['dependencies']['jodit']);
         $this->assertSame('4.5.1', $package['dependencies']['chart.js']);
         $this->assertSame('4.1.0', $package['dependencies']['select2']);
         $this->assertSame('2.0.11', $package['dependencies']['clipboard']);
@@ -23,23 +28,17 @@ final class BrowserDependenciesTest extends TestCase
         $this->assertSame('1.7.0', $package['dependencies']['jsvectormap']);
         $this->assertSame('1.44.0', $package['dependencies']['ace-builds']);
         $this->assertSame('11.11.1', $package['dependencies']['@highlightjs/cdn-assets']);
-        $this->assertSame('2.30.1', $package['dependencies']['moment']);
-        $this->assertSame('3.1.0', $package['dependencies']['daterangepicker']);
         $this->assertSame('4.38.0', $package['dependencies']['@yaireo/tagify']);
         $this->assertSame('3.1.1', $package['dependencies']['cookieconsent']);
-        $this->assertSame('1.14.16', $package['dependencies']['jquery-mask-plugin']);
         $this->assertSame('1.1.3', $package['dependencies']['svg-injector']);
         $this->assertSame('3.2.1', $package['dependencies']['blockadblock']);
-        $this->assertSame('1.8.1', $package['dependencies']['spectrum-colorpicker']);
-        $this->assertSame('3.2.0', $package['dependencies']['fontawesome-iconpicker']);
-        $this->assertSame('1.1.0', $package['dependencies']['fontselect-jquery-plugin']);
         $this->assertSame('5.49.0', $package['devDependencies']['terser']);
-        $this->assertStringContainsString('jQuery 3.7.1', $package['browserCompatibility']['holds']['jquery']);
-        $this->assertStringContainsString('Bootstrap 4.6.2', $package['browserCompatibility']['holds']['publicBootstrap']);
-        $this->assertStringContainsString('Popper 1', $package['browserCompatibility']['holds']['publicPopper']);
-        $this->assertStringContainsString('Core-JS 2', $package['browserCompatibility']['holds']['dashboardBundle']);
-        $this->assertStringContainsString('discontinued', $package['browserCompatibility']['holds']['fontawesomeIconpicker']);
-        $this->assertStringContainsString('incompatible', $package['browserCompatibility']['holds']['fontselectPackageLayout']);
+        $this->assertSame([], $package['browserCompatibility']['holds']);
+        $this->assertSame([], $package['dependencyReleasePolicy']['compatibilityHolds']);
+        $this->assertStringContainsString('actively supported', $package['dependencyReleasePolicy']['runtimeMatrix']['phpunit']);
+        foreach (['@adminkit/core', '@chenfengyuan/datepicker', 'daterangepicker', 'fontawesome-iconpicker', 'fontselect-jquery-plugin', 'jquery-mask-plugin', 'moment', 'popper.js', 'spectrum-colorpicker'] as $removed) {
+            $this->assertArrayNotHasKey($removed, $package['dependencies']);
+        }
         $this->assertArrayNotHasKey('bootstrap-notify', $package['dependencies']);
         $this->assertArrayNotHasKey('bootstrap-tagsinput', $package['dependencies']);
     }
@@ -51,13 +50,18 @@ final class BrowserDependenciesTest extends TestCase
         foreach ([
             'cookieconsent.min.css',
             'cookieconsent.min.js',
-            'frontend/libs/jquery-mask-plugin/dist/jquery.mask.min.js',
+            'backend/css/app.css',
+            'frontend/libs/air-datepicker/air-datepicker.css',
+            'frontend/libs/air-datepicker/air-datepicker.js',
+            'frontend/libs/coloris/coloris.min.css',
+            'frontend/libs/coloris/coloris.min.js',
+            'frontend/libs/fontawesome-free/css/all.min.css',
+            'frontend/libs/fontawesome-free/metadata/icons.json',
+            'frontend/libs/imask/imask.min.js',
             'frontend/libs/svg-injector/dist/svg-injector.min.js',
             'frontend/libs/blockadblock/blockadblock.min.js',
-            'frontend/libs/spectrum/spectrum.min.css',
-            'frontend/libs/spectrum/spectrum.min.js',
-            'frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css',
-            'frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js',
+            'vendor/jodit/jodit.min.css',
+            'vendor/jodit/jodit.min.js',
         ] as $path) {
             $this->assertArrayHasKey($path, $manifest['files']);
         }
@@ -68,6 +72,10 @@ final class BrowserDependenciesTest extends TestCase
             $this->assertSame($metadata['bytes'], filesize($absolute), $path);
             $this->assertSame($metadata['sha256'], hash_file('sha256', $absolute), $path);
         }
+
+        $this->assertSame('2.11.8', $manifest['embedded']['bundle.pack.js']['@popperjs/core']);
+        $this->assertSame('2.11.8', $manifest['embedded']['frontend/libs/bootstrap/dist/js/bootstrap.bundle.min.js']['@popperjs/core']);
+        $this->assertSame('5.3.8', $manifest['embedded']['backend/css/app.css']['bootstrap']);
     }
 
     public function testLayoutsDoNotLoadDuplicateOrAbandonedFrameworks(): void
@@ -131,7 +139,7 @@ final class BrowserDependenciesTest extends TestCase
     {
         $config = (string) file_get_contents(self::ROOT.'/app/config/cdn.php');
 
-        foreach (['ace-builds', 'daterangepicker', 'highlight.js', 'moment', 'spectrum', 'blockadblock'] as $library) {
+        foreach (['ace-builds', 'air-datepicker', 'coloris', 'highlight.js', 'blockadblock'] as $library) {
             $this->assertStringContainsString("frontend/libs/{$library}", $config);
         }
         $this->assertStringNotContainsString('momentjs/latest', $config);

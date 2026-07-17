@@ -12,12 +12,12 @@ $isDeposit = (string) $transaction->mode === 'custodial_deposit';
         <div class="card border-0 shadow-sm overflow-hidden" data-nowpayments-status-card data-status-url="<?php echo route('checkout.crypto.status.json', [$transaction->order_id]) ?>">
             <div class="card-body p-4 p-lg-5">
                 <div class="d-flex flex-wrap align-items-start justify-content-between mb-4">
-                    <div class="pr-3">
-                        <p class="text-uppercase text-primary font-weight-bold text-sm mb-2"><?php ee('Crypto payment') ?></p>
+                    <div class="pe-3">
+                        <p class="text-uppercase text-primary fw-bold text-sm mb-2"><?php ee('Crypto payment') ?></p>
                         <h1 class="h3 mb-2"><?php ee('Complete your transfer') ?></h1>
                         <p class="text-muted mb-0"><?php ee('Access starts only after final blockchain settlement.') ?></p>
                     </div>
-                    <span class="badge badge-primary px-3 py-2 text-uppercase" data-nowpayments-state aria-live="polite"><?php echo e($status) ?></span>
+                    <span class="badge bg-primary px-3 py-2 text-uppercase" data-nowpayments-state aria-live="polite"><?php echo e($status) ?></span>
                 </div>
                 <div class="alert alert-info" role="status">
                     <?php ee('Send the exact amount in the selected network. A different asset or network can permanently lose funds.') ?>

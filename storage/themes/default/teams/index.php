@@ -15,7 +15,7 @@
                 <?php foreach($teams as $team): ?>
                     <div class="col-md-4">
                         <div class="card flex-fill">
-                            <div class="card-body">        
+                            <div class="card-body">
                                 <div class="d-flex align-items-start mb-3">
                                     <div class="me-3">
                                         <img src="<?php echo $team->avatar() ?>">
@@ -28,25 +28,25 @@
                                                 <li><a class="dropdown-item" href="<?php echo route('team.edit', [$team->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></span></a></li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><form action="<?php echo route('team.delete', [$team->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item" onclick="return window.confirm(this.dataset.confirm)" data-confirm="<?php echo e('Are you sure you want to delete this team member?') ?>"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
-                                            </ul>                        
+                                            </ul>
                                         </div>
                                     <?php endif ?>
                                         <strong><?php echo $team->name ? $team->name : $team->username ?> <?php echo ($team->active ? '<span class="badge bg-success">'.e("Active").'</span>' : '<span class="badge bg-danger">'.e("Inactive").'</span>') ?></strong><br>
-                                        <small><?php echo $team->email ?></small>                                        
+                                        <small><?php echo $team->email ?></small>
                                     </div>
-                                </div> 
+                                </div>
                                 <p>
                                 <?php if ($permissions = json_decode($team->teampermission)): ?>
                                     <?php foreach ($permissions as $permission): ?>
                                         <span class="badge bg-primary"><?php echo str_replace('.', ': ', $permission) ?></span>
-                                    <?php endforeach ?>											
+                                    <?php endforeach ?>
                                 <?php endif ?>
                                 </p>
                             </div>
                         </div>
                     </div>
-                <?php endforeach ?>  
-            </div>              
+                <?php endforeach ?>
+            </div>
         <?php else: ?>
             <div class="card">
                 <div class="card-body text-center">
@@ -56,8 +56,8 @@
                     <?php endif ?>
                 </div>
             </div>
-        <?php endif ?>       
-        <?php echo pagination() ?> 
+        <?php endif ?>
+        <?php echo pagination() ?>
     </div>
     <div class="col-md-3">
         <div class="card">
@@ -65,7 +65,7 @@
                 <h5 class="card-title mb-3"><?php ee('Team Members') ?></h5>
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" style="width: <?php echo $total == 0 ? 100 : round($count*100/$total) ?>%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"><?php echo $count ?> / <?php echo $total == 0 ? e('Unlimited') : $total ?></div>
-                </div>            
+                </div>
             </div>
         </div>
         <div class="card">
@@ -94,72 +94,72 @@
         </div>
         <div class="modal-body">
             <?php echo csrf() ?>
-            <div class="form-group mb-3">
+            <div class="mb-3">
                 <label for="email" class="label-control mb-2"><?php echo e("Email") ?></label>
-                <input type="email" value="" name="email" class="form-control" placeholder="johndoe@email.tld" />				
-            </div>	
-            <div class="form-group input-select">
+                <input type="email" value="" name="email" class="form-control" placeholder="johndoe@email.tld" />
+            </div>
+            <div class="mb-3 input-select">
                 <label for="permissions" class="label-control mb-2"><?php echo e("Permissions") ?></label>
-                <select name="permissions[]" class="form-control" placeholder="<?php echo e("Permissions") ?>" data-placeholder="<?php echo e("Permissions") ?>" multiple data-toggle="select">	
+                <select name="permissions[]" class="form-select" placeholder="<?php echo e("Permissions") ?>" data-placeholder="<?php echo e("Permissions") ?>" multiple data-toggle="select">
                     <optgroup label="<?php echo e("Links") ?>">
                         <option value="links.create"><?php echo e("Create Links") ?></option>
                         <option value="links.edit"><?php echo e("Edit Links") ?></option>
-                        <option value="links.delete"><?php echo e("Delete Links") ?></option>				    				
+                        <option value="links.delete"><?php echo e("Delete Links") ?></option>
                     </optgroup>
                     <?php if (user()->has("qr") !== false): ?>
                         <optgroup label="<?php echo e("QR Codes") ?>">
                             <option value="qr.create"><?php echo e("Create QR") ?></option>
                             <option value="qr.edit"><?php echo e("Edit QR") ?></option>
-                            <option value="qr.delete"><?php echo e("Delete QR") ?></option>				    				
+                            <option value="qr.delete"><?php echo e("Delete QR") ?></option>
                         </optgroup>
                     <?php endif ?>
                     <?php if (user()->has("bio") !== false): ?>
                         <optgroup label="<?php echo e("Bio Pages") ?>">
                             <option value="bio.create"><?php echo e("Create Bio") ?></option>
                             <option value="bio.edit"><?php echo e("Edit Bio") ?></option>
-                            <option value="bio.delete"><?php echo e("Delete Bio") ?></option>				    				
+                            <option value="bio.delete"><?php echo e("Delete Bio") ?></option>
                         </optgroup>
                     <?php endif ?>
                     <?php if (user()->has("splash") !== false): ?>
                         <optgroup label="<?php echo e("Custom Splash") ?>">
                             <option value="splash.create"><?php echo e("Create Splash") ?></option>
                             <option value="splash.edit"><?php echo e("Edit Splash") ?></option>
-                            <option value="splash.delete"><?php echo e("Delete Splash") ?></option>				    				
+                            <option value="splash.delete"><?php echo e("Delete Splash") ?></option>
                         </optgroup>
                     <?php endif ?>
                     <?php if (user()->has("overlay") !== false): ?>
                         <optgroup label="<?php echo e("CTA Overlay") ?>">
                             <option value="overlay.create"><?php echo e("Create Overlay") ?></option>
                             <option value="overlay.edit"><?php echo e("Edit Overlay") ?></option>
-                            <option value="overlay.delete"><?php echo e("Delete Overlay") ?></option>				    				
+                            <option value="overlay.delete"><?php echo e("Delete Overlay") ?></option>
                         </optgroup>
-                    <?php endif ?>	
+                    <?php endif ?>
                     <?php if (user()->has("pixels") !== false): ?>
                             <optgroup label="<?php echo e("Tracking Pixels") ?>">
                             <option value="pixels.create"><?php echo e("Create Pixels") ?></option>
                             <option value="pixels.edit"><?php echo e("Edit Pixels") ?></option>
-                            <option value="pixels.delete"><?php echo e("Delete Pixels") ?></option>				    				
+                            <option value="pixels.delete"><?php echo e("Delete Pixels") ?></option>
                         </optgroup>
                     <?php endif ?>
                     <?php if (user()->has("domain") !== false): ?>
                             <optgroup label="<?php echo e("Branded Domain") ?>">
                             <option value="domain.create"><?php echo e("Add Custom Domain") ?></option>
-                            <option value="domain.delete"><?php echo e("Delete Custom Domain") ?></option>				    				
+                            <option value="domain.delete"><?php echo e("Delete Custom Domain") ?></option>
                         </optgroup>
-                    <?php endif ?>								    				
+                    <?php endif ?>
                     <?php if (user()->has("bundle") !== false): ?>
                             <optgroup label="<?php echo e("Campaigns") ?>/<?php ee('Channels') ?>">
                             <option value="bundle.create"><?php echo e("Create Campaigns") ?>/<?php ee('Channels') ?></option>
                             <option value="bundle.edit"><?php echo e("Edit Campaigns") ?>/<?php ee('Channels') ?></option>
-                            <option value="bundle.delete"><?php echo e("Delete Campaigns") ?>/<?php ee('Channels') ?></option>				    				
+                            <option value="bundle.delete"><?php echo e("Delete Campaigns") ?>/<?php ee('Channels') ?></option>
                         </optgroup>
-                    <?php endif ?>	
+                    <?php endif ?>
                     <?php if (user()->has("api") !== false): ?>
-                        <option value="api.create"><?php echo e("Developer API") ?></option>		    				
-                    <?php endif ?>	
+                        <option value="api.create"><?php echo e("Developer API") ?></option>
+                    <?php endif ?>
                     <?php if (user()->has("export") !== false): ?>
-                        <option value="export.create"><?php echo e("Export Data") ?></option>		    				
-                    <?php endif ?>						    						    						    					    							    		
+                        <option value="export.create"><?php echo e("Export Data") ?></option>
+                    <?php endif ?>
                 </select>
             </div>
         </div>

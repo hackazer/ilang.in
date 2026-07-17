@@ -192,7 +192,7 @@ class Overlay {
 
 		View::set('title', $name);
 		
-		\Helpers\CDN::load('spectrum');
+		\Helpers\CDN::load('coloris');
 
 		View::push('<script type="text/javascript">							
 					function bgColor(element, color, e) {
@@ -227,42 +227,42 @@ class Overlay {
 						$(".contact-box .contact-description").show();
 						$(".contact-box .contact-description").text($(this).val());
 					});							    						    				    
-					$("#bg").spectrum({
+					$("#bg").appColorPicker({
 						color: "#ffffff",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".contact-box, #contact-button", color, $(this)); },
 						hide: function (color) { bgColor(".contact-box, #contact-button", color, $(this)); }
 					}); 
-					$("#color").spectrum({
+					$("#color").appColorPicker({
 						color: "#000000",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); },
 						hide: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); }
 					});
-					$("#inputbg").spectrum({
+					$("#inputbg").appColorPicker({
 						color: "#ffffff",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".contact-box .form-control", color, $(this)); },
 						hide: function (color) { bgColor(".contact-box .form-control", color, $(this)); }
 					});  
-					$("#inputcolor").spectrum({
+					$("#inputcolor").appColorPicker({
 						color: "#000000",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { Color(".contact-box .form-control", color, $(this)); },
 						hide: function (color) { Color(".contact-box .form-control", color, $(this)); }
 					});				    	
-					$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 						color: "#000000",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); },
 						hide: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); }
 					});  
-					$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 						color: "#ffffff",
 						showInput: true,
 						preferredFormat: "hex",
@@ -350,7 +350,7 @@ class Overlay {
 
 		View::set('title', e('Edit').' '.$overlay->name);
 		
-		\Helpers\CDN::load('spectrum');
+		\Helpers\CDN::load('coloris');
 
 		View::push('<script type="text/javascript">							
 					function bgColor(element, color, e) {
@@ -385,7 +385,7 @@ class Overlay {
 						$(".contact-box .contact-description").show();
 						$(".contact-box .contact-description").text($(this).val());
 					});							    						    				    
-					$("#bg").spectrum({
+					$("#bg").appColorPicker({
 						color: "'.$overlay->data->bg.'",
 						showInput: true,
 						preferredFormat: "hex",
@@ -393,35 +393,35 @@ class Overlay {
 						move: function (color) { bgColor(".contact-box, #contact-button", color, $(this)); },
 						hide: function (color) { bgColor(".contact-box, #contact-button", color, $(this)); }
 					}); 
-					$("#color").spectrum({
+					$("#color").appColorPicker({
 						color: "'.$overlay->data->color.'",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); },
 						hide: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); }
 					});
-					$("#inputbg").spectrum({
+				$("#inputbg").appColorPicker({
 						color: "'.$overlay->data->inputbg.'",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".contact-box .form-control", color, $(this)); },
 						hide: function (color) { bgColor(".contact-box .form-control", color, $(this)); }
 					});  
-					$("#inputcolor").spectrum({
+				$("#inputcolor").appColorPicker({
 						color: "'.$overlay->data->inputcolor.'",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { Color(".contact-box .form-control", color, $(this)); },
 						hide: function (color) { Color(".contact-box .form-control", color, $(this)); }
 					});				    	
-					$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 						color: "'.$overlay->data->btnbg.'",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); },
 						hide: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); }
 					});  
-					$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 						color: "'.$overlay->data->btncolor.'",
 						showInput: true,
 						preferredFormat: "hex",
@@ -503,7 +503,7 @@ class Overlay {
 
 		View::set('title', $name);
 		
-		\Helpers\CDN::load('spectrum');
+		\Helpers\CDN::load('coloris');
 
 		View::push('<script type="text/javascript">	
 					var poll_max = 10;
@@ -535,28 +535,28 @@ class Overlay {
 					$("#votetext").keyup(function(e){
 						$("[data-trigger=vote]").text($(this).val());
 					});																    						    				    
-					$("#bg").spectrum({
+					$("#bg").appColorPicker({
 						color: "#ffffff",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".poll-box", color, $(this)); },
 						hide: function (color) { bgColor(".poll-box", color, $(this)); }
 					}); 
-					$("#color").spectrum({
+					$("#color").appColorPicker({
 						color: "#000000",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { Color(".poll-box .poll-question,.poll-answers li", color, $(this)); },
 						hide: function (color) { Color(".poll-box .poll-question,.poll-answers li", color, $(this)); }
 					});								    	
-					$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 						color: "#000000",
 						showInput: true,
 						preferredFormat: "hex",
 						move: function (color) { bgColor(".poll-box button", color, $(this)); },
 						hide: function (color) { bgColor(".poll-box button", color, $(this)); }
 					});  
-					$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 						color: "#ffffff",
 						showInput: true,
 						preferredFormat: "hex",
@@ -640,7 +640,7 @@ class Overlay {
 
 		View::set('title', e('Edit').' '.$overlay->name);
 		
-		\Helpers\CDN::load('spectrum');
+		\Helpers\CDN::load('coloris');
 
 		View::push('<script type="text/javascript">							
 						var poll_max = 10;
@@ -672,28 +672,28 @@ class Overlay {
 						$("#votetext").keyup(function(e){
 							$("[data-trigger=vote]").text($(this).val());
 						});																    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 							color: "'.$overlay->data->bg.'",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { bgColor(".poll-box", color, $(this)); },
 							hide: function (color) { bgColor(".poll-box", color, $(this)); }
 						}); 
-						$("#color").spectrum({
+					$("#color").appColorPicker({
 							color: "'.$overlay->data->color.'",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { Color(".poll-box .poll-question,.poll-answers li", color, $(this)); },
 							hide: function (color) { Color(".poll-box .poll-question,.poll-answers li", color, $(this)); }
 						});								    	
-						$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 							color: "'.$overlay->data->btnbg.'",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { bgColor(".poll-box button", color, $(this)); },
 							hide: function (color) { bgColor(".poll-box button", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 							color: "'.$overlay->data->btncolor.'",
 							showInput: true,
 							preferredFormat: "hex",
@@ -774,7 +774,7 @@ class Overlay {
 
 		View::set('title', $name);	
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 
   		View::push('<script type="text/javascript">
 						$("input[name=logo]").change(function(e){
@@ -812,42 +812,42 @@ class Overlay {
 								$(".custom-message .btn").show();
 								$(".custom-message .btn").text($(this).val());
 						});							    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 					        color: "#008aff",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".custom-message", color, $(this)); },
 					        hide: function (color) { bgColor(".custom-message", color, $(this)); }
 						}); 
-						$("#color").spectrum({
+					$("#color").appColorPicker({
 					        color: "#fff",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { Color(".custom-message .custom-text", color, $(this)); },
 					        hide: function (color) { Color(".custom-message .custom-text", color, $(this)); }
 						});
-						$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 					        color: "#fff",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".custom-message .btn", color, $(this)); },
 					        hide: function (color) { bgColor(".custom-message .btn", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 					        color: "#000",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { Color(".custom-message .btn", color, $(this)); },
 					        hide: function (color) { Color(".custom-message .btn", color, $(this)); }
 						});
-						$("#labelbg").spectrum({
+					$("#labelbg").appColorPicker({
 					        color: "#fff",
 					        showInput: true,
 					        preferredFormat: "hex",					        
 					        move: function (color) { bgColor(".custom-message .custom-label", color, $(this)); },
 					        hide: function (color) { bgColor(".custom-message .custom-label", color, $(this)); }
 						});  
-						$("#labelcolor").spectrum({
+					$("#labelcolor").appColorPicker({
 					        color: "#000",
 					        showInput: true,
 					        preferredFormat: "hex",
@@ -941,7 +941,7 @@ class Overlay {
 
 		View::set('title', e('Edit').' '.$overlay->name);
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 		
 		View::push('<script type="text/javascript">
 						$("input[name=logo]").change(function(e){
@@ -979,42 +979,42 @@ class Overlay {
 								$(".custom-message .btn").show();
 								$(".custom-message .btn").text($(this).val());
 						});							    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 					        color: "'.$overlay->data->bg.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".custom-message", color, $(this)); },
 					        hide: function (color) { bgColor(".custom-message", color, $(this)); }
 						}); 
-						$("#color").spectrum({
+					$("#color").appColorPicker({
 					        color: "'.$overlay->data->color.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { Color(".custom-message .custom-text", color, $(this)); },
 					        hide: function (color) { Color(".custom-message .custom-text", color, $(this)); }
 						});
-						$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 					        color: "'.$overlay->data->btnbg.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".custom-message .btn", color, $(this)); },
 					        hide: function (color) { bgColor(".custom-message .btn", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 					        color: "'.$overlay->data->btncolor.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { Color(".custom-message .btn", color, $(this)); },
 					        hide: function (color) { Color(".custom-message .btn", color, $(this)); }
 						});
-						$("#labelbg").spectrum({
+					$("#labelbg").appColorPicker({
 					        color: "'.$overlay->data->labelbg.'",
 					        showInput: true,
 					        preferredFormat: "hex",					        
 					        move: function (color) { bgColor(".custom-message .custom-label", color, $(this)); },
 					        hide: function (color) { bgColor(".custom-message .custom-label", color, $(this)); }
 						});  
-						$("#labelcolor").spectrum({
+					$("#labelcolor").appColorPicker({
 					        color: "'.$overlay->data->labelcolor.'",
 					        showInput: true,
 					        preferredFormat: "hex",
@@ -1105,7 +1105,7 @@ class Overlay {
 
 		View::set('title', $name);	
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 
   		View::push('<script type="text/javascript">
 						$("input[name=logo]").change(function(e){
@@ -1139,7 +1139,7 @@ class Overlay {
 							$(element).css("color", (color ? color.toHexString() : ""));
 							e.val(color.toHexString());
 						}								    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 					        color: "#008aff",
 					        showInput: true,
 					        preferredFormat: "hex",
@@ -1240,7 +1240,7 @@ class Overlay {
 
 		View::set('title', e('Edit').' '.$overlay->name);
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 		
 		View::push('<script type="text/javascript">
 						$("input[name=logo]").change(function(e){
@@ -1274,7 +1274,7 @@ class Overlay {
 							$(element).css("color", (color ? color.toHexString() : ""));
 							e.val(color.toHexString());
 						}							    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 					        color: "'.$overlay->data->bg.'",
 					        showInput: true,
 					        preferredFormat: "hex",
@@ -1376,7 +1376,7 @@ class Overlay {
 
 		View::set('title', $name);	
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 
   		View::push('<script type="text/javascript">													
 						function bgColor(element, color, e) {
@@ -1402,28 +1402,28 @@ class Overlay {
 						$("#button-p").keyup(function(e){
 							$(".contact-box button[type=submit]").text($(this).val());
 						});					    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 					        color: "#fff",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".contact-box", color, $(this)); },
 					        hide: function (color) { bgColor(".contact-box", color, $(this)); }
 						});		
-						$("#color").spectrum({
+					$("#color").appColorPicker({
 							color: "#000",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); },
 							hide: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); }
 						});				
-						$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 							color: "#000",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); },
 							hide: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 							color: "#fff",
 							showInput: true,
 							preferredFormat: "hex",
@@ -1509,7 +1509,7 @@ class Overlay {
 
 		View::set('title', e('Edit').' '.$overlay->name);
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 		
 		View::push('<script type="text/javascript">													
 						function bgColor(element, color, e) {
@@ -1535,28 +1535,28 @@ class Overlay {
 						$("#button-p").keyup(function(e){
 							$(".contact-box button[type=submit]").text($(this).val());
 						});					    						    				    
-						$("#bg").spectrum({
+					$("#bg").appColorPicker({
 					        color: "'.$overlay->data->bg.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".contact-box", color, $(this)); },
 					        hide: function (color) { bgColor(".contact-box", color, $(this)); }
 						});		
-						$("#color").spectrum({
+					$("#color").appColorPicker({
 							color: "'.$overlay->data->color.'",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); },
 							hide: function (color) { Color(".contact-label,.contact-description,.contact-box label", color, $(this)); }
 						});				
-						$("#btnbg").spectrum({
+					$("#btnbg").appColorPicker({
 							color: "'.$overlay->data->btnbg.'",
 							showInput: true,
 							preferredFormat: "hex",
 							move: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); },
 							hide: function (color) { bgColor(".contact-box button, #contact-button i", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+					$("#btncolor").appColorPicker({
 							color: "'.$overlay->data->btncolor.'",
 							showInput: true,
 							preferredFormat: "hex",
@@ -1660,7 +1660,7 @@ class Overlay {
 
 		View::set('title', $name);	
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 
   		View::push('<script type="text/javascript">													
 						function bgColor(element, color, e) {
@@ -1683,28 +1683,28 @@ class Overlay {
 						    	if($(this).val().length > 35) return false;
 								$(".contact-box .btn").text($(this).val());
 						});							    						    				    
-						$("#bg").spectrum({
+				$("#bg").appColorPicker({
 					        color: "#fff",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".contact-box", color, $(this)); },
 					        hide: function (color) { bgColor(".contact-box", color, $(this)); }
 						}); 
-						$("#color").spectrum({
+				$("#color").appColorPicker({
 					        color: "#000",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { Color(".contact-box .custom-text", color, $(this)); },
 					        hide: function (color) { Color(".contact-box .custom-text", color, $(this)); }
 						});
-						$("#btnbg").spectrum({
+				$("#btnbg").appColorPicker({
 					        color: "#000",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".contact-box .btn", color, $(this)); },
 					        hide: function (color) { bgColor(".contact-box .btn", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+				$("#btncolor").appColorPicker({
 					        color: "#fff",
 					        showInput: true,
 					        preferredFormat: "hex",
@@ -1778,7 +1778,7 @@ class Overlay {
 
 		View::set('title', e('Edit').' '.$overlay->name);
 
-		\Helpers\CDN::load("spectrum");
+		\Helpers\CDN::load("coloris");
 		
 		View::push('<script type="text/javascript">													
 						function bgColor(element, color, e) {
@@ -1801,28 +1801,28 @@ class Overlay {
 						    	if($(this).val().length > 35) return false;
 								$(".contact-box .btn").text($(this).val());
 						});							    						    				    
-						$("#bg").spectrum({
+				$("#bg").appColorPicker({
 					        color: "'.$overlay->data->bg.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".contact-box", color, $(this)); },
 					        hide: function (color) { bgColor(".contact-box", color, $(this)); }
 						}); 
-						$("#color").spectrum({
+				$("#color").appColorPicker({
 					        color: "'.$overlay->data->color.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { Color(".contact-box .custom-text", color, $(this)); },
 					        hide: function (color) { Color(".contact-box .custom-text", color, $(this)); }
 						});
-						$("#btnbg").spectrum({
+				$("#btnbg").appColorPicker({
 					        color: "'.$overlay->data->btnbg.'",
 					        showInput: true,
 					        preferredFormat: "hex",
 					        move: function (color) { bgColor(".contact-box .btn", color, $(this)); },
 					        hide: function (color) { bgColor(".contact-box .btn", color, $(this)); }
 						});  
-						$("#btncolor").spectrum({
+				$("#btncolor").appColorPicker({
 					        color: "'.$overlay->data->btncolor.'",
 					        showInput: true,
 					        preferredFormat: "hex",

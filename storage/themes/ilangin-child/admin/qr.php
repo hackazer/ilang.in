@@ -25,7 +25,7 @@
                         <td><a href="<?php echo route('qr.generate', [$qr->alias]) ?>" target="_blank"><img src="<?php echo route('qr.generate', [$qr->alias]) ?>" width="100" class="rounded"></a></td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $qr->user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $qr->user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <?php echo ($qr->user->admin)?"<strong>{$qr->user->email}</strong>":$qr->user->email ?>
                                 </div>

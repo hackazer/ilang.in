@@ -65,18 +65,26 @@ JSON);
         $this->write('package.json', <<<'JSON'
 {
   "dependencies": {
-    "@adminkit/core": "3.4.0",
+    "@fortawesome/fontawesome-free": "7.3.1",
+    "@melloware/coloris": "0.25.0",
     "@yaireo/tagify": "4.38.0",
-    "fontawesome-iconpicker": "3.2.0",
-    "jquery": "3.6.0",
-    "popper.js": "1.16.1",
-    "spectrum-colorpicker": "1.8.1"
+    "air-datepicker": "3.6.0",
+    "bootstrap": "5.3.8",
+    "chart.js": "4.5.1",
+    "feather-icons": "4.29.2",
+    "imask": "7.6.1",
+    "jodit": "4.13.5",
+    "jquery": "4.0.0",
+    "jsvectormap": "1.7.0",
+    "select2": "4.1.0"
   },
   "browserCompatibility": {
-    "holds": {
-      "jquery": "Bootstrap 4 requires jQuery major 3.",
-      "fontawesomeIconpicker": "Font Awesome Icon Picker is discontinued.",
-      "dashboardBundle": "Admin shell compatibility hold."
+    "holds": {}
+  },
+  "dependencyReleasePolicy": {
+    "compatibilityHolds": {},
+    "runtimeMatrix": {
+      "phpunit": "PHPUnit 11 is the actively supported test runtime for the project's PHP 8.3 minimum."
     }
   }
 }
@@ -85,15 +93,20 @@ JSON);
 {
   "lockfileVersion": 3,
   "packages": {
-    "": {"dependencies":{"@adminkit/core":"3.4.0","@yaireo/tagify":"4.38.0","fontawesome-iconpicker":"3.2.0","jquery":"3.6.0","popper.js":"1.16.1","spectrum-colorpicker":"1.8.1"}},
-    "node_modules/@adminkit/core": {"version":"3.4.0","license":"MIT"},
-    "node_modules/@adminkit/core/node_modules/bootstrap": {"version":"5.3.0","license":"MIT"},
-    "node_modules/@adminkit/core/node_modules/chart.js": {"version":"2.9.4","license":"MIT"},
+    "": {"dependencies":{"@fortawesome/fontawesome-free":"7.3.1","@melloware/coloris":"0.25.0","@yaireo/tagify":"4.38.0","air-datepicker":"3.6.0","bootstrap":"5.3.8","chart.js":"4.5.1","feather-icons":"4.29.2","imask":"7.6.1","jodit":"4.13.5","jquery":"4.0.0","jsvectormap":"1.7.0","select2":"4.1.0"}},
+    "node_modules/@fortawesome/fontawesome-free": {"version":"7.3.1","license":"CC-BY-4.0 AND MIT AND OFL-1.1"},
+    "node_modules/@melloware/coloris": {"version":"0.25.0","license":"MIT"},
+    "node_modules/@popperjs/core": {"version":"2.11.8","license":"MIT"},
     "node_modules/@yaireo/tagify": {"version":"4.38.0","license":"MIT"},
-    "node_modules/fontawesome-iconpicker": {"version":"3.2.0","license":"MIT"},
-    "node_modules/jquery": {"version":"3.6.0","license":"MIT"},
-    "node_modules/popper.js": {"version":"1.16.1","license":"MIT"},
-    "node_modules/spectrum-colorpicker": {"version":"1.8.1","license":"MIT"}
+    "node_modules/air-datepicker": {"version":"3.6.0","license":"MIT"},
+    "node_modules/bootstrap": {"version":"5.3.8","license":"MIT"},
+    "node_modules/chart.js": {"version":"4.5.1","license":"MIT"},
+    "node_modules/feather-icons": {"version":"4.29.2","license":"MIT"},
+    "node_modules/imask": {"version":"7.6.1","license":"MIT"},
+    "node_modules/jodit": {"version":"4.13.5","license":"MIT"},
+    "node_modules/jquery": {"version":"4.0.0","license":"MIT"},
+    "node_modules/jsvectormap": {"version":"1.7.0","license":"MIT"},
+    "node_modules/select2": {"version":"4.1.0","license":"MIT"}
   }
 }
 JSON);
@@ -111,13 +124,19 @@ file_put_contents(__DIR__.'/executed.txt', 'unsafe');
 
 return [
     'editor' => [
-        'version' => '4.16.1',
-        'js' => ['https://cdn.ckeditor.com/[version]/standard/ckeditor.js'],
-    ],
-    'simpleeditor' => [
-        'version' => '4.13.3',
+        'version' => '4.13.5',
         'js' => [assets('vendor/jodit/jodit.min.js')],
         'css' => [assets('vendor/jodit/jodit.min.css')],
+    ],
+    'airdatepicker' => [
+        'version' => '3.6.0',
+        'js' => [assets('frontend/libs/air-datepicker/air-datepicker.min.js')],
+        'css' => [assets('frontend/libs/air-datepicker/air-datepicker.min.css')],
+    ],
+    'coloris' => [
+        'version' => '0.25.0',
+        'js' => [assets('frontend/libs/coloris/coloris.min.js')],
+        'css' => [assets('frontend/libs/coloris/coloris.min.css')],
     ],
     'mystery' => [
         'version' => '',
@@ -126,38 +145,52 @@ return [
 ];
 PHP);
         $this->write('app/UsesCdn.php', "<?php\n\\Helpers\\CDN::load('editor');\n");
-        $this->write('public/static/frontend/libs/jquery/package.json', <<<'JSON'
-{"name":"jquery","version":"3.5.1","license":"MIT"}
-JSON);
-        $this->write('public/static/frontend/libs/jquery/dist/jquery.js', "/*! jQuery v3.5.1 | MIT */\n");
-        $this->write('public/static/frontend/libs/jquery/dist/jquery.min.js', "/*! jQuery v3.5.1 | MIT */\n");
-        $this->write('public/static/bundle.pack.js', "/*! jQuery JavaScript Library v3.5.1 | MIT */\n");
+        $this->write('public/static/frontend/libs/jquery/dist/jquery.js', "/*! jQuery v4.0.0 | MIT */\n");
+        $this->write('public/static/frontend/libs/jquery/dist/jquery.min.js', "/*! jQuery v4.0.0 | MIT */\n");
+        $this->write('public/static/bundle.pack.js', "/*! jQuery JavaScript Library v4.0.0 | MIT */\n");
         $this->write('public/static/mystery.min.js', '!function(){window.mystery=true}();');
-        $this->write('public/static/vendor/jodit/jodit.min.js', "/*! jodit Version: v4.13.3 License(s): MIT */\n");
+        $this->write('public/static/vendor/jodit/jodit.min.js', "/*! jodit Version: v4.13.5 License(s): MIT */\n");
         $this->write('public/static/vendor/jodit/LICENSE.txt', "MIT License\n");
         $this->write('public/static/frontend/libs/tagify/tagify.min.js', '!function(){}();');
-        $this->write('public/static/frontend/libs/fontawesome-picker/dist/fontawesome-iconpicker.min.js', '!function(){}();');
-        $this->write('public/static/frontend/libs/spectrum/spectrum.min.js', '!function(){}();');
-        $this->write('public/static/backend/js/app.js', '!function(){}();');
+        $this->write('public/static/frontend/libs/air-datepicker/air-datepicker.min.js', '!function(){}();');
+        $this->write('public/static/frontend/libs/coloris/coloris.min.js', '!function(){}();');
+        $this->write('public/static/frontend/libs/imask/imask.min.js', '!function(){}();');
+        $this->write('public/static/backend/css/app.css', '/*! AdminKit 3.4.0 shell styles compiled with Bootstrap 5.3.8 */');
         $this->write('public/static/vendor-manifest.json', <<<'JSON'
 {
   "versions": {
-    "@adminkit/core": "3.4.0",
+    "@fortawesome/fontawesome-free": "7.3.1",
+    "@melloware/coloris": "0.25.0",
     "@yaireo/tagify": "4.38.0",
-    "jquery": "3.6.0",
-    "spectrum-colorpicker": "1.8.1"
+    "air-datepicker": "3.6.0",
+    "bootstrap": "5.3.8",
+    "chart.js": "4.5.1",
+    "imask": "7.6.1",
+    "jodit": "4.13.5",
+    "jquery": "4.0.0",
+    "jsvectormap": "1.7.0"
   },
-  "holds": {
-    "dashboardBundle": "Admin shell compatibility hold.",
-    "fontawesomeIconpicker": "Font Awesome Icon Picker is discontinued.",
-    "jquery": "Bootstrap 4 requires jQuery major 3."
+  "holds": {},
+  "embedded": {
+    "backend/css/app.css": {
+      "@adminkit/core": "3.4.0",
+      "bootstrap": "5.3.8"
+    },
+    "bundle.pack.js": {
+      "@popperjs/core": "2.11.8",
+      "bootstrap": "5.3.8",
+      "jquery": "4.0.0"
+    },
+    "Chart.min.js": {
+      "chart.js": "4.5.1"
+    }
   }
 }
 JSON);
         $this->write('storage/themes/default/admin/layouts/main.php', <<<'PHP'
+<link rel="stylesheet" href="/static/backend/css/app.css">
 <script src="/static/frontend/libs/jquery/dist/jquery.min.js"></script>
 <script src="/static/mystery.min.js"></script>
-<script src="/static/backend/js/app.js"></script>
 PHP);
         $this->write('storage/plugins/example/config.json', <<<'JSON'
 {"id":"example","name":"Example Plugin","version":"2.0.0","license":"MIT"}
@@ -176,7 +209,7 @@ JSON);
 {"packages":{"acme/transitive":[{"version":"1.0.0","version_normalized":"1.0.0.0","license":["BSD-3-Clause"],"abandoned":"acme/replacement"}]}}
 JSON);
         $this->writeMetadata('npm/jquery.json', <<<'JSON'
-{"dist-tags":{"latest":"3.7.1"},"versions":{"3.7.1":{"version":"3.7.1","license":"MIT"}}}
+{"dist-tags":{"latest":"4.0.0"},"versions":{"4.0.0":{"version":"4.0.0","license":"MIT"}}}
 JSON);
         $this->writeMetadata('npm/@yaireo/tagify.json', <<<'JSON'
 {"dist-tags":{"latest":"5.0.0-beta.1"},"versions":{"4.38.0":{"version":"4.38.0","license":"MIT"},"5.0.0-beta.1":{"version":"5.0.0-beta.1","license":"MIT"}}}
@@ -201,15 +234,20 @@ JSON);
         self::assertStringContainsString("composer\tacme/direct\tdirect-runtime\t1.2.0\t^1.0\t2.1.0\tMIT\tactive\tcomposer.lock\tapp/UsesDependency.php:3\toutdated", $first);
         self::assertStringContainsString("composer\tacme/transitive\ttransitive-runtime\t0.9.0\t-\t1.0.0\tBSD-3-Clause\tabandoned:acme/replacement\tcomposer.lock\t-\tabandoned,outdated", $first);
         self::assertStringContainsString("composer\tacme/dev-tool\tdirect-dev\t3.4.0\t^3.0\t3.5.0\tApache-2.0\tactive\tcomposer.lock\t-\tcompatibility-hold,outdated", $first);
-        self::assertStringContainsString("browser\tjquery\tvendored\t3.6.0\t-\t3.7.1\tMIT\tactive\tpublic/static/frontend/libs/jquery/package.json", $first);
-        self::assertStringContainsString("browser\tjodit\tvendored\t4.13.3\t-", $first);
+        self::assertStringContainsString("browser\tjquery\tvendored\t4.0.0\t-\t4.0.0\tMIT\tactive\tpublic/static/frontend/libs/jquery", $first);
+        self::assertStringContainsString("browser\tjodit\tvendored\t4.13.5\t-", $first);
         self::assertStringContainsString("browser\t@yaireo/tagify\tvendored\t4.38.0\t-\t4.38.0\tMIT\tactive", $first);
-        self::assertStringContainsString("browser\tspectrum-colorpicker\tvendored\t1.8.1", $first);
-        self::assertStringContainsString("cdn\teditor\tremote\t4.16.1", $first);
-        self::assertStringContainsString("cdn\tsimpleeditor\tself-hosted\t4.13.3", $first);
-        self::assertStringNotContainsString("cdn\tsimpleeditor\tself-hosted\t4.13.3\t-\t-\t-\teol", $first);
-        self::assertStringContainsString("admin-shell\tjquery\tloaded\t3.6.0", $first);
-        self::assertStringContainsString("admin-shell\t@adminkit/core\tbundled\t3.4.0", $first);
+        self::assertStringContainsString("browser\t@melloware/coloris\tvendored\t0.25.0", $first);
+        self::assertStringContainsString("browser\tair-datepicker\tvendored\t3.6.0", $first);
+        self::assertStringContainsString("browser\timask\tvendored\t7.6.1", $first);
+        self::assertStringContainsString("cdn\teditor\tself-hosted\t4.13.5", $first);
+        self::assertStringContainsString("cdn\tairdatepicker\tself-hosted\t3.6.0", $first);
+        self::assertStringContainsString("cdn\tcoloris\tself-hosted\t0.25.0", $first);
+        self::assertStringContainsString("admin-shell\tjquery\tloaded\t4.0.0", $first);
+        self::assertStringContainsString("admin-shell\t@adminkit/core\tembedded\t3.4.0", $first);
+        self::assertStringContainsString("admin-shell\t@popperjs/core\tembedded\t2.11.8", $first);
+        self::assertStringContainsString("admin-shell\tbootstrap\tembedded\t5.3.8", $first);
+        self::assertStringContainsString("admin-shell\tchart.js\tembedded\t4.5.1", $first);
         self::assertStringContainsString("plugin\texample\tinstalled\t2.0.0", $first);
         self::assertStringContainsString("addon\tcustom\ttheme\t1.1.0", $first);
         self::assertStringContainsString("finding\tparallel-browser-artifacts", $first);
@@ -218,21 +256,24 @@ JSON);
         self::assertFileDoesNotExist($this->fixtureRoot.'/app/config/executed.txt');
     }
 
-    public function testOfflineInventoryUsesManagedVersionsLicensesAndHolds(): void
+    public function testOfflineInventoryUsesManagedVersionsLicensesAndRuntimeMatrixPolicy(): void
     {
         [$status, $output] = $this->runInventory();
 
         self::assertSame(0, $status, $output);
-        self::assertMatchesRegularExpression('/browser\tjquery\tvendored\t3\.6\.0\t-\t-\tMIT\tmanaged\t[^\n]+\tcompatibility-hold/', $output);
+        self::assertMatchesRegularExpression('/browser\tjquery\tvendored\t4\.0\.0\t-\t-\tMIT\tmanaged/', $output);
         self::assertMatchesRegularExpression('/browser\t@yaireo\/tagify\tvendored\t4\.38\.0\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/browser\tpopper\.js\tbuild-input\t1\.16\.1\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/browser\tfontawesome-iconpicker\tvendored\t3\.2\.0\t-\t-\tMIT\tdiscontinued\t[^\n]+\tcompatibility-hold,discontinued/', $output);
-        self::assertMatchesRegularExpression('/browser\tjodit\tvendored\t4\.13\.3\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/cdn\tsimpleeditor\tself-hosted\t4\.13\.3\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/admin-shell\t@adminkit\/core\tbundled\t3\.4\.0\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/admin-shell\tbootstrap\tembedded\t5\.3\.0\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/admin-shell\tchart\.js\tembedded\t2\.9\.4\t-\t-\tMIT\tmanaged/', $output);
-        self::assertMatchesRegularExpression('/composer\tphpunit\/phpunit\tdirect-dev\t12\.5\.31\t\^12\.5\t-\tBSD-3-Clause\tunknown\tcomposer\.lock\t-\tcompatibility-hold/', $output);
+        self::assertMatchesRegularExpression('/browser\t@melloware\/coloris\tvendored\t0\.25\.0\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/browser\tair-datepicker\tvendored\t3\.6\.0\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/browser\timask\tvendored\t7\.6\.1\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/browser\tjodit\tvendored\t4\.13\.5\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/cdn\teditor\tself-hosted\t4\.13\.5\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/admin-shell\t@adminkit\/core\tembedded\t3\.4\.0\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/admin-shell\t@popperjs\/core\tembedded\t2\.11\.8\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/admin-shell\tbootstrap\tembedded\t5\.3\.8\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/admin-shell\tchart\.js\tembedded\t4\.5\.1\t-\t-\tMIT\tmanaged/', $output);
+        self::assertMatchesRegularExpression('/composer\tphpunit\/phpunit\tdirect-dev\t12\.5\.31\t\^12\.5\t-\tBSD-3-Clause\tunknown\tcomposer\.lock\t-\truntime-matrix/', $output);
+        self::assertStringNotContainsString('compatibility-hold', implode("\n", array_filter(explode("\n", $output), static fn (string $line): bool => str_contains($line, 'phpunit/phpunit'))));
     }
 
     public function testMarkdownOutputProvidesARefreshableReleaseTable(): void

@@ -27,7 +27,7 @@ use Helpers\App;
 
 class Stats {
     
-    use Traits\Links;
+    use Traits\Links, Traits\DateRangePicker;
     /**
      * Simple Redirect
      *
@@ -110,33 +110,7 @@ class Stats {
 		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
-		\Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
 		return View::with('stats.index', compact('url', 'top', 'recentActivity'))->extend('layouts.main');
     }
@@ -274,33 +248,7 @@ class Stats {
         View::push(assets('frontend/libs/jsvectormap/dist/maps/world.js'), "script")->tofooter();
         View::push(assets('frontend/libs/jsvectormap/dist/css/jsvectormap.min.css'), "css")->toHeader();
         View::push(assets('charts.min.js'), "script")->tofooter();
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
         return View::with('stats.countries', compact('url', 'top'))->extend('layouts.main');
     }
@@ -490,33 +438,7 @@ class Stats {
 		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
 
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
 		return View::with('stats.platforms', compact('url', 'top'))->extend('layouts.main');
     }
@@ -633,33 +555,7 @@ class Stats {
 		View::set("description", e("Browser statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
 		
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		            
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
 		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();
@@ -777,33 +673,7 @@ class Stats {
 		View::set("description", e("Language statistics page for the short URL")." ". \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain));
 		View::set("image", \Helpers\App::shortRoute($url->domain, $url->alias.$url->domain).'/i');
 		
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){             		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                minDate: moment('{$url->date}').format('MM/DD/YY'),
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});			
-		});</script>", "custom")->tofooter();
+		$this->loadDateRangePicker($url->date);
 
 		View::push(assets('Chart.min.js'), "script")->toFooter();
 		View::push(assets('charts.min.js'), "script")->tofooter();

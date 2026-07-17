@@ -50,18 +50,14 @@ class Coupons {
 
         $coupons = DB::coupons()->orderByDesc('id')->paginate(15);
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::push("<script>
                     $('[data-toggle=updateFormContent]').click(function(){
                         
                         let content = $(this).data('content');
                         console.log(content['newvaliduntil']);
-                        $('[data-datepicker]').datepicker({
-                            autoPick: false,
-                            date: content['newvaliduntil'],
-                            format: 'yyyy-mm-dd'
-                        });
+                        AppDatePicker.set('[data-datepicker]', content['newvaliduntil']);
                     });
                     </script>", 'custom')->tofooter();
 

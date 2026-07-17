@@ -217,8 +217,8 @@ final class DB extends ORM {
 		
 		try{
 			parent::raw_execute($db->query);	
-		} catch(Exception $e){  					
-			GemError::trigger(500, $e->getMessage());
+		} catch(\Throwable $e){
+			\GemError::trigger(500, $e->getMessage());
 		}  	
 	} 
   /**
@@ -496,16 +496,20 @@ final class DB extends ORM {
 		self::$mode = "alter";
 
 		$db->query = "ALTER TABLE `{$table}`\n";
+		$baseQuery = $db->query;
 		$commands($db);
+
+		if(trim($db->query) === trim($baseQuery)) return true;
 
 		$db->query = trim($db->query, ",\n");
 
-		$db->query .= ";";		
+		$db->query .= ";";
 
 		try{
-			parent::raw_execute($db->query);  
-		} catch(Exception $e){      
-			GemError::trigger(500, $e->getMessage());
+			parent::raw_execute($db->query);
+			return true;
+		} catch(\Throwable $e){
+			\GemError::trigger(500, $e->getMessage());
 		}      
   	}
   /**
@@ -573,8 +577,8 @@ final class DB extends ORM {
 
 		try{
 			parent::raw_execute($db->query);  
-		} catch(Exception $e){      
-			GemError::trigger(500, $e->getMessage());
+		} catch(\Throwable $e){
+			\GemError::trigger(500, $e->getMessage());
 		}   
 	}
 	/**
@@ -595,8 +599,8 @@ final class DB extends ORM {
 
 		try{
 			parent::raw_execute($db->query);  
-		} catch(Exception $e){      
-			GemError::trigger(500, $e->getMessage());
+		} catch(\Throwable $e){
+			\GemError::trigger(500, $e->getMessage());
 		}
 	}
 	/**
@@ -653,8 +657,8 @@ final class DB extends ORM {
 
 		try{
 			parent::raw_execute($db->query);  
-		} catch(Exception $e){      
-			GemError::trigger(500, $e->getMessage());
+		} catch(\Throwable $e){
+			\GemError::trigger(500, $e->getMessage());
 		}
 	}
 }

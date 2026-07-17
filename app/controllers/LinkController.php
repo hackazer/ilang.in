@@ -650,7 +650,7 @@ class Link {
 
 		View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
 		
-        \Helpers\CDN::load('datetimepicker');
+        \Helpers\CDN::load('airdatepicker');
 
         return View::with('user.edit', compact('url', 'locations', 'channels'))->extend('layouts.dashboard');
     }

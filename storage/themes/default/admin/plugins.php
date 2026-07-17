@@ -26,7 +26,7 @@
         </div>
       </form>
     </div>
-    <div class="col-md-12">        
+    <div class="col-md-12">
         <div class="card">
             <div class="table-responsive">
                 <table class="table table-hover my-0">
@@ -38,7 +38,7 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>             
+                    <tbody>
                         <?php foreach($plugins as $plugin): ?>
                             <tr>
                                 <td>
@@ -62,10 +62,10 @@
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table> 
-            </div>        
-        </div>        
-    </div>    
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="modal fade" id="infoModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
@@ -108,11 +108,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="file" class="form-label"><?php ee('Plugin File') ?></label>
                     <input type="file" class="form-control" name="file" id="file" value="" accept=".zip" placeholder="e.g. PLUGINNAME.zip">
                     <p class="form-text"><?php ee('Upload the zip file that comes in the package. Usually it is named PLUGINNAME.zip. Please make sure the plugin respects the file structure.') ?></p>
-                </div>                
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>

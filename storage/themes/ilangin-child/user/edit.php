@@ -16,7 +16,7 @@
             <div class="card">
                 <div class="card-body">
                     <?php echo csrf() ?>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="url" class="form-label"><?php ee('URL') ?></label>
                         <div class="input-group">
                             <div class="input-group-text  <?php echo user()->pro() ? 'bg-white' : '' ?>"><img src="<?php echo route('link.ico', $url->id) ?>" width="16"></div>
@@ -28,19 +28,19 @@
                         <h4><?php echo e("Meta Tags")?></h4>
                         <div class="row">   
                             <div class="col-lg-4 col-md-6 mt-3">
-                                <div class="form-group">
+                                <div class="mb-3">
                                     <label for="metaimage" class="form-label"><?php ee('Custom Banner') ?></label>                    
                                     <input type="file" class="form-control p-2" name="metaimage" id="metaimage" placeholder="<?php echo e("Enter your custom meta title")?>" autocomplete="off">
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 mt-3">
-                                <div class="form-group">
+                                <div class="mb-3">
                                     <label for="metatitle" class="form-label"><?php ee('Meta Title') ?></label>                    
                                     <input type="text" class="form-control p-2" name="metatitle" id="metatitle" value="<?php echo $url->meta_title ?>" placeholder="<?php echo e("Enter your custom meta title")?>" autocomplete="off">
                                 </div>
                             </div>
                             <div class="col-lg-4 col-md-6 mt-3">
-                                <div class="form-group">
+                                <div class="mb-3">
                                     <label for="metadescription" class="form-label"><?php ee('Meta Description') ?></label>                    
                                     <input type="text" class="form-control p-2" name="metadescription" id="metadescription" value="<?php echo $url->meta_description ?>" placeholder="<?php echo e("Enter your custom meta description")?>" autocomplete="off">
                                 </div>
@@ -261,7 +261,7 @@
             <div class="card">
                 <div class="card-body">       
                     <?php if($domains = \Helpers\App::domains()): ?>
-                        <div class="form-group mb-3 rounded input-select">
+                        <div class="mb-3 rounded input-select">
                             <label for="domain" class="form-label"><?php ee('Domain') ?></label>
                             <select name="domain" id="domain" class="form-control border-start-0 ps-0" data-toggle="select">
                                 <?php foreach($domains as $domain): ?>
@@ -271,7 +271,7 @@
                         </div>
                     <?php endif ?>
                     <?php if($redirects = \Helpers\App::redirects()): ?>
-                        <div class="form-group mb-3 rounded input-select">
+                        <div class="mb-3 rounded input-select">
                             <label for="type" class="form-label"><?php ee('Redirect') ?></label>
                             <select name="type" id="type" class="form-control border-start-0 ps-0" data-toggle="select">
                                 <?php foreach($redirects as $name => $redirect): ?>
@@ -285,7 +285,7 @@
                         </div>
                     <?php endif ?>      
                     <?php if(!$url->custom):?>             
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="alias" class="form-label"><?php ee('Alias') ?></label>
                         <div class="input-group input-select">
                             <div class="input-group-text"><i data-feather="globe"></i></div>
@@ -294,7 +294,7 @@
                     </div>
                     <?php endif ?>
                     <?php if (\Core\Auth::user()->has("alias") !== false): ?>
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="custom" class="form-label"><?php ee('Custom') ?></label>
                         <div class="input-group">
                             <div class="input-group-text bg-white"><i data-feather="globe"></i></div>
@@ -302,28 +302,28 @@
                         </div>
                     </div>    
                     <?php endif ?>                  
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="pass" class="form-label"><?php ee('Password Protection') ?></label>
                         <div class="input-group">
                             <div class="input-group-text bg-white"><i data-feather="lock"></i></div>
                             <input type="text" class="form-control p-2 border-start-0 ps-0" name="pass" id="pass" placeholder="<?php echo e("Type your password here")?>" autocomplete="off" value="<?php echo $url->pass ?>">
                         </div>
                     </div>                                     
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="expiry" class="form-label"><?php ee('Link Expiration') ?></label>
                         <div class="input-group">
                             <div class="input-group-text bg-white"><i data-feather="lock"></i></div>
                             <input type="text" class="form-control p-2 border-start-0 ps-0" data-toggle="datepicker" name="expiry" id="expiry" placeholder="<?php echo e("MM/DD/YYYY")?>" autocomplete = "off" value="<?php echo $url->expiry ?>">
                         </div>
                     </div>                        
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label for="expiry" class="form-label"><?php echo e("Description")?></label>
                         <div class="input-group">
                             <span class="input-group-text bg-white"><i data-feather="tag"></i></span>
                             <input type="text" class="form-control p-2 border-start-0 ps-0" name="description" id="description" placeholder="<?php echo e("Type your description here")?>" autocomplete = "off" value="<?php echo $url->description ?>">
                         </div>
                     </div>
-                    <div class="form-group mb-3 rounded input-select">
+                    <div class="mb-3 rounded input-select">
                         <label for="type" class="form-label"><?php ee('Campaign') ?></label>
                         <select name="bundle" id="bundle" class="form-control border-start-0 ps-0" data-toggle="select">
                             <option value="0"><?php echo e('None') ?></option>
@@ -333,7 +333,7 @@
                         </select>
                     </div>
                     <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-                    <div class="form-group rounded input-select">
+                    <div class="mb-3 rounded input-select">
                         <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
                             <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                                 <option value="<?php echo $channel['id'] ?>" <?php echo in_array($channel['id'], $channels) ? 'selected' : '' ?>><?php echo $channel['name'] ?></option>

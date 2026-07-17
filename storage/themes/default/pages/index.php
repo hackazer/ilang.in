@@ -1,20 +1,20 @@
 <section class="slice slice-lg pt-7 <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'bg-white', 'bg-section-dark') ?>" <?php echo themeSettings::config('homecolor') ?>>
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-xl-9 col-lg-10">               
-                <div class="card mb-n7 position-relative zindex-100">                                       
+            <div class="col-xl-9 col-lg-10">
+                <div class="card mb-n7 position-relative zindex-100">
                     <div class="card-body p-md-5">
                         <div class=" text-center">
                             <h1 class="h2 lh-150 mt-3 mb-0"><?php echo $page->name ?></h1>
                         </div>
                         <div class="row align-items-center mt-5 pt-5 delimiter-top">
                             <div class="col mb-3 mb-lg-0">
-                                <div class="media align-items-center">
-                                    <div class="media-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
                                         <span class="text-sm text-muted"><?php ee('Last Updated') ?> <?php echo $page->lastupdated ?></span>
                                     </div>
                                 </div>
-                            </div>                           
+                            </div>
                         </div>
                     </div>
                 </div>

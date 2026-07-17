@@ -5,12 +5,12 @@
     <div class="row">        
         <div class="col-md-9">
             <div class="card card-body">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="text" class="form-label"><?php ee('QR Code Name') ?></label>
                     <input type="text" class="form-control p-2" name="name" value="<?php echo $qr->name ?>" placeholder="e.g. For Instagram">
                 </div>
                 <?php if($domains): ?>
-                <div class="form-group mt-4">
+                <div class="mb-3 mt-4">
                     <label class="form-label"><?php ee('Domain') ?> <small class="text-danger"><?php ee('If you change the domain name, the QR code will change!') ?></small></label>
                     <div class="d-flex">
                         <div>
@@ -32,7 +32,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="type"></i> <?php ee('Text') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Your Text') ?></label>
                             <textarea class="form-control" name="text" placeholder="<?php ee('Your Text') ?>"><?php echo $qr->data->data ?></textarea>
                         </div>
@@ -45,7 +45,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="link"></i> <?php ee('Link') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Your Link') ?></label>
                             <input type="text" class="form-control p-2" name="link" value="<?php echo $qr->data->data ?>" placeholder="https://"></input>
                         </div>
@@ -58,15 +58,15 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="mail"></i> <?php ee('Email') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Email') ?></label>
                             <input type="email" class="form-control" name="email[email]" value="<?php echo $qr->data->data->email ?>" placeholder="e.g. someone@domain.com"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Subject') ?></label>
                             <input type="text" class="form-control p-2" name="email[subject]" value="<?php echo $qr->data->data->subject ?>" placeholder="e.g. <?php ee('Job Application') ?>"></input>
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Message') ?></label>
                             <textarea class="form-control" name="email[body]" placeholder="e.g. <?php ee('Your message here to be sent as email') ?>"><?php echo $qr->data->data->body ?></textarea>
                         </div>
@@ -79,7 +79,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="phone"></i> <?php ee('Phone') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="phone" value="<?php echo $qr->data->data ?>" placeholder="e.g. 123456789"></input>
                         </div>
@@ -92,11 +92,11 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="smartphone"></i> <?php ee('SMS & Message') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="sms[phone]" value="<?php echo $qr->data->data->phone ?>" placeholder="e.g 123456789"></input>
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Message') ?></label>
                             <input type="text" class="form-control p-2" name="sms[message]" value="<?php echo $qr->data->data->message ?>" placeholder="e.g. Job Application"></input>
                         </div>
@@ -109,7 +109,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="smartphone"></i> <?php ee('SMS') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="sms[phone]" value="<?php echo $qr->data->data->phone ?>" placeholder="e.g 123456789"></input>
                         </div>
@@ -122,11 +122,11 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="smartphone"></i> <?php ee('Whatsapp') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone Number') ?></label>
                             <input type="text" class="form-control p-2" name="whatsapp[phone]" value="<?php echo $qr->data->data->phone ?>" placeholder="e.g +123456789"></input>
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Message') ?></label>
                             <textarea class="form-control" name="whatsapp[body]"  placeholder="e.g. <?php ee('Your Text') ?>"><?php echo $qr->data->data->body ?></textarea>
                         </div>
@@ -139,27 +139,27 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="user"></i> <?php ee('vCard') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('First Name') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[fname]" value="<?php echo $qr->data->data->fname ?>" placeholder="e.g. John"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Last Name') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[lname]" value="<?php echo $qr->data->data->lname ?>" placeholder="e.g. Doe"></input>
                         </div> 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Organization') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[org]" value="<?php echo $qr->data->data->org ?>" placeholder="e.g. Internet Inc"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[phone]" value="<?php echo $qr->data->data->phone ?>" placeholder="e.g. +112345689"></input>
                         </div>   
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Email') ?></label>
                             <input type="email" class="form-control" name="vcard[email]" value="<?php echo $qr->data->data->email ?>" placeholder="e.g. someone@domain.com"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Website') ?></label>
                             <input type="text" class="form-control p-2" name="vcard[site]" value="<?php echo $qr->data->data->site ?>" placeholder="e.g. https://domain.com"></input>
                         </div> 
@@ -169,42 +169,42 @@
                         </div>
                         <div id="vcard-address" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Street') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[street]" value="<?php echo $qr->data->data->street ?>" placeholder="e.g. 123 My Street"></input>
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('City') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[city]" value="<?php echo $qr->data->data->city ?>" placeholder="e.g. My City"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('State') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[state]" value="<?php echo $qr->data->data->state ?>" placeholder="e.g. My State"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Zipcode') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[zip]" value="<?php echo $qr->data->data->zip ?>" placeholder="e.g. 123456"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Country') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[country]" value="<?php echo $qr->data->data->country ?>" placeholder="e.g. My Country"></input>
                             </div>
                         </div>
                         <div id="vcard-social" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Facebook') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[facebook]" value="<?php echo $qr->data->data->facebook ?>" placeholder="e.g. https://www.facebook.com/myprofile"></input>
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Twitter') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[twitter]" value="<?php echo $qr->data->data->twitter ?>" placeholder="e.g. https://www.twitter.com/myprofile"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Instagram') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[instagram]" value="<?php echo $qr->data->data->instagram ?>" placeholder="e.g. https://www.instagram.com/myprofile"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Linekdin') ?></label>
                                 <input type="text" class="form-control p-2" name="vcard[linkedin]" value="<?php echo $qr->data->data->linkedin ?>" placeholder="e.g. https://www.linkedin.com/myprofile"></input>
                             </div> 
@@ -218,27 +218,27 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="user"></i> <?php ee('vCard') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('First Name') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[fname]" value="<?php echo $qr->data->data->fname ?>" placeholder="e.g. John"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Last Name') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[lname]" value="<?php echo $qr->data->data->lname ?>" placeholder="e.g. Doe"></input>
                         </div> 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Organization') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[org]" value="<?php echo $qr->data->data->org ?>" placeholder="e.g. Internet Inc"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Phone') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[phone]" value="<?php echo $qr->data->data->phone ?>" placeholder="e.g. +112345689"></input>
                         </div>   
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Email') ?></label>
                             <input type="email" class="form-control" name="staticvcard[email]" value="<?php echo $qr->data->data->email ?>" placeholder="e.g. someone@domain.com"></input>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Website') ?></label>
                             <input type="text" class="form-control p-2" name="staticvcard[site]" value="<?php echo $qr->data->data->site ?>" placeholder="e.g. https://domain.com"></input>
                         </div> 
@@ -248,42 +248,42 @@
                         </div>
                         <div id="staticvcard-address" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Street') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[street]" value="<?php echo $qr->data->data->street ?>" placeholder="e.g. 123 My Street"></input>
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('City') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[city]" value="<?php echo $qr->data->data->city ?>" placeholder="e.g. My City"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('State') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[state]" value="<?php echo $qr->data->data->state ?>" placeholder="e.g. My State"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Zipcode') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[zip]" value="<?php echo $qr->data->data->zip ?>" placeholder="e.g. 123456"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Country') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[country]" value="<?php echo $qr->data->data->country ?>" placeholder="e.g. My Country"></input>
                             </div>
                         </div>
                         <div id="staticvcard-social" class="collapse">
                             <hr>
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Facebook') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[facebook]" value="<?php echo $qr->data->data->facebook ?>" placeholder="e.g. https://www.facebook.com/myprofile"></input>
                             </div>    
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Twitter') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[twitter]" value="<?php echo $qr->data->data->twitter ?>" placeholder="e.g. https://www.twitter.com/myprofile"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Instagram') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[instagram]" value="<?php echo $qr->data->data->instagram ?>" placeholder="e.g. https://www.instagram.com/myprofile"></input>
                             </div> 
-                            <div class="form-group mb-3">
+                            <div class="mb-3">
                                 <label for="text" class="form-label"><?php ee('Linekdin') ?></label>
                                 <input type="text" class="form-control p-2" name="staticvcard[linkedin]" value="<?php echo $qr->data->data->linkedin ?>" placeholder="e.g. https://www.linkedin.com/myprofile"></input>
                             </div> 
@@ -297,15 +297,15 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="wifi"></i> <?php ee('WiFi') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Network SSID') ?></label>
                             <input type="text" class="form-control p-2" name="wifi[ssid]" placeholder="e.g 123456789" value="<?php echo $qr->data->data->ssid ?>"></input>
                         </div>                        
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Password') ?></label>
                             <input type="text" class="form-control p-2" name="wifi[pass]" placeholder="Optional" value="<?php echo $qr->data->data->pass ?>"></input>
                         </div>
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php ee('Encryption') ?></label>
                             <select name="wifi[encryption]" class="form-control">
                                 <option value="wep" <?php echo $qr->data->data->encryption == "wep" ? 'selected' : '' ?>>WEP</option>
@@ -321,7 +321,7 @@
                         <h5 class="card-title fw-bold"><i class="me-2" data-feather="smartphone"></i> <?php ee('Cryptocurrency') ?></h5>
                     </div>
                     <div class="card-body">
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <p><?php ee('Cryptocurrency') ?></p>
                             <label class="me-3">
                                 <input type="radio" name="crypto[currency]" value="btc" <?php echo $qr->data->data->currency == 'btc' ? 'checked' : '' ?>> <?php ee('Bitcoin') ?>
@@ -333,7 +333,7 @@
                                 <input type="radio" name="crypto[currency]" value="bch" <?php echo $qr->data->data->currency == 'bch' ? 'checked' : '' ?>> <?php ee('Bitcoin Cash') ?>
                             </label>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="text" class="form-label"><?php echo strtoupper($qr->data->data->currency) ?> <?php ee('Wallet Address') ?></label>
                             <input type="text" class="form-control p-2" name="crypto[wallet]" value="<?php echo $qr->data->data->wallet ?>" placeholder=""></input>
                         </div>
@@ -351,7 +351,7 @@
                     </div>
                     <div class="card-body">
                         <p><?php ee('This can be used to upload an image or a PDF. Most common uses are restaurant menu, promotional poster and resume.') ?></p>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label for="file" class="form-label"><?php ee('File') ?></label>
                             <input type="file" class="form-control p-2" name="file" accept=".jpg, .jpeg, .png, .gif, .pdf">
                             <p class="form-text"><?php ee('Acceptable file: jpg, png, gif, pdf. Max 2MB.') ?></p>
@@ -375,13 +375,13 @@
                     <div id="singlecolor" class="collapse <?php echo isset($qr->data->color) ? 'show' : '' ?>">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="bg"><?php ee("Background") ?></label><br>
                                     <input type="text" name="bg" id="bg" value="<?php echo isset($qr->data->color) ? $qr->data->color->bg : '' ?>">
                                 </div>
                             </div>	
                             <div class="col-md-6">
-                                <div class="form-group mb-3">
+                                <div class="mb-3">
                                     <label class="form-label" for="fg"><?php ee("Foreground") ?></label><br>
                                     <input type="text" name="fg" id="fg" value="<?php echo isset($qr->data->color) ? $qr->data->color->fg : '' ?>">
                                 </div>
@@ -393,23 +393,23 @@
                             <input type="hidden" name="mode" value="<?php echo isset($qr->data->gradient) ? 'gradient' : 'simple' ?>">
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="form-group mb-3">
+                                    <div class="mb-3">
                                         <label class="form-label" for="bg"><?php ee("Background") ?></label><br>
                                         <input type="text" name="gradient[bg]" id="gbg" value="<?php echo isset($qr->data->gradient) ? $qr->data->gradient[1] : 'rgb(255,255,255)' ?>">
                                     </div>
                                 </div>	
                                 <div class="col-md-12">
                                     <div class="row">
-                                        <div class="col form-group mb-3">
+                                        <div class="col mb-3">
                                             <label class="form-label" for="fg"><?php ee("Gradient Start") ?></label><br>
                                             <input type="text" name="gradient[start]" id="gfg" value="<?php echo isset($qr->data->gradient) ? $qr->data->gradient[0][0] : 'rgb(0,0,0)' ?>">
                                         </div>	
-                                        <div class="col form-group mb-3">
+                                        <div class="col mb-3">
                                             <label class="form-label" for="fgs"><?php ee("Gradient Stop") ?></label><br>
                                             <input type="text" name="gradient[stop]" id="gfgs" value="<?php echo isset($qr->data->gradient) ? $qr->data->gradient[0][1] : 'rgb(0,0,0)' ?>">
                                         </div>                                        
                                     </div>
-                                    <div class="form-group mb-3">
+                                    <div class="mb-3">
                                         <label class="form-label" for="fgd"><?php ee("Gradient Direction") ?></label><br>
                                         <select name="gradient[direction]" id="gfgd" class="form-control">
                                             <option value="vertical" <?php echo isset($qr->data->gradient) && $qr->data->gradient[2] == "vertical" ? 'selected' : '' ?>><?php ee('Vertical') ?></option>
@@ -421,7 +421,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col form-group mb-3">
+                        <div class="col mb-3">
                             <label class="form-label" for="fgs"><?php ee("Eye Color") ?></label><br>
                             <input type="text" name="eyecolor" id="eyecolor" value="<?php echo $qr->data->eyecolor ?? '' ?>">
                         </div> 
@@ -473,45 +473,45 @@
                     </div>
 					<div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="logo"><?php ee("Logo") ?></label>
 								<input type="file" class="form-control" name="logo" id="logo">
 							</div>
 						</div>                    						
 					</div>
                     <?php if(\Helpers\QR::hasImagick()): ?>
-                        <div class="form-group mb-3">
-                            <label class="form-label d-block" for="fgd"><?php ee("Matrix Style") ?></label>                        
-                            <div class="btn-group btn-group-toggle mt-2 border rounded" data-toggle="buttons">
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="square"></i><br>
-                                    <input type="radio" name="matrix" value="square" class="me-2" autocomplete="off" <?php echo isset($qr->data->matrix) && $qr->data->matrix == 'square' ? 'checked' : '' ?>> <?php ee('Square') ?>
+                        <div class="mb-3">
+                            <span class="form-label d-block"><?php ee("Matrix Style") ?></span>
+                            <div class="btn-group mt-2 border rounded" role="group" aria-label="<?php echo e('Matrix Style') ?>">
+                                <input type="radio" class="btn-check" name="matrix" id="matrix-square" value="square" autocomplete="off" <?php echo isset($qr->data->matrix) && $qr->data->matrix == 'square' ? 'checked' : '' ?>>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="matrix-square">
+                                    <i class="mb-3" data-feather="square"></i><br><?php ee('Square') ?>
                                 </label>
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="circle"></i><br>
-                                    <input type="radio" name="matrix" value="circle" class="me-2" autocomplete="off" <?php echo isset($qr->data->matrix) && $qr->data->matrix == 'circle' ? 'checked' : '' ?>>  <?php ee('Rounded') ?>
+                                <input type="radio" class="btn-check" name="matrix" id="matrix-circle" value="circle" autocomplete="off" <?php echo isset($qr->data->matrix) && $qr->data->matrix == 'circle' ? 'checked' : '' ?>>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="matrix-circle">
+                                    <i class="mb-3" data-feather="circle"></i><br><?php ee('Rounded') ?>
                                 </label>
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="more-horizontal"></i> <br>
-                                    <input type="radio" name="matrix" value="dot" class="me-2" autocomplete="off" <?php echo isset($qr->data->matrix) && $qr->data->matrix == 'dot' ? 'checked' : '' ?>> <?php ee('Dots') ?>
+                                <input type="radio" class="btn-check" name="matrix" id="matrix-dot" value="dot" autocomplete="off" <?php echo isset($qr->data->matrix) && $qr->data->matrix == 'dot' ? 'checked' : '' ?>>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="matrix-dot">
+                                    <i class="mb-3" data-feather="more-horizontal"></i><br><?php ee('Dots') ?>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label class="form-label d-block"><?php ee("Eye Style") ?></label>                        
-                            <div class="btn-group btn-group-toggle mt-2 border rounded" data-toggle="buttons">
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="square"></i> <br>
-                                    <input type="radio" name="eye" value="square" class="me-2" autocomplete="off" <?php echo isset($qr->data->eye) && $qr->data->eye == 'square' ? 'checked' : '' ?>>  <?php ee('Square') ?>
+                            <div class="btn-group mt-2 border rounded" role="group" aria-label="<?php echo e('Eye Style') ?>">
+                                <input type="radio" class="btn-check" name="eye" id="eye-square" value="square" autocomplete="off" <?php echo isset($qr->data->eye) && $qr->data->eye == 'square' ? 'checked' : '' ?>>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="eye-square">
+                                    <i class="mb-3" data-feather="square"></i><br><?php ee('Square') ?>
                                 </label>
-                                <label class="btn d-block text-center border rounded p-3 px-2 h-100">
-                                    <i class="mb-3" data-feather="circle"></i><br>
-                                    <input type="radio" name="eye" value="circle" class="me-2" autocomplete="off"<?php echo isset($qr->data->eye) && $qr->data->eye == 'circle' ? 'checked' : '' ?>> <?php ee('Circle') ?>
+                                <input type="radio" class="btn-check" name="eye" id="eye-circle" value="circle" autocomplete="off" <?php echo isset($qr->data->eye) && $qr->data->eye == 'circle' ? 'checked' : '' ?>>
+                                <label class="btn d-block text-center border rounded p-3 px-2 h-100" for="eye-circle">
+                                    <i class="mb-3" data-feather="circle"></i><br><?php ee('Circle') ?>
                                 </label>
                             </div>
                         </div>
                     <?php endif ?>
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label class="form-label d-block"><?php ee("Margin") ?></label>                        
                         <input type="number" value="<?php echo $qr->data->margin ?? '' ?>" name="margin" placeholder="e.g. 10" class="form-control">
                     </div>
@@ -525,7 +525,7 @@
                 </div>
                 <div class="card-body">
                     <div id="return-ajax">
-                        <img src="<?php echo route('qr.generate', [$qr->alias]) ?>" class="img-responsive w-100 mw-50">
+                        <img src="<?php echo route('qr.generate', [$qr->alias]) ?>" class="img-fluid w-100 mw-50">
                     </div>    
                     <button type="submit" class="btn btn-primary mt-3"><?php ee('Update') ?></button>
                 </div>

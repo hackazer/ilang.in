@@ -75,7 +75,7 @@
       <div class="card-header"><?php ee('Download Language Files') ?></div>
       <div class="card-body">
         <p><?php ee('A list of available language files can be found on our website below.') ?></p>
-        <a href="https://gempixel.com/products/url-shortener-script/languages" target="_blank" class="btn btn-xs btn-primary"><?php ee('Download') ?></a>
+        <a href="https://gempixel.com/products/url-shortener-script/languages" target="_blank" class="btn btn-sm btn-primary"><?php ee('Download') ?></a>
       </div>
     </div>
   </div>
@@ -107,7 +107,7 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="file" class="form-label"><?php ee('Language File') ?></label>
                     <input type="file" class="form-control" name="file" id="file" value="" accept=".zip" placeholder="e.g. en.zip">
                     <p class="form-text"><?php ee('Upload the zip file that comes in the package. Usually it is named {LANGCODE}.zip. Please make sure the language respects the file structure.') ?></p>

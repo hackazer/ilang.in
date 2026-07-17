@@ -3,11 +3,11 @@
     <div class="card-body">
         <form method="post" action="<?php echo route('team.update', [$team->id]) ?>">
             <?php echo csrf() ?>
-            <div class="form-group mb-3">
+            <div class="mb-3">
                 <label for="email" class="label-control mb-2"><?php echo e("Email") ?></label>
                 <input type="email" class="form-control" value="<?php echo $team->email ?>" disabled>				
             </div>	
-            <div class="form-group input-select mb-3">
+            <div class="mb-3 input-select">
                 <label for="permissions" class="label-control mb-2"><?php echo e("Permissions") ?></label>
                 <select name="permissions[]" class="form-control" placeholder="<?php echo e("Permissions") ?>" data-placeholder="<?php echo e("Permissions") ?>" multiple data-toggle="select">	
                     <optgroup label="<?php echo e("Links") ?>">

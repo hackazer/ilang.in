@@ -1,36 +1,84 @@
 {
   "versions": {
-    "@adminkit/core": "3.4.0",
-    "@chenfengyuan/datepicker": "1.0.10",
+    "@fortawesome/fontawesome-free": "7.3.1",
     "@highlightjs/cdn-assets": "11.11.1",
+    "@melloware/coloris": "0.25.0",
     "@yaireo/tagify": "4.38.0",
     "ace-builds": "1.44.0",
-    "bootstrap": "4.6.2",
+    "air-datepicker": "3.6.0",
     "blockadblock": "3.2.1",
+    "bootstrap": "5.3.8",
     "chart.js": "4.5.1",
     "clipboard": "2.0.11",
     "cookieconsent": "3.1.1",
-    "daterangepicker": "3.1.0",
     "devbridge-autocomplete": "2.0.4",
     "feather-icons": "4.29.2",
-    "fontawesome-iconpicker": "3.2.0",
-    "fontselect-jquery-plugin": "1.1.0",
-    "jquery": "3.7.1",
-    "jquery-mask-plugin": "1.14.16",
+    "imask": "7.6.1",
+    "jodit": "4.13.5",
+    "jquery": "4.0.0",
     "jsvectormap": "1.7.0",
-    "moment": "2.30.1",
-    "popper.js": "1.16.1",
     "select2": "4.1.0",
-    "spectrum-colorpicker": "1.8.1",
     "svg-injector": "1.1.3"
   },
-  "holds": {
-    "jquery": "jQuery 4 is outside Bootstrap 4.6.2's supported peer range, so the public theme remains on jQuery 3.7.1.",
-    "publicBootstrap": "The compiled public theme and inherited views use Bootstrap 4 data APIs and utility classes, so the safest stable line is Bootstrap 4.6.2 until a full theme migration is owned.",
-    "publicPopper": "Bootstrap 4.6.2 requires the discontinued Popper 1 package line. popper.js 1.16.1 is pinned for audit coverage, while the production bootstrap.bundle asset embeds the compatible runtime.",
-    "dashboardBundle": "AdminKit 3.4.0 is the newest stable shell, but it still embeds Bootstrap 5.3.0 and Chart.js 2.9.4 and installs deprecated Babel polyfill and Core-JS 2 transitives. Shared chart configuration detects that bundled major, while stats pages replace the global once with standalone Chart.js 4.5.1 after the shell loads.",
-    "fontawesomeIconpicker": "Font Awesome Icon Picker 3.2.0 is discontinued. It remains pinned at its final stable release because active theme-admin call sites depend on its jQuery API.",
-    "fontselectPackageLayout": "fontselect-jquery-plugin 1.1.0 is pinned for inventory and audit coverage, but its non-searchable anchor-based UI is incompatible with the active searchable span-based font selector and existing CSS. The shipped compatible asset remains held until its UI can be migrated and tested."
+  "holds": {},
+  "embedded": {
+    "backend/admin-vendor.min.css": {
+      "@yaireo/tagify": "4.38.0",
+      "select2": "4.1.0"
+    },
+    "backend/admin-vendor.min.js": {
+      "@yaireo/tagify": "4.38.0",
+      "jquery": "4.0.0",
+      "select2": "4.1.0"
+    },
+    "backend/css/app.css": {
+      "@adminkit/core": "3.4.0",
+      "bootstrap": "5.3.8"
+    },
+    "backend/vendor.min.css": {
+      "select2": "4.1.0"
+    },
+    "backend/vendor.min.js": {
+      "jquery": "4.0.0",
+      "select2": "4.1.0"
+    },
+    "bundle.pack.js": {
+      "@popperjs/core": "2.11.8",
+      "bootstrap": "5.3.8",
+      "clipboard": "2.0.11",
+      "devbridge-autocomplete": "2.0.4",
+      "feather-icons": "4.29.2",
+      "jquery": "4.0.0",
+      "select2": "4.1.0"
+    },
+    "Chart.min.js": {
+      "chart.js": "4.5.1"
+    },
+    "frontend/libs/bootstrap/dist/js/bootstrap.bundle.min.js": {
+      "@popperjs/core": "2.11.8",
+      "bootstrap": "5.3.8"
+    }
+  },
+  "provenance": {
+    "feather-icons": {
+      "source": "feather-icons@4.29.2 dist/icons.json",
+      "generator": "scripts/sync-browser-assets.mjs",
+      "excluded": [
+        "published core-js browser polyfill"
+      ]
+    },
+    "backend/css/app.css": {
+      "source": "@adminkit/core@3.4.0 SCSS from git 2e0f84ab4acdc913706ce5b0c56badc08441d0cb",
+      "sourceFile": "scripts/vendor/adminkit-3.4.0-shell.scss",
+      "sourceSha256": "704ae9a87fe1ecf8f9c9ccd3d14216c3e144cca98f7983ddf5f27a22f1ac21d2",
+      "compiler": "sass@1.101.0",
+      "excluded": [
+        "AdminKit distributed CSS and JavaScript",
+        "Flatpickr",
+        "Simplebar",
+        "stale embedded package runtimes"
+      ]
+    }
   },
   "files": {
     "backend/admin-vendor.min.css": {
@@ -38,40 +86,32 @@
       "sha256": "6c5f5a388138cfdcf4cf088e737360bccc99826ab89ed103b3985b8e570aa17f"
     },
     "backend/admin-vendor.min.js": {
-      "bytes": 228285,
-      "sha256": "7176352cb4e5fe3b7bd3b8ec82567eac51870260a0d2314552a9f6068bfa7714"
+      "bytes": 220073,
+      "sha256": "c9b0aa16bc1e4acc98a4d545c22194240432d94fb47693691225f51230da3b2c"
     },
     "backend/css/app.css": {
-      "bytes": 238761,
-      "sha256": "feb7cf7c0168a11d1037d1b9101994ee5331fbd567ad0dcc067a790bb91ef8ff"
-    },
-    "backend/js/app.js": {
-      "bytes": 898297,
-      "sha256": "84e423c64d0dc644f7cf1f70432c9337facab38b2bdd1f13c143877cbb18fad7"
-    },
-    "backend/js/app.js.LICENSE.txt": {
-      "bytes": 23708,
-      "sha256": "cffc474db445c0ec215e9502a78858990875694e82337549d60a6c18dba2654a"
+      "bytes": 218156,
+      "sha256": "0cd0873f0798664a3c0f8ee13104bfb2bb5f1dbba4249beb0b2bcac589f77d2f"
     },
     "backend/vendor.min.css": {
       "bytes": 15559,
       "sha256": "b3f74ff3ea515f8c424bc6e9e2c691f9d606c8a913e7f8cb42b9767acbad630e"
     },
     "backend/vendor.min.js": {
-      "bytes": 161029,
-      "sha256": "69ba85f6fd3e9f566a72b7b0a36e95a4c4254a46f0e387db0c299d64e728e744"
+      "bytes": 152817,
+      "sha256": "913f45aeda97511002d9237eab48948efc30cd82b6291f3cd96ab9fe8bca8ada"
     },
     "bundle.pack.js": {
-      "bytes": 360180,
-      "sha256": "266b7c7b2f4f9e23889601654856142134406b30a2eb328e9f5da27753daf8a4"
+      "bytes": 305675,
+      "sha256": "00181ca0f19a1466973acce6fe709cbd9c114cbf2726ad26c200e9a743897a62"
     },
     "Chart.min.js": {
       "bytes": 208522,
       "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a"
     },
     "charts.min.js": {
-      "bytes": 4469,
-      "sha256": "c1bae1c95de557b894c7dfdf70c1d45ba114bf36f50fbc7ae86fc4a27814c7ee"
+      "bytes": 4349,
+      "sha256": "be339121ff42e170152dca81320b2c66f2dc759373297c2a0f59775769797815"
     },
     "cookieconsent.min.css": {
       "bytes": 4958,
@@ -82,8 +122,8 @@
       "sha256": "e55842a856a6d829feca3c3ad736c136b6c7549e9247274f78aa296259e06e24"
     },
     "custom.min.js": {
-      "bytes": 15189,
-      "sha256": "f0cd1e341dc4bf3ba49bf63e1c2e43886224173ec861f8a47106482ff48b869c"
+      "bytes": 15316,
+      "sha256": "7876ff796b761c535177da8afa5db79dd611f7be2ea758b04f5a2b3d1725fac6"
     },
     "frontend/libs/ace-builds/ace.js": {
       "bytes": 475001,
@@ -141,53 +181,69 @@
       "bytes": 78849,
       "sha256": "bd289e0aae1ff3cc09f29b78c31c0fb6d71393a5daf372455c4fa7063b505679"
     },
+    "frontend/libs/air-datepicker/air-datepicker.css": {
+      "bytes": 19619,
+      "sha256": "110391f897ba0abc6c563bc8d1e7afa135b26955ae57a5fc0a1228e79c394f73"
+    },
+    "frontend/libs/air-datepicker/air-datepicker.js": {
+      "bytes": 48971,
+      "sha256": "24be9285f8a7b00ec14ca94a954f54383ea6a507067f7d3c3f1c2c2280462185"
+    },
     "frontend/libs/blockadblock/blockadblock.min.js": {
       "bytes": 4740,
       "sha256": "2e15e559c918e08b446105b698d90b91bd777cedf8fbbf80f4a88661e5f1f379"
     },
     "frontend/libs/bootstrap/dist/css/bootstrap.min.css": {
-      "bytes": 162264,
-      "sha256": "f886516f3d41e9e7bd994c7f7a39a89cafae9483f90396cb0ddeafe8d1ea5e72"
+      "bytes": 232111,
+      "sha256": "d85327d99c7a3ee1f9b5d0500d1370acea3ad2db39c163c2f51f232baedbdede"
     },
     "frontend/libs/bootstrap/dist/js/bootstrap.bundle.min.js": {
-      "bytes": 83376,
-      "sha256": "19126b874a32753d42c12dfa6c17892bfd93820a5a5100ba1b34da4d07599b49"
+      "bytes": 80496,
+      "sha256": "e4fd49181388c48ec5040bd3fe66f57c29c8e67fcd8502b3354b96ec7ab47cc7"
     },
     "frontend/libs/clipboard/dist/clipboard.min.js": {
       "bytes": 9160,
       "sha256": "e17a1d816e13c0826e0ed7febfabc3277f45571234bde0bf9120829a7169edc9"
     },
-    "frontend/libs/datepicker/datepicker.min.css": {
-      "bytes": 3510,
-      "sha256": "37a8f6af3364f68b0070fb4ef2fed2a63d529ef3eeacd9f19a484fa234336aea"
+    "frontend/libs/coloris/coloris.min.css": {
+      "bytes": 8506,
+      "sha256": "b5e003381340500620df07a09b982abbfe1a848f9ca7efc4f3b3d91f89b9d83d"
     },
-    "frontend/libs/datepicker/datepicker.min.js": {
-      "bytes": 18765,
-      "sha256": "32f8d51e6cb30bddc20cb2046394fe8684bae7dbec9d1d27c3dabdf823090d61"
-    },
-    "frontend/libs/daterangepicker/daterangepicker.min.css": {
-      "bytes": 6154,
-      "sha256": "cdd4438241b92bf00b0293aa17b82fc58b8d110a25aaba3a435dd54a0d6e2259"
-    },
-    "frontend/libs/daterangepicker/daterangepicker.min.js": {
-      "bytes": 32270,
-      "sha256": "f2c1aa494b93b7df907d08f31aa3f05a90dda45fb375879286810502fe1f79ff"
+    "frontend/libs/coloris/coloris.min.js": {
+      "bytes": 14542,
+      "sha256": "383e42d95fb797b54588e056103bfd93d63fa4005e0104164fd487c93b5676af"
     },
     "frontend/libs/devbridge-autocomplete/jquery.autocomplete.min.js": {
       "bytes": 13471,
       "sha256": "a94fbe89c98bae4870c6971f3f1cf8a03c0bcc5c584634d3b3fd17510b09c738"
     },
     "frontend/libs/feather-icons/dist/feather.min.js": {
-      "bytes": 76047,
-      "sha256": "ea465ac6b69a037dc49fda6ab1c585f95725091eff4515df61db91d9d3c5e54e"
+      "bytes": 50753,
+      "sha256": "069c8d0c05e2d07d38494483131d3af2fd1c6c1b52e3ce29695c04ecc31af81d"
     },
-    "frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css": {
-      "bytes": 6184,
-      "sha256": "c84c44580e9bfdbaacdc55f1432d3768e58816dc7d4045671d9fc4c1e9912db7"
+    "frontend/libs/fontawesome-free/css/all.min.css": {
+      "bytes": 90336,
+      "sha256": "e0b69df26e19596d4b81bf7eb0c54b6047e7221ec18d5d4d40c11eefd3ef8a4b"
     },
-    "frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js": {
-      "bytes": 110712,
-      "sha256": "42f04cdc79d6b2f7025aaa6a1d9aeda1e7e307cb76a8f3737520cdc9a48d1f94"
+    "frontend/libs/fontawesome-free/metadata/icons.json": {
+      "bytes": 693798,
+      "sha256": "6d6879ae1c9d47286848e62f296950d8084ced14da0d6770c1f5fd3218da76f1"
+    },
+    "frontend/libs/fontawesome-free/webfonts/fa-brands-400.woff2": {
+      "bytes": 115420,
+      "sha256": "ff66d1cfb67dbe3da432bbe36572cabfa4eef0e591303c2cba111474ba1d15bc"
+    },
+    "frontend/libs/fontawesome-free/webfonts/fa-regular-400.woff2": {
+      "bytes": 19512,
+      "sha256": "f4722d10b9e1b41eefe3b51a026312ee1970edb7782f94b0080d3d475945734c"
+    },
+    "frontend/libs/fontawesome-free/webfonts/fa-solid-900.woff2": {
+      "bytes": 119488,
+      "sha256": "24e5fae26b41c08b2df81c91669f5aaae71d81a84a4713fc56b5c621b78dd456"
+    },
+    "frontend/libs/fontawesome-free/webfonts/fa-v4compatibility.woff2": {
+      "bytes": 4168,
+      "sha256": "c776ee1f1fe21cd72195e91de7afd5c9dbd007e9d06016254d65fbcc091398ca"
     },
     "frontend/libs/highlight.js/highlight.min.js": {
       "bytes": 127496,
@@ -197,13 +253,13 @@
       "bytes": 1421,
       "sha256": "d8dfd126e376afbeadd941be47bc4ee88df1a82ccad09a25d03b3fc68d7d6a2e"
     },
-    "frontend/libs/jquery-mask-plugin/dist/jquery.mask.min.js": {
-      "bytes": 8327,
-      "sha256": "2a0db34dc14ef4b5ce73b230701c7561e5012667a4c9cb274ecab646e1474995"
+    "frontend/libs/imask/imask.min.js": {
+      "bytes": 59248,
+      "sha256": "7fcd7b0428e446cb8fc10a9acde63838a2af5a1cf5e1d90596e326431e489610"
     },
     "frontend/libs/jquery/dist/jquery.min.js": {
-      "bytes": 87533,
-      "sha256": "fc9a93dd241f6b045cbff0481cf4e1901becd0e12fb45166a8f17f95823f0b1a"
+      "bytes": 78748,
+      "sha256": "39a546ea9ad97f8bfaf5d3e0e8f8556adb415e470e59007ada9759dce472adaa"
     },
     "frontend/libs/jsvectormap/dist/css/jsvectormap.min.css": {
       "bytes": 3260,
@@ -217,10 +273,6 @@
       "bytes": 102246,
       "sha256": "de3c2c21cf63bdd95a4cfc477a566a4b189579daeb26157e8ecb101000224edd"
     },
-    "frontend/libs/moment/moment.min.js": {
-      "bytes": 58890,
-      "sha256": "845c524969edd5b3af9aa6d8718d29fe92e8dbe25b955214a8e064a05a9a5027"
-    },
     "frontend/libs/select2/dist/css/select2.min.css": {
       "bytes": 16476,
       "sha256": "5d5e14d587308b5d1ad79f51e9aea2f8f469b0a02b335f559f5a4bb756b81737"
@@ -228,14 +280,6 @@
     "frontend/libs/select2/dist/js/select2.min.js": {
       "bytes": 74294,
       "sha256": "15692c266649fbc8acb4ebfb345e7e9499486d9551148241a235c9d62eea2f55"
-    },
-    "frontend/libs/spectrum/spectrum.min.css": {
-      "bytes": 10225,
-      "sha256": "e1fb553d081450dbb732a9d04bad95998b0206f383c9cc023cc4edec8c309e46"
-    },
-    "frontend/libs/spectrum/spectrum.min.js": {
-      "bytes": 27983,
-      "sha256": "2f625e6d7d356c2dbdf3218bcd15946638f268fee1a601d9a55860d2d5c9fbd1"
     },
     "frontend/libs/svg-injector/dist/svg-injector.min.js": {
       "bytes": 4579,
@@ -248,6 +292,18 @@
     "frontend/libs/tagify/tagify.min.js": {
       "bytes": 67258,
       "sha256": "9053774f6cef7755e022fd896f59fb698b2e4320365f7f9a8cabef8eb48adf16"
+    },
+    "vendor/jodit/jodit.min.css": {
+      "bytes": 160859,
+      "sha256": "4fa0f793769ac7951c092d5b79eda4e20e1839e9db386885860e45d7fe6d360b"
+    },
+    "vendor/jodit/jodit.min.js": {
+      "bytes": 736244,
+      "sha256": "ec72d4c900577f5ff0bd6b9a0569e98453ddc9708ffa251f4061078e0e2f1a74"
+    },
+    "vendor/jodit/LICENSE.txt": {
+      "bytes": 1067,
+      "sha256": "b6eccb41553c575c01f6a1261e87fdc7b842a721d6ba9daa88bdbd9259865d55"
     }
   }
 }

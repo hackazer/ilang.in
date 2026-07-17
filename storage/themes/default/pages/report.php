@@ -17,17 +17,17 @@
                 <div class="card">
                     <div class="card-body">
                         <form id="form-contact" method="post" action="<?php echo route('report.send') ?>" data-trigger="server-form">
-                            <div class="form-group">
-                                <label class="form-control-label" for="contact-email"><?php ee("Email") ?> <span class="text-danger">*</span></label>
+                            <div class="mb-3">
+                                <label class="form-label" for="contact-email"><?php ee("Email") ?> <span class="text-danger">*</span></label>
                                 <input class="form-control form-control-lg" type="email" placeholder="<?php ee("Email") ?>" name="email" id="contact-email" value="<?php echo \Core\Auth::logged() ? \Core\Auth::user()->email : '' ?>" data-error="<?php ee('Please enter a valid email.') ?>" required>
-                            </div>   
-                            <div class="form-group">
-                                <label class="form-control-label" for="contact-link"><?php ee("Short Link") ?> <span class="text-danger">*</span></label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="contact-link"><?php ee("Short Link") ?> <span class="text-danger">*</span></label>
                                 <input class="form-control form-control-lg" type="text" placeholder="<?php ee("Please enter a valid short link") ?>" id="contact-link" name="link" value="" data-error="<?php ee('Please enter a valid link.') ?>" required>
-                            </div>                
-                            <div class="form-group">
-                                <label class="form-control-label" for="contact-reason"><?php ee("Reason") ?> <span class="text-danger">*</span></label>
-                                <select name="reason" id="contact-reason" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="contact-reason"><?php ee("Reason") ?> <span class="text-danger">*</span></label>
+                                <select name="reason" id="contact-reason" class="form-select">
                                     <option value="spam"><?php echo e("Spam") ?></option>
                                     <option value="fraudulent"><?php echo e("Fraudulent") ?></option>
                                     <option value="malicious"><?php echo e("Malicious") ?></option>
@@ -37,7 +37,7 @@
                             <?php echo \Helpers\Captcha::display() ?>
                             <div class="text-center">
                                 <?php echo csrf() ?>
-                                <button type="submit" class="btn btn-block btn-lg btn-primary mt-4"><?php ee('Send') ?></button>
+                                <button type="submit" class="btn w-100 btn-lg btn-primary mt-4"><?php ee('Send') ?></button>
                             </div>
                         </form>
                     </div>

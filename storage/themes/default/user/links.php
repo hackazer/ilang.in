@@ -2,7 +2,7 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header d-flex align-items-center">                
+            <div class="card-header d-flex align-items-center">
                 <div>
                     <form method="post" action="" data-trigger="options">
                         <?php echo csrf() ?>
@@ -28,13 +28,13 @@
                                 <a data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo e("Delete Selected") ?>" href="<?php echo route('links.deleteall') ?>" data-trigger="submitchecked" class="fa fa-trash btn px-3 py-2 border-start"></a>
                             <?php endif ?>
                         </div>
-                    </form>                    
+                    </form>
                 </div>
-                <div class="my-md-0 my-2 ms-auto">                  
+                <div class="my-md-0 my-2 ms-auto">
                     <div class="rounded border">
                       <form action="<?php echo route('links') ?>" method="get">
                         <a href="#search" data-bs-toggle="collapse" class="btn btn-white bg-white"><i class="align-middle" data-feather="search"></i></a>
-                        <button type="button" class="btn btn-default bg-white border-start" data-bs-toggle="dropdown"  aria-expanded="false"><span  data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Sort Results') ?>"><i data-feather="filter"></i></span></button>  
+                        <button type="button" class="btn btn-default bg-white border-start" data-bs-toggle="dropdown"  aria-expanded="false"><span  data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Sort Results') ?>"><i data-feather="filter"></i></span></button>
                         <div class="dropdown-menu p-2">
                             <div class="input-select d-block mb-2">
                               <label for="perpage" class="form-label"><?php ee('Sort By') ?></label>
@@ -43,7 +43,7 @@
                                   <option value=""<?php if(!request()->sort) echo " selected" ?>><?php ee('Newest') ?></option>
                                   <option value="old"<?php if(request()->sort == 'old') echo " selected" ?>><?php ee('Oldest') ?></option>
                                   <option value="most"<?php if(request()->sort == 'most') echo " selected" ?>><?php ee('Most Popular') ?></option>
-                                  <option value="less"<?php if(request()->sort == 'less') echo " selected" ?>><?php ee('Less Popular') ?></option>       
+                                  <option value="less"<?php if(request()->sort == 'less') echo " selected" ?>><?php ee('Less Popular') ?></option>
                                 </optgroup>
                               </select>
                             </div>
@@ -54,11 +54,11 @@
                                     <option value="50"<?php if(request()->perpage == 50) echo " selected" ?>>50</option>
                                     <option value="100"<?php if(request()->perpage == 100) echo " selected" ?>>100</option>
                                 </select>
-                            </div>      
+                            </div>
                             <div class="input-select d-block mb-2">
                               <label for="perpage" class="form-label"><?php ee('Older than') ?></label>
                               <input type="text" class="form-control" name="date" placeholder="" value="<?php echo clean(request()->date) ?>" data-toggle="datepicker">
-                            </div>    
+                            </div>
                             <button type="submit" class="btn btn-primary"><?php ee('Filter') ?></button>
                         </div>
                       </form>
@@ -80,22 +80,22 @@
                 <div id="return-ajax"></div>
                 <div id="link-holder" data-refresh="<?php echo \Gem::currentRoute() == 'archive' ? route('links.refresh.archive') : route('links.refresh') ?>" data-fetch="<?php echo route('links.fetch')?>">
                     <?php foreach($urls as $url): ?>
-                        <?php view('partials.links', compact('url')) ?>      
-                    <?php endforeach ?>                     
-                    
+                        <?php view('partials.links', compact('url')) ?>
+                    <?php endforeach ?>
+
                     <div class="d-flex">
                         <?php echo pagination() ?>
-                    </div> 
-                </div>           
+                    </div>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <?php \Helpers\App::ads('resp') ?>
-        
+
         <?php if(\Models\User::where('id', user()->rID())->first()->has('export') !== false): ?>
         <div class="card">
-            <div class="card-body">                            
+            <div class="card-body">
                 <h5 class="card-title fw-bold"><?php ee('Export Links') ?></h5>
                 <p><?php ee('This tool allows you to generate a list of urls in CSV format. Some basic data such clicks will be included as well.') ?></p>
                 <a href="<?php echo route('user.export.links') ?>" class="btn btn-success"><?php ee('Export') ?></a>
@@ -163,7 +163,7 @@
                 </div>
             </div>
             <div class="mt-2">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="short" class="form-label"><?php ee('Short Link') ?></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="modal-input" name="shortlink" value="">
@@ -171,11 +171,11 @@
                             <button class="btn btn-primary copy" data-clipboard-text=""><?php ee('Copy') ?></button>
                         </div>
                     </div>
-                </div>    
+                </div>
                 <div class="mt-3" id="modal-share">
                     <?php echo \Helpers\App::share('--url--') ?>
                 </div>
-            </div>            
+            </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -185,7 +185,7 @@
   </div>
 </div>
 <div class="modal fade" id="bundleModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">    
+  <div class="modal-dialog">
     <div class="modal-content">
       <form action="<?php echo route('links.addtocampaign') ?>" data-trigger="server-form">
         <?php echo csrf() ?>
@@ -195,8 +195,8 @@
         </div>
         <div class="modal-body">
             <label for="campaigns" class="form-label d-block mb-2"><?php ee('Campaigns') ?></label>
-            <div class="input-group input-select">            
-                <select name="campaigns" id="campaigns" class="form-control" data-toggle="select">
+            <div class="input-group input-select">
+                <select name="campaigns" id="campaigns" class="form-select" data-toggle="select">
                     <option value="0"><?php ee('None') ?></option>
                     <?php foreach(\Core\DB::bundle()->where('userid', user()->rID())->findArray() as $campaign): ?>
                         <option value="<?php echo $campaign['id'] ?>"><?php echo $campaign['name'] ?></option>
@@ -208,13 +208,13 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
             <button type="submit" class="btn btn-success" class="btn btn-success" data-bs-dismiss="modal" data-trigger="addtocampaign"><?php ee('Add') ?></button>
-        </div>          
+        </div>
       </form>
     </div>
   </div>
 </div>
 <div class="modal fade" id="channelModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">    
+  <div class="modal-dialog">
     <div class="modal-content">
       <form action="<?php echo route('channel.addto', ['links', null]) ?>" data-trigger="server-form">
         <?php echo csrf() ?>
@@ -224,8 +224,8 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
-                <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
+            <div class="mb-3 rounded input-select">
+                <select name="channels[]" id="channels" class="form-select" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>
                     <?php endforeach ?>
@@ -236,7 +236,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
             <button type="submit" class="btn btn-success" class="btn btn-success" data-bs-dismiss="modal" data-trigger="addtocampaign"><?php ee('Add') ?></button>
-        </div>          
+        </div>
       </form>
     </div>
   </div>

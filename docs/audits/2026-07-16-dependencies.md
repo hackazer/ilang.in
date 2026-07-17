@@ -57,31 +57,26 @@ The browser state below is sourced from the active root npm lock, vendor manifes
 | Surface | Current evidence |
 | --- | --- |
 | Composer | 12 direct packages and 31 transitive packages are locked; no lock entry reports Composer abandonment |
-| Editor | Jodit 4.13.3, MIT, self-hosted; both `editor` and `simpleeditor` resolve to Jodit assets |
-| Public runtime | Bootstrap 4.6.2, jQuery 3.7.1, Popper 1.16.1, Select2 4.1.0, clipboard 2.0.11, Feather 4.29.2, jsVectorMap 1.7.0 |
-| Charts and dates | Chart.js 4.5.1, datepicker 1.0.10, daterangepicker 3.1.0, Moment 2.30.1 |
-| Other managed browser assets | Ace 1.44.0, Highlight.js CDN assets 11.11.1, Tagify 4.38.0, Devbridge Autocomplete 2.0.4, Cookie Consent 3.1.1, Spectrum 1.8.1, BlockAdBlock 3.2.1, Fontselect 1.1.0, SVG Injector 1.1.3, jQuery Mask 1.14.16 |
-| Admin shell | AdminKit 3.4.0, MIT; embedded Bootstrap 5.3.0, Chart.js 2.9.4, Feather 4.29.0, and jsVectorMap 1.5.3 are separate lock rows |
+| Editor | Jodit 4.13.5, MIT, self-hosted; both `editor` and `simpleeditor` resolve to Jodit assets |
+| Public runtime | Bootstrap 5.3.8, jQuery 4.0.0, Popper 2.11.8, Select2 4.1.0, clipboard 2.0.11, Feather 4.29.2, jsVectorMap 1.7.0 |
+| Charts and dates | Chart.js 4.5.1 and Air Datepicker 3.6.0; Moment and both legacy date plugins removed |
+| Other managed browser assets | Ace 1.44.0, Highlight.js CDN assets 11.11.1, Tagify 4.38.0, Devbridge Autocomplete 2.0.4, Cookie Consent 3.1.1, Coloris 0.25.0, BlockAdBlock 3.2.1, Font Awesome 7.3.1, SVG Injector 1.1.3, IMask 7.6.1 |
+| Admin shell | AdminKit 3.4.0 styles rebuilt with Bootstrap 5.3.8; legacy AdminKit JavaScript and embedded old runtimes removed |
 | Addons | no installed plugin manifest; `default` and `ilangin-child` themes both report version 1.0 |
 
 Representative call-site evidence includes TwitterOAuth in `app/controllers/UsersController.php`, QR Code in `app/helpers/QrGd.php`, Monolog in `core/GemError.class.php`, Stripe in `app/helpers/payments/Stripe.php`, Jodit through `app/config/cdn.php`, admin-shell loads in both theme layout trees, and plugin discovery in `app/controllers/admin/PluginsController.php`. The generated inventory contains the complete sorted call-site column.
 
-## Deliberate compatibility holds
+## Compatibility policy
 
-| Dependency | Current | Official latest stable | Exact blocker |
-| --- | ---: | ---: | --- |
-| `endroid/qr-code` | 6.0.9 | 6.1.3 | Packagist metadata for 6.1.3 requires PHP `^8.4`; project minimum is PHP 8.3 |
-| `phpunit/phpunit` | 12.5.31 | 13.2.4 | Packagist metadata for 13.2.4 requires PHP `>=8.4.1`; the release gate must still run on PHP 8.3 |
-| `jquery` | 3.7.1 | 4.0.0 | Bootstrap 4.6.2 declares the jQuery peer range `1.9.1 - 3` |
-| public `bootstrap` | 4.6.2 | 5.3.8 | inherited public templates use Bootstrap 4 data APIs and utility classes; this requires a full theme migration |
-| `@adminkit/core` | 3.4.0 | 3.4.0 | current shell is pinned as a unit; its embedded dependency versions are inventoried separately |
+No EOL, discontinued, abandoned, or unexplained compatibility hold remains in the release policy. PHPUnit is the only runtime matrix item because its latest major requires a newer PHP runtime: PHP 8.3 uses the actively supported 12.5 line, and PHP 8.5 runs 13.2.4 in CI.
 
-These are compatibility holds, not upgrade omissions. The script flags Bootstrap, jQuery, AdminKit, and PHPUnit directly. Online metadata also flags any Composer latest release whose minimum PHP version exceeds the project minimum.
+## Replaced legacy assets
 
-## Remaining unresolved or discontinued assets
-
-- `fontawesome-iconpicker` is pinned at final stable 3.2.0 under MIT. Official npm metadata marks the project discontinued. Existing admin-plan and bio-editor jQuery call sites block simple removal, so replacement requires call-site migration and behavior tests.
-- Moment 2.30.1 is current, but the official project documentation describes Moment as a legacy project in maintenance mode. It remains a daterangepicker dependency and should not be added to new code.
+- `endroid/qr-code` was replaced by `chillerlan/php-qrcode` 6.0.1, which supports the PHP 8.3 floor and preserves GD, SVG, PDF, logo, file, and data URI output.
+- Discontinued Font Awesome Iconpicker was replaced by an accessible searchable Font Awesome 7 picker.
+- Moment and the legacy datepicker and daterangepicker stack were replaced by Air Datepicker.
+- Spectrum was replaced by Coloris, jQuery Mask by IMask, and the legacy font selector by a first-party searchable selector.
+- The distributed AdminKit JavaScript bundle was removed. AdminKit SCSS is rebuilt with current Bootstrap and the current standalone chart and map assets are loaded explicitly.
 - First-party or ownership-unresolved standalone files such as `animate`, `bio`, `bookmarklet`, `bundle.pack`, `chart-compat`, `charts`, `custom`, `detect.app`, `editor-adapter`, and `server` have no independent package version or license marker. The inventory reports them instead of guessing provenance.
 - The `default` and `ilangin-child` theme manifests contain no license field.
 - Parallel source and minified files are reported separately from runtime duplication. Their presence is packaging evidence, not proof that both execute on one route.

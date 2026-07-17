@@ -176,9 +176,16 @@ final class StripeWebhookTest extends TestCase
     {
         self::assertSame(-300, Stripe::negativeAdjustmentMinor('refund', 500, 200, 0, 1200));
         self::assertSame(0, Stripe::negativeAdjustmentMinor('refund', 500, 500, 0, 1200));
+        self::assertSame(-300, Stripe::negativeAdjustmentMinor('refund', 800, 500, 0, 1200));
         self::assertSame(300, Stripe::negativeAdjustmentMinor('refund_reversed', 500, 300, 0, 1200));
         self::assertSame(-1000, Stripe::negativeAdjustmentMinor('dispute', 1200, 200, 0, 1200));
         self::assertSame(700, Stripe::negativeAdjustmentMinor('dispute_reversed', 900, 0, 700, 1200));
+    }
+
+    public function testCumulativeChargeRefundEventsDoNotUseChargeIdAsTheDeduplicationKey(): void
+    {
+        self::assertFalse(Stripe::negativeProviderObjectDedupSafe('charge.refunded'));
+        self::assertTrue(Stripe::negativeProviderObjectDedupSafe('refund.updated'));
     }
 
     public function testOnlyFullLossOfTheCurrentStripePaymentCanChangeEntitlement(): void
@@ -253,6 +260,9 @@ final class StripeWebhookTest extends TestCase
 
         self::assertSame([
             'session_id' => 'cs_security_1',
+            'payment_intent_id' => 'pi_security_1',
+            'charge_id' => '',
+            'invoice_id' => '',
             'mode' => 'payment',
             'provider_payment_id' => 'pi_security_1',
             'customer_id' => 'cus_security_1',
@@ -269,6 +279,183 @@ final class StripeWebhookTest extends TestCase
             'payment_status' => 'unpaid',
         ]);
         self::assertNull(Stripe::checkoutSessionPaymentContext($unpaid));
+    }
+
+    public function testCheckoutContextKeepsSessionPaymentIntentAndChargeMappingsSeparate(): void
+    {
+        $paid = $this->event('checkout.session.completed', [
+            'id' => 'cs_mapping_1',
+            'object' => 'checkout.session',
+            'payment_status' => 'paid',
+            'mode' => 'payment',
+            'customer' => 'cus_mapping_1',
+            'payment_intent' => (object) [
+                'id' => 'pi_mapping_1',
+                'latest_charge' => (object) ['id' => 'ch_mapping_1'],
+            ],
+            'metadata' => [
+                'local_subscription_id' => '41',
+                'local_subscription_uniqueid' => 'local-mapping-1',
+            ],
+            'amount_total' => 1200,
+            'currency' => 'usd',
+        ]);
+
+        self::assertSame([
+            'session_id' => 'cs_mapping_1',
+            'payment_intent_id' => 'pi_mapping_1',
+            'charge_id' => 'ch_mapping_1',
+            'invoice_id' => '',
+        ], array_intersect_key(
+            Stripe::checkoutSessionPaymentContext($paid),
+            array_flip(['session_id', 'payment_intent_id', 'charge_id', 'invoice_id'])
+        ));
+    }
+
+    public function testChargeReconciliationUsesCanonicalProviderMappingAndDoesNotRejectAValidLaterCharge(): void
+    {
+        self::assertTrue(Stripe::providerIdentityMatches([
+            'session_id' => 'cs_mapping_1',
+            'payment_intent_id' => 'pi_mapping_1',
+            'charge_id' => 'ch_mapping_1',
+        ], 'ch_mapping_1'));
+
+        $source = file_get_contents(dirname(__DIR__, 2).'/app/helpers/payments/Stripe.php');
+
+        self::assertIsString($source);
+        self::assertStringContainsString('findSubscriptionByStripeProviderMapping', $source);
+        self::assertStringContainsString("'stripe_charge_id'", $source);
+        self::assertStringContainsString("'stripe_payment_intent_id'", $source);
+        self::assertStringContainsString('Stripe charge does not match its canonical local checkout mapping.', $this->methodSource($source, 'resolveWebhookSubscription'));
+    }
+
+    public function testModernRefundObjectEventsAreSupported(): void
+    {
+        self::assertTrue(Stripe::isSupportedWebhookEventType('refund.failed'));
+        self::assertTrue(Stripe::isSupportedWebhookEventType('refund.updated'));
+
+        $failed = $this->event('refund.failed', [
+            'id' => 're_modern_1',
+            'object' => 'refund',
+            'charge' => 'ch_modern_1',
+            'amount' => 500,
+            'currency' => 'usd',
+            'status' => 'failed',
+        ]);
+
+        self::assertSame('refund_reversed', Stripe::normalizeNegativeWebhookEvent($failed)['kind']);
+        self::assertSame('ch_modern_1', Stripe::normalizeNegativeWebhookEvent($failed)['charge_id']);
+    }
+
+    public function testOutOfOrderNegativeEventsArePersistedAndReplayedAfterDebit(): void
+    {
+        self::assertSame([
+            'event_id' => 'evt_pending_1',
+            'charge_id' => 'ch_pending_1',
+            'kind' => 'refund',
+            'provider_object_id' => 're_pending_1',
+            'amount_minor' => 500,
+            'currency' => 'USD',
+        ], Stripe::pendingNegativeWebhookState([
+            'kind' => 'refund',
+            'charge_id' => 'ch_pending_1',
+            'provider_object_id' => 're_pending_1',
+            'amount_minor' => 500,
+            'currency' => 'USD',
+        ], 'evt_pending_1'));
+
+        $source = file_get_contents(dirname(__DIR__, 2).'/app/helpers/payments/Stripe.php');
+
+        self::assertIsString($source);
+        self::assertStringContainsString('stripe_pending_negative', $source);
+        self::assertStringContainsString('replayPendingNegativeEvents', $source);
+        self::assertStringContainsString("JSON_EXTRACT(`data`, '$.pending_action.charge_id')", $source);
+        self::assertStringNotContainsString('$pending->cid = $action[\'charge_id\'];', $source);
+        self::assertStringNotContainsString('return 409;', $this->methodSource($source, 'handleNegativeWebhookEvent'));
+    }
+
+    public function testCouponCapacityIsReservedBeforeStripeCheckoutCreation(): void
+    {
+        self::assertTrue(Stripe::couponHasCapacity(4, 5, 0));
+        self::assertFalse(Stripe::couponHasCapacity(4, 5, 1));
+        self::assertTrue(Stripe::couponHasCapacity(5, 0, 100));
+
+        $source = file_get_contents(dirname(__DIR__, 2).'/app/helpers/payments/Stripe.php');
+
+        self::assertIsString($source);
+        self::assertStringContainsString('acquireStripeCouponLock', $source);
+        self::assertStringContainsString('pendingCouponReservations', $source);
+        self::assertStringContainsString('$sub->status = "Pending"', $this->methodSource($source, 'paymentLink'));
+        self::assertStringContainsString("'Canceled'", $this->methodSource($source, 'paymentLink'));
+    }
+
+    public function testDuplicateCheckoutSuccessReturnsOkAfterMappingAndFulfillment(): void
+    {
+        self::assertSame(200, Stripe::checkoutSuccessResponse(true));
+
+        $source = file_get_contents(dirname(__DIR__, 2).'/app/helpers/payments/Stripe.php');
+
+        self::assertIsString($source);
+        $handler = $this->methodSource($source, 'handleCheckoutSessionPayment');
+        self::assertStringContainsString('providerMappingAlreadyProcessed', $handler);
+        self::assertStringNotContainsString('return 409;', $handler);
+    }
+
+    public function testZeroTotalCheckoutSessionNeedsNoPaymentIntent(): void
+    {
+        $free = $this->event('checkout.session.completed', [
+            'id' => 'cs_zero_1',
+            'object' => 'checkout.session',
+            'payment_status' => 'no_payment_required',
+            'mode' => 'payment',
+            'customer' => 'cus_zero_1',
+            'metadata' => [
+                'local_subscription_id' => '42',
+                'local_subscription_uniqueid' => 'local-zero-1',
+            ],
+            'amount_total' => 0,
+            'currency' => 'jpy',
+        ]);
+
+        $context = Stripe::checkoutSessionPaymentContext($free);
+
+        self::assertNotNull($context);
+        self::assertSame('cs_zero_1', $context['session_id']);
+        self::assertSame(0, $context['amount_minor']);
+        self::assertSame('JPY', $context['currency']);
+    }
+
+    public function testAggregateSubscriptionStatusPreservesEntitlementForPositiveRemainingBalance(): void
+    {
+        self::assertSame('Active', Stripe::aggregateSubscriptionStatus(500, 1200, 0));
+        self::assertSame('Disputed', Stripe::aggregateSubscriptionStatus(0, 1200, 0));
+        self::assertSame('Refunded', Stripe::aggregateSubscriptionStatus(0, 0, 1200));
+    }
+
+    public function testCurrencyAwareMinorUnitsHandleJpyAndStripeDecimalCurrencies(): void
+    {
+        self::assertSame(1, Stripe::currencyMinorUnit('JPY'));
+        self::assertSame(100, Stripe::currencyMinorUnit('USD'));
+        self::assertSame(1200, Stripe::toMinorUnits('1200', 'JPY'));
+        self::assertSame(1200, Stripe::toMinorUnits('12', 'USD'));
+        self::assertSame(1200, Stripe::fromMinorUnits(1200, 'JPY'));
+        self::assertSame(12, Stripe::fromMinorUnits(1200, 'USD'));
+    }
+
+    public function testLifetimePaymentAndWebhookShareCanonicalChargeIdentity(): void
+    {
+        self::assertTrue(Stripe::providerIdentityMatches([
+            'session_id' => '',
+            'payment_intent_id' => 'pi_lifetime_1',
+            'charge_id' => 'ch_lifetime_1',
+        ], 'ch_lifetime_1'));
+
+        $source = file_get_contents(dirname(__DIR__, 2).'/app/helpers/payments/Stripe.php');
+
+        self::assertIsString($source);
+        self::assertStringContainsString('providerMappingAlreadyProcessed', $source);
+        self::assertStringContainsString("'stripe_charge_id'", $source);
+        self::assertStringContainsString("'stripe_payment_intent_id'", $source);
     }
 
     public function testRecurringCheckoutDefersFulfillmentToTheExistingChargeSuccessPath(): void

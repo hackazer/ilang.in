@@ -8,7 +8,7 @@
     <?php if($user->verified) echo '<span class="badge bg-success ms-2">'.e('Verified').'</span>' ?>
     <?php if($verification->status == '1'): ?>
         <span class="badge bg-danger"><?php ee('Rejected') ?></span>
-    <?php endif ?>         
+    <?php endif ?>
 </h1>
 <div class="row">
     <div class="col-md-4 col-xl-3">
@@ -20,23 +20,23 @@
 
                 <div>
                     <a class="btn btn-primary btn-sm" href="<?php echo route('admin.email', ['email'=> $user->email]) ?>"><span data-feather="message-square"></span> <?php echo e('Send Email') ?></a>
-                    <a class="btn btn-primary btn-sm" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><span data-feather="edit"></span></a>                    
+                    <a class="btn btn-primary btn-sm" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><span data-feather="edit"></span></a>
                 </div>
-            </div>            
+            </div>
         </div>
         <div class="card">
             <div class="card-body">
                 <h4 class="mb-3"><?php ee('Manage Verification') ?></h4>
                 <form action="<?php echo route('admin.verifications.process', [$verification->id]) ?>" method="post">
                     <?php echo csrf() ?>
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="" class="form-label"><?php ee('Action') ?></label>
                         <select name="action" id="" class="form-select">
-                            <option value="2" selected><?php ee('Approve') ?></option>    
+                            <option value="2" selected><?php ee('Approve') ?></option>
                             <option value="1"><?php ee('Reject') ?></option>
                         </select>
                     </div>
-                    <div class="form-group my-3">
+                    <div class="mb-3 my-3">
                         <label><input type="checkbox" name="deletefile" value="1"> <?php ee('Delete document from server') ?></label>
                     </div>
                     <button type="submit" class="btn btn-primary"><?php ee('Process') ?></button>
@@ -77,49 +77,49 @@
             <div class="card-body h-100">
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label class="form-label" for="billingname"><?php echo e("Full Name") ?></label>
                             <input readonly type="text" class="form-control" id="billingname" name="billingname" placeholder="e.g. John Doe" value="<?php echo (isset($user->address->name) ? $user->address->name : $user->name ) ?>">
-                        </div>									
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label class="form-label" for="company"><?php echo e("Company Name") ?></label>
                             <input readonly type="text" class="form-control" id="company" name="company" placeholder="e.g. Acme Inc" value="<?php echo (isset($user->address->company) ? $user->address->company : "" ) ?>">
-                        </div>									
+                        </div>
                     </div>
                 </div>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label" for="address"><?php echo e("Address") ?></label>
                     <input readonly type="text" class="form-control" id="address" name="address" value="<?php echo (isset($user->address->address) ? $user->address->address : "" ) ?>">
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label class="form-label" for="city"><?php echo e("City") ?></label>
                             <input readonly type="text" class="form-control" id="city" name="city" placeholder="e.g. New York" value="<?php echo (isset($user->address->city) ? $user->address->city : "" ) ?>">
-                        </div>									
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label class="form-label" for="state"><?php echo e("State/Province") ?></label>
                             <input readonly type="text" class="form-control" id="state" name="state" placeholder="e.g. NY" value="<?php echo (isset($user->address->state) ? $user->address->state : "" ) ?>">
-                        </div>										
+                        </div>
                     </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <div class="form-group input-select">
+                        <div class="mb-3 input-select">
                             <label class="form-label" for="country"><?php echo e("Country") ?></label>
                             <input readonly type="text" class="form-control" id="state" name="country" placeholder="e.g. NY" value="<?php echo $user->address->country ?>">
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label class="form-label" for="zip"><?php echo e("Zip/Postal code") ?></label>
                             <input readonly type="text" class="form-control" id="zip" name="zip" placeholder="e.g. 44205" value="<?php echo (isset($user->address->zip) ? $user->address->zip : "" ) ?>">
-                        </div>										
-                    </div>                                  
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

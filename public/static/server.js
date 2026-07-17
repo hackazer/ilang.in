@@ -1,3 +1,32 @@
+window.AppNotify = window.AppNotify || {
+    show: function(message, type) {
+        let container = document.getElementById('app-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'app-toast-container';
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1090';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-white bg-' + (type || 'danger') + ' border-0';
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = '<div class="d-flex"><div class="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+        toast.querySelector('.toast-body').textContent = message;
+        container.appendChild(toast);
+        if (window.bootstrap && window.bootstrap.Toast) {
+            const instance = bootstrap.Toast.getOrCreateInstance(toast, { delay: 5000 });
+            toast.addEventListener('hidden.bs.toast', function() { toast.remove(); });
+            instance.show();
+        } else {
+            toast.classList.add('show');
+            setTimeout(function() { toast.remove(); }, 5000);
+        }
+        return toast;
+    },
+    error: function(message) { return this.show(message, 'danger'); }
+};
+
 function updateCsrfToken(response){
     if(response && response.token){
         $('input[name=_token]').val(response.token);
@@ -22,15 +51,7 @@ $(document).ready(function(){
                 valid = false;
                 $(this).addClass('is-invalid');
                 if($(this).data('error')) {
-                    $.notify({
-                        message: $(this).data('error')
-                    },{
-                        type: 'danger',
-                        placement: {
-                            from: "top",
-                            align: "right"
-                        },
-                    });
+                    AppNotify.error($(this).data('error'));
                 }
             }
         });
@@ -51,25 +72,9 @@ $(document).ready(function(){
             success: function(response){
                 $('input[name=_token]').val(response.token);
                 if(response.error){
-                    $.notify({
-                        message: response.message
-                    },{
-                        type: 'danger',
-                        placement: {
-                            from: "top",
-                            align: "right"
-                        },
-                    });
+                    AppNotify.error(response.message);
                 } else {
-                    $.notify({
-                        message: response.message
-                    },{
-                        type: 'success',
-                        placement: {
-                            from: "top",
-                            align: "right"
-                        },
-                    });
+                    AppNotify.show(response.message, 'success');
                     if(typeof response.html !== 'undefined'){
                         $('body').append(response.html);
                     }
@@ -96,14 +101,14 @@ $(document).ready(function(){
         }
 
         if(url.val().length == 0){
-            $.notify({message: lang.error},{type: 'danger',placement: {from: "top",align: "left"}});
+            AppNotify.error(lang.error);
             $('#url,#urls').addClass('is-invalid');
             return false;
         }
 
         if($("#metaimage").length > 0 && file.get(0).files.length != 0 && file.get(0).files[0].size > 1*1024*1024){
             if(["image/jpeg", "image/jpg"].includes(file.get(0).files[0].type) == false){
-                $.notify({message: lang.imageerror},{type: 'danger',placement: {from: "top",align: "left"}});
+                AppNotify.error(lang.imageerror);
                 return false;
             }
         }
@@ -125,10 +130,10 @@ $(document).ready(function(){
             },
             success: function(response){
                 if(response.error){
-                    return $.notify({message: response.message},{type: 'danger',placement: {from: "top",align: "left"}});
+                    return AppNotify.error(response.message);
                 }
                 let shorturl = response.data.shorturl;
-                $.notify({message: response.message},{type: 'success',placement: {from: "top",align: "left"}});
+                AppNotify.show(response.message, 'success');
 
                 if($("input[name=multiple]").val() == "1"){
                     refreshlinks();
@@ -214,16 +219,16 @@ $(document).ready(function(){
             success: function (response) { 
                 updateCsrfToken(response);
                 if(response.error){
-                    return $.notify({message: response.message},{type: 'danger',placement: {from: "bottom",align: "right"}});
+                    return AppNotify.error(response.message);
                 }
-                $.notify({message: response.message},{type: 'success',placement: {from: "bottom",align: "right"}});
+                AppNotify.show(response.message, 'success');
                 refreshlinks(ids);
                 feather.replace();
             },
             error: function(xhr) {
                 updateCsrfToken(xhr.responseJSON || {});
                 let message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'An unexpected error occurred. Please try again.';
-                $.notify({message: message},{type: 'danger',placement: {from: "bottom",align: "right"}});
+                AppNotify.error(message);
             }
         });   
     });
@@ -299,5 +304,5 @@ function triggerShortModal(shorturl){
     }).on('success', function(){
         $('#successModal .copy').text(lang.copy);
     }); 
-    new bootstrap.Modal(document.getElementById('successModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('successModal')).show();
 }

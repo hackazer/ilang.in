@@ -10,12 +10,12 @@
                     <?php ee('We are currently offline for maintenance. We will be back online as soon as we are done. It should not take long.') ?>
                 </p>
                 <?php if($facebook = config('facebook')): ?>
-                    <a href="<?php echo $facebook ?>" class="bg-secondary text-dark rounded-circle p-3 text-center mr-5" target="_blank">
+                    <a href="<?php echo $facebook ?>" class="bg-secondary text-dark rounded-circle p-3 text-center me-5" target="_blank">
                         <i data-feather="facebook"></i>
                     </a>
                 <?php endif ?>
                 <?php if($twitter = config('twitter')): ?>
-                    <a href="<?php echo $twitter ?>" class="bg-secondary text-dark rounded-circle p-3 text-center mr-5" target="_blank">
+                    <a href="<?php echo $twitter ?>" class="bg-secondary text-dark rounded-circle p-3 text-center me-5" target="_blank">
                         <i data-feather="twitter"></i>
                     </a>
                 <?php endif ?>

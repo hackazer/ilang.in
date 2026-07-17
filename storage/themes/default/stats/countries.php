@@ -10,14 +10,14 @@
         </div>
         <div class="row">
             <div class="col-md-8">
-                <div class="card flex-fill w-100">                    
+                <div class="card flex-fill w-100">
                     <div class="card-header d-flex d-block align-items-center">
                         <div>
                             <h5 class="card-title mb-0 fw-bold"><?php ee('Visitor Map') ?></h5>
                         </div>
-                        <div class="ml-auto">
+                        <div class="ms-auto">
                             <input type="text" name="customreport" data-action="customreport" class="form-control" placeholder="<?php echo e("Choose a date range to update stats") ?>">
-                        </div> 
+                        </div>
                     </div>
                     <div class="card-body px-4">
                         <div id="visitor-map" data-trigger="dynamic-map" data-url="<?php echo route('data.countries', [$url->id]) ?>" style="height:350px;"></div>
@@ -42,7 +42,7 @@
                         <h5 class="card-title mb-0 fw-bold"><?php ee('Cities') ?></h5>
                         <small><?php ee('Select a region in the map above to display city data.') ?></small>
                     </div>
-                    <div class="card-body px-4" data-toggle="cities" data-url="<?php echo route('data.cities', [$url->id]) ?>">                                    
+                    <div class="card-body px-4" data-toggle="cities" data-url="<?php echo route('data.cities', [$url->id]) ?>">
                     </div>
                 </div>
             </div>

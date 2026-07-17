@@ -12,8 +12,8 @@ use RecursiveIteratorIterator;
 
 final class EditorMigrationTest extends TestCase
 {
-    private const JODIT_VERSION = '4.13.3';
-    private const JODIT_JS_SHA256 = '7499f4ee79562deeeb0961be19d6ef37a0ed078d8c781d4b78b263c03b1bb088';
+    private const JODIT_VERSION = '4.13.5';
+    private const JODIT_JS_SHA256 = 'ec72d4c900577f5ff0bd6b9a0569e98453ddc9708ffa251f4061078e0e2f1a74';
     private const JODIT_CSS_SHA256 = '4fa0f793769ac7951c092d5b79eda4e20e1839e9db386885860e45d7fe6d360b';
 
     private string $root;

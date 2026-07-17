@@ -16,7 +16,7 @@
             <div class="row align-items-center">
                 <div class="col-auto">
                     <?php if($post->avatar): ?>
-                        <img alt="<?php echo $post->title ?>" src="<?php echo $post->avatar ?>" width="30" class="rounded-circle mr-2">
+                        <img alt="<?php echo $post->title ?>" src="<?php echo $post->avatar ?>" width="30" class="rounded-circle me-2">
                     <?php else: ?>
                         <span class="avatar avatar-sm bg-primary rounded-circle"><?php echo $post->author[0] ?></span>
                     <?php endif ?>
@@ -25,4 +25,4 @@
             </div>
         </div>
     </div>
-</div>  
+</div>

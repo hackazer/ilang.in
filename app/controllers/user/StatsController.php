@@ -27,7 +27,8 @@ use Core\Helper;
 use Core\Email;
 use Models\User;
 
-class Stats {	
+class Stats {
+    use \Traits\DateRangePicker;
 	/**
 	 * Build a tenant-scoped cache key for a statistics data set.
 	 */
@@ -71,32 +72,7 @@ class Stats {
        
         View::set('title', e('Statistics'));
 
-        \Helpers\CDN::load("daterangepicker");
-
-		View::push("<script>$(document).ready(function(){ 		
-            $('input[name=customreport]').daterangepicker({
-                locale: {
-                    'applyLabel': '".e('Apply')."',
-                    'cancelLabel': '".e('Cancel')."',
-                    'fromLabel': '".e('From')."',
-                    'toLabel': '".e('To')."',
-                    'customRangeLabel': '".e('Custom')."',
-                    'daysOfWeek': ['".e('Su')."','".e('Mo')."','".e('Tu')."','".e('We')."','".e('Th')."','".e('Fr')."','".e('Sa')."'],
-                    'monthNames': ['".e('January')."','".e('February')."','".e('March')."','".e('April')."','".e('May')."','".e('June')."','".e('July')."','".e('August')."','".e('September')."','".e('October')."','".e('November')."','".e('December')."'],
-                },
-                maxDate: moment(),
-                startDate: moment().subtract(14, 'days'),
-                endDate: moment(),
-                autoUpdateInput: true,
-                ranges: {
-                    '".e("Last 7 Days")."': [moment().subtract(6, 'days'), moment()],
-                    '".e("Last 30 Days")."': [moment().subtract(29, 'days'), moment()],
-                    '".e("This Month")."': [moment().startOf('month'), moment().endOf('month')],
-                    '".e("Last Month")."': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-                    '".e("Last 3 Months")."': [moment().subtract(2, 'month').startOf('month'), moment()]
-                }
-			});
-		});</script>", "custom")->tofooter();
+        $this->loadDateRangePicker();
     
         return View::with('user.stats')->extend('layouts.dashboard');
     }

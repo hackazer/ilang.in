@@ -6,7 +6,7 @@
         <div class="card">
             <div class="card-header"><?php ee('User Membership') ?></div>
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <p><?php ee('This cron will check all users and if they are expired, it will switch them to a free plan') ?></p>
                     
                     <label for="date" class="form-label"><?php ee('Cron Link') ?></label>
@@ -34,7 +34,7 @@
         <div class="card">
             <div class="card-header"><?php ee('Remind Trial Users') ?></div>
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <p><?php ee('This cron will check all trial users and if they are close to expiry, it will remind them to renew. The number of days is defined in the cron url. In the urls below, it is currently set to 1 so this means users will be reminded if their trial expires in 1 day.') ?></p>
                     
                     <label for="date" class="form-label"><?php ee('Cron Link') ?></label>
@@ -62,7 +62,7 @@
     <div class="col-md-6 h-100">
         <div class="card">
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <label for="date" class="form-label"><?php ee('Data Retention') ?></label>
                     <p><?php ee('This cron will remove data with respect to the data retention settings in the plan.') ?></p>
                     <input type="text" class="form-control" value="<?php echo route('crons.data', [md5('data'.AuthToken)]) ?>" disabled>
@@ -88,7 +88,7 @@
     <div class="col-md-6 h-100">
         <div class="card">
             <div class="card-body">
-                <div class="form-group mb-2">
+                <div class="mb-2">
                     <label for="date" class="form-label"><?php ee('URL Checks') ?> (Optional)</label>
                     <p><?php ee('This cron will check each URL in the database against active security checks like Web Risk, Phishtank, Virus Total or Blacklist.') ?></p>
                     <div class="alert bg-danger p-3 text-white rounded">

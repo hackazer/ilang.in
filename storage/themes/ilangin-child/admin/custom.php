@@ -12,7 +12,7 @@
                         </div>            
                     </div>
                 </div>        
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <div id="customheader"><?php echo config('customheader') ?></div>
                     <textarea class="d-none" id="customhead" name="customheader"></textarea>                     
                 </div>
@@ -31,7 +31,7 @@
                         </div>            
                     </div>
                 </div>        
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <div id="customfooter"><?php echo config('customfooter') ?></div>
                     <textarea class="d-none" id="customfoot" name="customfooter"></textarea>                    
                 </div>

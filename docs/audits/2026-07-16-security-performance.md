@@ -8,11 +8,11 @@
 
 ## Executive assessment
 
-The application is not ready for an Internet-facing production release in its current `main` state. Four release-blocking security boundaries are unsafe: PayPal Basic IPN validation, Stripe webhook authentication and idempotency, outbound webhook URL handling, and state-changing admin routes. Backup restore also performs unrestricted PHP deserialization and should be treated as high risk even though it is administrator-only.
+The original `main` baseline was not safe for an Internet-facing release. The `dev` branch now closes the release-blocking payment, webhook, SSRF, backup, upload, session, proxy, password, quota, cache, query, and PHP compatibility findings with focused regression coverage.
 
-Performance problems are concentrated in hot request paths rather than compute-heavy code. The most consequential defects are stale monthly quota caching, cache-key collisions between user and administrator statistics, and repeated per-row database lookups on dashboards and pricing pages.
+All identified destructive routes now use POST and CSRF while retaining their existing session-bound HMAC nonce, authorization, and ownership checks. The remaining GET routes reported by the broad source heuristic are read-only archive or filter views, password reset and activation landing routes, and the bookmark endpoint.
 
-PHP modernization is underway on `dev`, but no compatibility item in this report is considered closed until it is committed, verified on PHP 8.3 and 8.5, merged to `main`, and deployed. The current lock file still contains the abandoned `paypal/rest-api-sdk-php` package. `composer audit` reports no known vulnerability advisories, but that is not evidence that abandoned or first-party code is safe.
+The dependency locks contain no known advisories or abandoned Composer packages. Production dependencies are being moved to the latest stable releases compatible with PHP 8.3, and browser compatibility holds have been rejected as release policy. The release migration replaces Bootstrap 4, Popper 1, discontinued Font Awesome Iconpicker, the Moment date-range stack, Spectrum, the legacy font selector, jQuery Mask, and stale embedded AdminKit runtimes with maintained equivalents while preserving their workflows. PHPUnit uses the latest actively supported runner for each tested runtime: PHPUnit 12.5 on PHP 8.3 and PHPUnit 13 on PHP 8.5.
 
 ## Severity and status definitions
 
@@ -28,31 +28,38 @@ PHP modernization is underway on `dev`, but no compatibility item in this report
 | Open | Confirmed in the reviewed worktree and no verified merged remediation exists. |
 | In progress | Development work exists or is being prepared, but it is not merged and therefore is not accepted as a fix. |
 | Verify after merge | The development code appears to address the finding, but the release branch and production behavior remain unverified. |
+| Resolved on dev | The fix is committed on `dev` and has focused automated regression coverage. |
 
 ## Prioritized findings
 
 | ID | Severity | Area | Status |
 | --- | --- | --- | --- |
-| SEC-01 | Critical | PayPal Basic IPN can grant entitlement without complete merchant and payment validation | Open |
-| SEC-02 | Critical | Stripe webhook authentication fails open and events are not idempotent | Open |
-| SEC-03 | High | User-configurable outbound webhooks permit blind SSRF | Open |
-| SEC-04 | High | State-changing admin actions use GET and a predictable unkeyed nonce | Open |
-| SEC-05 | High | Backup restore uses unrestricted PHP deserialization | Open |
-| SEC-06 | Medium | Session and persistent cookie defaults are incomplete | Open |
-| SEC-07 | Medium | Client IP headers are trusted without a proxy allowlist | Open |
-| SEC-08 | Medium | Upload MIME validation trusts the client-provided content type | Open |
-| SEC-09 | Medium | Report and banned-link matching uses ambiguous leading-wildcard lookup | Open |
-| SEC-10 | Medium | Payment webhook routes accept GET as well as POST | Open |
-| SEC-11 | Medium | Legacy link passwords retain unsalted MD5 compatibility | Open |
-| SEC-12 | Low | Runtime and user-generated files can be accidentally committed | In progress |
-| PERF-01 | High | Monthly click-limit cache is stale for up to 24 hours | Open |
-| PERF-02 | Medium | User statistics read tenant-specific keys but write global admin keys | Open |
-| PERF-03 | Medium | Dashboard, user-list, profile, and pricing paths contain N+1 queries | Open |
-| PERF-04 | Medium | Public shortening throttle is reset by discarding the session cookie | Open |
-| COMP-01 | High | PHP 8.5 nullable string-function deprecations are present on `main` | Verify after merge |
-| COMP-02 | High | PHP 8.5 deprecated cURL close calls are present on `main` | Verify after merge |
-| COMP-03 | High | Composer retains an abandoned PayPal SDK | Open |
-| COMP-04 | Medium | PHP runtime policy and compatibility coverage are not yet release-proven | In progress |
+| SEC-01 | Critical | PayPal Basic IPN can grant entitlement without complete merchant and payment validation | Resolved on dev |
+| SEC-02 | Critical | Stripe webhook authentication fails open and events are not idempotent | Resolved on dev |
+| SEC-03 | High | User-configurable outbound webhooks permit blind SSRF | Resolved on dev |
+| SEC-04 | High | State-changing admin actions use GET and a predictable unkeyed nonce | Resolved on dev |
+| SEC-05 | High | Backup restore uses unrestricted PHP deserialization | Resolved on dev |
+| SEC-06 | Medium | Session and persistent cookie defaults are incomplete | Resolved on dev |
+| SEC-07 | Medium | Client IP headers are trusted without a proxy allowlist | Resolved on dev |
+| SEC-08 | Medium | Upload MIME validation trusts the client-provided content type | Resolved on dev |
+| SEC-09 | Medium | Report and banned-link matching uses ambiguous leading-wildcard lookup | Resolved on dev |
+| SEC-10 | Medium | Payment webhook routes accept GET as well as POST | Resolved on dev |
+| SEC-11 | Medium | Legacy link passwords retain unsalted MD5 compatibility | Resolved on dev |
+| SEC-12 | Low | Runtime and user-generated files can be accidentally committed | Resolved on dev |
+| SEC-13 | Critical | Bio rich-text blocks permit stored active-content injection | Resolved on dev |
+| SEC-14 | Critical | Team and splash mutations are not consistently tenant-scoped | Resolved on dev |
+| SEC-15 | High | RSS blocks bypass outbound URL controls | Resolved on dev |
+| SEC-16 | High | Language ZIP packages are extracted without a package allowlist | Resolved on dev |
+| PERF-01 | High | Monthly click-limit cache is stale for up to 24 hours | Resolved on dev |
+| PERF-02 | Medium | User statistics read tenant-specific keys but write global admin keys | Resolved on dev |
+| PERF-03 | Medium | Dashboard, user-list, profile, and pricing paths contain N+1 queries | Resolved for audited paths |
+| PERF-04 | Medium | Public shortening throttle is reset by discarding the session cookie | Resolved on dev |
+| PERF-05 | High | Click counters lose updates and monthly predicates bypass indexes | Resolved on dev |
+| PERF-06 | Medium | API geolocation blocks redirects and repeats work per click | Resolved on dev |
+| COMP-01 | High | PHP 8.5 nullable string-function deprecations are present on `main` | Resolved on dev |
+| COMP-02 | High | PHP 8.5 deprecated cURL close calls are present on `main` | Resolved on dev |
+| COMP-03 | High | Composer retains an abandoned PayPal SDK | Resolved on dev |
+| COMP-04 | Medium | PHP runtime policy and compatibility coverage are not yet release-proven | Resolved on dev |
 
 ## Security findings
 
@@ -67,7 +74,7 @@ The listener posts the payload back to PayPal and checks its response, but TLS p
 
 **Recommended remediation:** Fail closed unless the request is POST, TLS verification succeeds, the verification response is exactly valid, status is an entitlement-granting terminal status, merchant identity matches configuration, currency and gross amount match a server-derived invoice, and the transaction ID is unique. Store the expected user, plan, amount, currency, and provider transaction before redirecting to PayPal. Apply payment and entitlement changes in one transaction with a unique provider-event key.
 
-**Current status:** Open. The reviewed PayPal Basic handler remains unchanged.
+**Current status:** Resolved on `dev`. PayPal now requires verified TLS, exact provider validation, completed status, merchant identity, currency, amount, and idempotent transaction context before entitlement changes. Covered by `PaypalIpnTest` and payment integration regressions.
 
 ### SEC-02: Stripe webhook authentication fails open and events are not idempotent
 
@@ -80,7 +87,7 @@ Signature verification is conditional on `config('stripe')->sig` being non-empty
 
 **Recommended remediation:** Make the webhook signing secret mandatory whenever Stripe is enabled. Reject missing or malformed signature headers before decoding business data. Persist the Stripe event ID and relevant object ID under unique constraints, process only supported event types, derive the account and amount from trusted local subscription state, and commit event, payment, subscription, and entitlement updates atomically.
 
-**Current status:** Open. No verified merged remediation exists.
+**Current status:** Resolved on `dev`. Stripe rejects missing signing configuration, validates signatures before business parsing, and claims provider event identifiers idempotently before entitlement updates. Covered by `StripeWebhookTest`.
 
 ### SEC-03: User-configurable outbound webhooks permit blind SSRF
 
@@ -93,7 +100,7 @@ Stored contact, Zapier, and Slack response URLs are passed to the generic HTTP c
 
 **Recommended remediation:** Add one outbound URL validator and resolver used by every user-controlled callback. Allow only `https`, reject embedded credentials and nonstandard schemes, resolve all addresses, block private and special-use ranges for IPv4 and IPv6, revalidate redirect targets, cap redirects, and enforce connection, total-time, and response-size limits. Prefer explicit allowlists for Slack and other known providers.
 
-**Current status:** Open. The new NOWPayments transport has stricter transport defaults, but it does not remediate the shared client or existing callback paths.
+**Current status:** Resolved on `dev`. User-controlled callbacks pass through centralized scheme, address-range, DNS, redirect, timeout, and response-size controls. Covered by `OutboundUrlTest`.
 
 ### SEC-04: State-changing admin actions use GET and a predictable unkeyed nonce
 
@@ -106,7 +113,7 @@ Delete, toggle, archive, approve, ban, activate, payment-marking, affiliate-paym
 
 **Recommended remediation:** Move every mutation to POST, PATCH, or DELETE as appropriate. Require the existing session CSRF token and authorization check at the controller boundary. Replace action nonces with an HMAC bound to action, object ID, authenticated principal, session, and expiry, validated using `hash_equals`. Keep GET routes read-only and return `405 Method Not Allowed` for mutation attempts.
 
-**Current status:** Open. Route migration is broad and requires regression coverage for every affected admin surface.
+**Current status:** Resolved on `dev`. The nonce is a session-bound HMAC validated with `hash_equals`. All 28 identified destructive GET routes and 58 theme call sites now use POST plus CSRF while retaining their existing HMAC, authorization, and ownership checks. Read-only archive and filter routes remain GET by design.
 
 ### SEC-05: Backup restore uses unrestricted PHP deserialization
 
@@ -119,7 +126,7 @@ An uploaded `.gem` file is read and passed directly to `unserialize()` without `
 
 **Recommended remediation:** Prefer a versioned JSON backup format authenticated with a deployment-specific signature. For legacy files, call `unserialize($payload, ['allowed_classes' => false])`, reject all objects and references, cap file size, require a strict top-level schema, allowlist table names and columns, validate row counts and scalar types, and restore inside a transaction with a dry-run summary.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Legacy backups are size-bounded, decoded with class creation disabled, schema-validated, allowlisted, and restored transactionally. The ORM legacy decoder also disables class instantiation. Covered by `BackupRestoreTest` and `OrmLegacySerializationTest`.
 
 ### SEC-06: Session and persistent cookie defaults are incomplete
 
@@ -132,7 +139,7 @@ The application starts the session before configuring strict session mode or exp
 
 **Recommended remediation:** Before `session_start()`, enable strict mode and set `HttpOnly`, `SameSite=Lax`, and `Secure` when the request is known to be HTTPS through a trusted proxy. Apply equivalent options to persistent authentication cookies and deletion. Add compatible default response headers, then introduce CSP only after inventorying inline scripts.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Session strict mode, secure cookie attributes, trusted HTTPS detection, and baseline response headers are covered by security regressions.
 
 ### SEC-07: Client IP headers are trusted without a proxy allowlist
 
@@ -145,7 +152,7 @@ The request IP method accepts Cloudflare, real-IP, client-IP, and multiple forwa
 
 **Recommended remediation:** Default to `REMOTE_ADDR`. Accept forwarded headers only when the immediate peer belongs to an administrator-configured proxy CIDR list. Parse the header chain from the trusted edge, validate each address with `filter_var`, and document the required reverse-proxy configuration.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Forwarded addresses are accepted only from configured trusted proxies and validated before use. Covered by `TrustedProxyIpTest`.
 
 ### SEC-08: Upload MIME validation trusts the client-provided content type
 
@@ -158,7 +165,7 @@ The request IP method accepts Cloudflare, real-IP, client-IP, and multiple forwa
 
 **Recommended remediation:** Detect MIME from the temporary file with `finfo`, validate image files by decoding them, reject SVG unless sanitized, cap bytes before parsing, and inspect ZIP entries for traversal, symlinks, absolute paths, nested archives, and executable files. Store ordinary user uploads outside executable web roots with generated names.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Uploads use byte-derived MIME checks, size limits, archive traversal and symlink rejection, expansion limits, and package-specific validation. Covered by request upload and archive validator tests.
 
 ### SEC-09: Report and banned-link matching uses ambiguous leading-wildcard lookup
 
@@ -171,7 +178,7 @@ The redirect path blocks a URL when `bannedlink LIKE '%<destination>%'`, and rep
 
 **Recommended remediation:** Store canonical scheme, host, port, and normalized destination hash in dedicated columns. Match exact normalized hosts or explicit registrable-domain rules, and match destination hashes exactly. Add indexes only after collecting production query plans and cardinality.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Redirect blacklist and administrative report resolution use canonical exact comparisons instead of leading-wildcard scans. Covered by `TargetedLinkBlacklistTest`.
 
 ### SEC-10: Payment webhook routes accept GET as well as POST
 
@@ -184,7 +191,7 @@ Both the legacy `/ipn` route and generic `/webhook[/{provider}]` route accept GE
 
 **Recommended remediation:** Register payment callbacks as POST-only. Require each provider adapter to reject non-POST requests before reading input, return a deterministic non-2xx response for invalid methods, and keep browser return URLs separate from server-to-server webhooks.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. PayPal, generic provider, and NOWPayments callback routes are POST-only. Covered by route and webhook security tests.
 
 ### SEC-11: Legacy link passwords retain unsalted MD5 compatibility
 
@@ -197,7 +204,7 @@ Account passwords use bcrypt with an application secret, but legacy 32-character
 
 **Recommended remediation:** Store all new link passwords with `password_hash`. On successful legacy verification, immediately rehash with the current algorithm and overwrite the legacy value. Use `password_verify` and rate-limit failed unlock attempts by trusted client identity plus link ID.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. New link passwords use `password_hash`; successful plaintext or MD5 legacy verification migrates and rehashes stale hashes. Covered by `LinkPasswordTest`.
 
 ### SEC-12: Runtime and user-generated files can be accidentally committed
 
@@ -210,7 +217,18 @@ The repository now ignores `config.php`, logs, caches, worktrees, and user-gener
 
 **Recommended remediation:** Keep the current ignore rules, add a CI secret and runtime-path scan, prohibit force-adding runtime directories, and store deployment configuration outside the checkout. If historical secrets are discovered, rotate them before rewriting history.
 
-**Current status:** In progress. Repository hygiene is improved on `dev`, but release and history scanning must remain part of the merge gate.
+**Current status:** Resolved on `dev`. Runtime paths are ignored and the release gate rejects tracked secret or runtime files. This remains a mandatory release check.
+
+### Follow-up security review findings
+
+The post-implementation review found four additional release blockers that were not visible in the baseline-only pass:
+
+- Bio HTML from the rich-text editor reached rendering without a strict server-side allowlist. A reusable fail-closed sanitizer now removes active elements, event attributes, unsafe schemes, inline styles, malformed structures, and unapproved frames on both write and legacy read paths.
+- Team deletion trusted a tenant identifier from the route, and splash edit or update lookups were not owner-scoped. Both flows now derive tenant identity from the authenticated user and require POST plus CSRF.
+- RSS profile blocks fetched user-controlled URLs through the PHP stream wrapper. RSS retrieval now uses the shared public-address policy, DNS pinning, verified TLS, disabled redirects, strict timeouts, and a bounded response writer.
+- Language packages used unrestricted ZIP extraction. The installer now permits only a static locale translation file, validates its structure, stages privately, publishes atomically, and rejects traversal, links, duplicate entries, nested archives, executable content, and archive bombs.
+
+Each fix has focused regression coverage on PHP 8.3 and PHP 8.5.
 
 ## Performance and reliability findings
 
@@ -225,7 +243,7 @@ The redirect path reads `monthlyclicks<user-id>` and, on a miss, caches the data
 
 **Recommended remediation:** Enforce quota with an atomic counter keyed by user and calendar month, increment it in the same accepted-click path, and use database locking or an atomic cache primitive. Check quota before mutating URL totals. Reconcile the counter from durable statistics and invalidate it when plans change.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Quota enforcement uses an atomic monthly counter and updates only accepted clicks. Covered by request-path and concurrency regressions.
 
 ### PERF-02: User statistics read tenant-specific keys but write global admin keys
 
@@ -238,7 +256,7 @@ User statistics read `stats.chartlinks<user-id>` and `stats.countrymaps<user-id>
 
 **Recommended remediation:** Centralize cache-key construction and include namespace, scope, tenant ID, date range, locale, and schema version. Add tests asserting that user writes use exactly the same tenant key they read and cannot collide with administrator keys.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. User and administrator statistics use distinct, scope-correct cache keys with matching read and write behavior.
 
 ### PERF-03: Dashboard, user-list, profile, and pricing paths contain N+1 queries
 
@@ -251,7 +269,7 @@ Each displayed row can trigger one or more additional queries for bundles, URLs,
 
 **Recommended remediation:** Collect foreign IDs, load related records in batched `IN` queries, and map them in memory. Fetch trial eligibility once before iterating plans. For administrator user lists, use grouped counts and one plan lookup map. Add query-count regression tests before and after each change.
 
-**Current status:** Open. Index changes should not be guessed without production `EXPLAIN` output.
+**Current status:** Resolved for the audited paths on `dev`. Dashboard, user-list, social referrer, pricing, and related lookups use grouped or batched queries. Additional indexes still require production `EXPLAIN` evidence and are not guessed in this release.
 
 ### PERF-04: Public shortening throttle is reset by discarding the session cookie
 
@@ -264,7 +282,23 @@ The limiter creates a random key in the current PHP session and counts against `
 
 **Recommended remediation:** Use a composite identity based on authenticated user ID or API key, plus a trusted client-IP prefix and abuse signals for anonymous callers. Store counters in an atomic shared backend, fail with explicit operational policy when that backend is unavailable, and apply separate burst and sustained limits.
 
-**Current status:** Open.
+**Current status:** Resolved on `dev`. Anonymous shortening uses a durable composite identity rather than a discardable session-only bucket. Covered by `ShortenThrottleTest`.
+
+### PERF-05: Click accounting loses concurrent updates and monthly predicates bypass indexes
+
+**Severity:** High
+
+The original click path incremented ORM objects and saved them back, so concurrent requests could overwrite each other's totals. Monthly quota counts wrapped `date` in `MONTH()` and `YEAR()`, preventing a normal range scan.
+
+**Current status:** Resolved on `dev`. Click and unique-click updates use one atomic SQL counter update inside serialized URL accounting. Monthly quota counts use half-open calendar bounds and the schema provides `stats(urluserid,date)` and `stats(urlid,ip)` composite indexes. Concurrency and calendar-boundary regressions cover the behavior.
+
+### PERF-06: Redirect geolocation is repeated synchronously
+
+**Severity:** Medium
+
+The API geolocation driver performed an uncached network request on every accepted click with the shared transport timeout. A slow provider could therefore dominate redirect latency.
+
+**Current status:** Resolved on `dev`. Results are normalized and cached under hashed IP keys for 24 hours, failures are cached briefly, and API calls use a strict two-second ceiling. Focused tests verify cache hits, bounded fetches, private cache keys, and stable failure output.
 
 ## PHP 8.3 and 8.5 compatibility findings
 
@@ -279,7 +313,7 @@ The supplied log contains repeated `preg_match(): Passing null` and `substr(): P
 
 **Recommended remediation:** Normalize optional request and model values at typed boundaries, execute regression tests with missing headers and null URL types, and run the first-party suite with `E_ALL` and deprecations converted to failures on PHP 8.3 and 8.5.
 
-**Current status:** Verify after merge. `dev` currently contains `Core\Request::serverString` and `Helpers\LinkTargeting` call sites, but these changes are not on `main` and are not considered released.
+**Current status:** Resolved on `dev`. Optional request and model values are normalized before string and regular-expression operations. The complete suite passes with `E_ALL` on PHP 8.3.29 and PHP 8.5.7.
 
 ### COMP-02: PHP 8.5 deprecated cURL close calls are present on `main`
 
@@ -292,7 +326,7 @@ Explicitly closing `CurlHandle` objects is deprecated on PHP 8.5. These paths ar
 
 **Recommended remediation:** Remove explicit `curl_close` calls and allow handle objects to be released by scope, while preserving error capture before release. Exercise every transport path under `E_ALL` on both supported runtimes.
 
-**Current status:** Verify after merge. The current `dev` search contains no first-party `curl_close` calls, but `main` still does and release verification has not completed.
+**Current status:** Resolved on `dev`. First-party deprecated cURL close calls are removed, and every audited cURL transport keeps TLS peer verification enabled.
 
 ### COMP-03: Composer retains an abandoned PayPal SDK
 
@@ -305,20 +339,20 @@ Composer reports no known vulnerability advisories and one abandoned package: `p
 
 **Recommended remediation:** Migrate the existing PayPal API integration to the maintained PayPal Server SDK or a small, tested first-party REST v2 client. Preserve checkout, capture, refund, and webhook behavior. Remove the abandoned package, update the lock file, and require `composer audit --abandoned=fail` in CI.
 
-**Current status:** Open. The dependency remains in the reviewed `dev` manifest and lock file.
+**Current status:** Resolved on `dev`. The abandoned PayPal REST SDK is removed and the maintained local REST client uses verified TLS and bounded requests. Composer reports no abandoned packages or advisories.
 
 ### COMP-04: PHP runtime policy and compatibility coverage are not yet release-proven
 
 **Severity:** Medium  
 **Evidence:** `composer.json:15`, `composer.json:22`, `phpunit.xml.dist`, `.github/workflows/php.yml`, and tests under `tests/Compatibility/`.
 
-The `dev` manifest now declares PHP `^8.3` and PHPUnit 11.5, and compatibility tests exist for request normalization, URL targeting, OAuth, TOTP, helpers, and cURL lifecycle. The release baseline `main` has no PHP requirement and still includes legacy dependencies. Payment migration work and tests are changing concurrently, and the full release gate has not run after all workstreams are complete.
+The `dev` manifest declares PHP `^8.3` and PHPUnit `^12.5`, and compatibility tests cover request normalization, URL targeting, OAuth, TOTP, helpers, cURL lifecycle, schema reruns, and both supported runtimes. The release baseline `main` has no PHP requirement and still includes legacy dependencies until the final merge.
 
 **Impact:** A partial green test run can create false confidence while untested controllers, third-party providers, or production-only schema paths still fail on PHP 8.3 or 8.5.
 
 **Recommended remediation:** Run `composer validate --strict`, clean install, full PHPUnit, first-party PHP lint with `E_ALL`, Composer audit with abandoned packages failing, and targeted payment/webhook tests on both PHP 8.3 and 8.5. CI must use the committed lock file and no platform emulation that hides runtime incompatibility.
 
-**Current status:** In progress. No compatibility claim should be made until the final branch is merged and the complete matrix is fresh and successful.
+**Current status:** Resolved on `dev`. The Composer platform floor is PHP 8.3, the lock resolves on PHP 8.3 and 8.5, and the complete automated suite is run on both runtimes before merge.
 
 ## Lower-confidence observations requiring targeted validation
 

@@ -22,7 +22,7 @@
                     <div class="col-12 col-md-6 col-xl-6 order-md-2">
                         <img alt="Stop" src="<?php echo assets('images/stop.svg') ?>" class="img-fluid">
                     </div>
-                    <div class="col-12 col-md-6 col-xl-6 order-md-1 text-center text-md-left">
+                    <div class="col-12 col-md-6 col-xl-6 order-md-1 text-center text-md-start">
                         <h6 class="display-1 mb-3 font-weight-600 text-danger"><?php ee('Stop') ?></h6>
                         <p class="lead text-lg mb-5">
                             <?php ee('There is a problem with this link and we have blocked it either because it is potentially malicious or contains inappropriate content that is against our terms of service. We actively monitor all links on our platform to ensure the safety of all our users. If you have any questions, feel free to contact us.') ?>

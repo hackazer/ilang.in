@@ -8,13 +8,13 @@
                     <?php echo csrf() ?>
                     <div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="name"><?php ee("Name") ?></label>
 								<input type="text" class="form-control" name="name" id="name"  placeholder="e.g. Promo" value="" data-required="true">
 							</div>	
 						</div>
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="label"><?php ee("Form Label") ?> <small><?php ee("leave empty to disable") ?></small></label>
 								<input type="text" class="form-control" name="label" id="label"  value="" placeholder="<?php ee("e.g. Need help?") ?>">
 							</div>	
@@ -22,20 +22,20 @@
 					</div>
 					<div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="content"><?php ee("Form Description") ?> <small><?php ee("leave empty to disable") ?></small></label>
 								<input class="form-control" name="content" id="content" placeholder="<?php ee("(optional) Provide a description or anything you want to add to the form.") ?>" value="">
 							</div>
 						</div>
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="success"><?php ee("Thank You Message") ?> <small><?php ee("leave empty to disable") ?></small></label>
 								<input type="text" class="form-control" name="success" id="success"  value="" placeholder="<?php ee("e.g. Thank you.") ?>">
 							</div>
 						</div>
 					</div>
 					<hr>
-					<div class="form-group mb-3">
+					<div class="mb-3">
 						<label class="form-label" for="webhook"><?php ee("Webhook Notification") ?></label><br>
 						<input type="text" name="webhook" id="webhook" class="form-control" placeholder="e.g. https://domain.com/path/to/webhook-receiver">
 						<p class="form-text"><?php ee("If you want to receive a notification directly to your app, add the url to your app's handler and as soon as there is a submission, we will send a notification to this url as well as an email to the address provided above.") ?></p>
@@ -49,7 +49,7 @@
 				<div class="card-body collapse" id="textlabels">				
 					<div class="row">
 						<div class="col-md-4">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="button-p"><?php ee("Button") ?></label>
 								<input type="text" class="form-control" name="button" id="button-p" value="<?php ee('Subscribe') ?>">
 								<p class="form-text"><?php ee("If you want to use a different language, change these.") ?></p>
@@ -65,31 +65,31 @@
 				<div class="card-body collapse" id="custom">			
 					<div class="row">						
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="bg"><?php ee("Overlay Background Color") ?></label> <br>
 								<input type="text" name="bg" id="bg">
 							</div>			
 						</div>	
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="color"><?php ee("Overlay Text Color") ?></label><br>
 								<input type="text" name="color" id="color">
 							</div>	
                         </div>						
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="btnbg"><?php ee("Button Background Color") ?></label><br>
 								<input type="text" name="btnbg" id="btnbg">
 							</div>		
 						</div>
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="btncolor"><?php ee("Button Text Color") ?></label><br>
 								<input type="text" name="btncolor" id="btncolor">
 							</div>					
 						</div>
 					</div>				
-					<div class="form-group mb-3">
+					<div class="mb-3">
 						<label class="form-label d-block" for="position"><?php ee("Overlay Position") ?></label>
 						<select name="position" id="position" class="form-control" data-toggle="select">               
 							<option value="bl"><?php ee("Bottom Left") ?></option>

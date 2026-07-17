@@ -26,16 +26,16 @@
                         <a class="btn btn-primary btn-sm" href="<?php echo route('admin.email', ['email'=> $user->email]) ?>"><span data-feather="message-square"></span> <?php echo e('Send Email') ?></a>
                         <a class="btn btn-primary btn-sm" href="<?php echo route('admin.users.edit', [$user->id]) ?>"><span data-feather="edit"></span></a>
                     </div>
-                </div>                  
+                </div>
             <?php else: ?>
                 <div class="card-header">
                     <?php ee('Anonymous user') ?>
                 </div>
             <?php endif ?>
-        </div> 
+        </div>
         <div class="card">
             <div class="card-body">
-                <div class="list-group list-group-flush">                    
+                <div class="list-group list-group-flush">
                     <a class="list-group-item list-group-item-action" href="<?php echo route('admin.links.edit', [$url->id]) ?>"><?php ee('Edit Link') ?></a>
                     <?php if($url->status): ?>
                         <form action="<?php echo route('admin.links.disable', [$url->id]) ?>" method="post"><?php echo csrf() ?><button type="submit" class="list-group-item list-group-item-action"><?php ee('Disable Link') ?></button></form>
@@ -46,7 +46,7 @@
                     <a class="list-group-item list-group-item-action" href="<?php echo route('stats', [$url->id]) ?>"><?php ee('Statistics') ?></span></a>
                 </div>
             </div>
-        </div>               
+        </div>
     </div>
 
     <div class="col-md-8 col-xl-9">
@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title mb-4"><?php ee('Clicks') ?></h5>
-                        <h1 class="mt-1 mb-3"><?php echo $url->click ?></h1>                        
+                        <h1 class="mt-1 mb-3"><?php echo $url->click ?></h1>
                     </div>
                 </div>
             </div>
@@ -63,26 +63,26 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title mb-4"><?php ee('Unique Clicks') ?></h5>
-                        <h1 class="mt-1 mb-3"><?php echo $url->uniqueclick ?></h1>                        
+                        <h1 class="mt-1 mb-3"><?php echo $url->uniqueclick ?></h1>
                     </div>
-                </div>       
-            </div>  
-        </div>    
+                </div>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0"><?php ee('Links') ?></h5>
             </div>
             <div class="card-body h-100">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="url" class="form-label"><?php ee('URL') ?></label>
                     <div class="input-group">
                         <div class="input-group-text"><i data-feather="link"></i></div>
                         <input type="text" class="form-control p-2 border-start-0 ps-0" id="url" readonly value="<?php echo $url->url ?>" autocomplete="off">
                     </div>
-                </div>  
-                <div class="row">    
+                </div>
+                <div class="row">
                     <div class="col-sm-4 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="alias" class="form-label"><?php ee('Alias') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="globe"></i></div>
@@ -91,7 +91,7 @@
                         </div>
                     </div>
                     <div class="col-sm-4 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="custom" class="form-label"><?php ee('Custom') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="globe"></i></div>
@@ -100,7 +100,7 @@
                         </div>
                     </div>
                     <div class="col-md-4 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="pass" class="form-label"><?php ee('Password Protection') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="lock"></i></div>
@@ -111,7 +111,7 @@
                 </div>
                 <div class="row mt-3">
                     <div class="col-md-6 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="expiry" class="form-label"><?php ee('Link Expiration') ?></label>
                             <div class="input-group">
                                 <div class="input-group-text"><i data-feather="lock"></i></div>
@@ -120,7 +120,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 mt-3">
-                        <div class="form-group">
+                        <div class="mb-3">
                             <label for="expiry" class="form-label"><?php echo e("Description")?></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i data-feather="tag"></i></span>
@@ -132,25 +132,25 @@
                 <div class="mt-4">
                     <hr>
                     <h4><?php echo e("Meta Tags")?></h4>
-                    <div class="row">   
+                    <div class="row">
                         <div class="col-lg-4 col-md-6 mt-3">
-                            <div class="form-group">
-                                <label for="metatitle" class="form-label"><?php ee('Meta Title') ?></label>                    
+                            <div class="mb-3">
+                                <label for="metatitle" class="form-label"><?php ee('Meta Title') ?></label>
                                 <input type="text" class="form-control p-2" readonly id="metatitle" placeholder="<?php echo e("Enter your custom meta title")?>" autocomplete="off">
                             </div>
                         </div>
                         <div class="col-lg-4 col-md-6 mt-3">
-                            <div class="form-group">
-                                <label for="metadescription" class="form-label"><?php ee('Meta Description') ?></label>                    
+                            <div class="mb-3">
+                                <label for="metadescription" class="form-label"><?php ee('Meta Description') ?></label>
                                 <input type="text" class="form-control p-2" readonly id="metadescription" placeholder="<?php echo e("Enter your custom meta description")?>" autocomplete="off">
                             </div>
                         </div>
                     </div>
-                </div>  
+                </div>
                 <?php if($locations): ?>
                     <div class="mt-4">
                         <hr>
-                        <h4><?php echo e("Geo Targeting")?></h4>   
+                        <h4><?php echo e("Geo Targeting")?></h4>
                         <?php foreach($locations as $name => $link):?>
                             <?php $name = explode('-', $name) ?>
                             <div class="row mb-2">
@@ -172,21 +172,21 @@
                                         <input type="text" readonly class="form-control border-start-0 ps-0 p-1" placeholder="<?php echo e("Type the url to redirect user to.")?>" value="<?php echo $link ?>">
                                     </div>
                                 </div>
-                            </div>   
+                            </div>
                         <?php endforeach ?>
                     </div>
                 <?php endif ?>
                 <?php if($url->devices): ?>
                     <div class="mt-4">
                         <hr>
-                        <h4><?php echo e("Device Targeting")?></h4>                    
+                        <h4><?php echo e("Device Targeting")?></h4>
                         <?php foreach($url->devices as $name => $link):?>
                         <div class="row">
                             <div class="col-sm-6 mt-3">
                                 <div class="input-group input-select">
                                     <span class="input-group-text"><i data-feather="smartphone"></i></span>
                                     <input type="text" class="form-control border-start-0 ps-0" value="<?php echo $name ?>" readonly>
-                                </div>              
+                                </div>
                             </div>
                             <div class="col-sm-6 mt-3">
                                 <div class="input-group">
@@ -197,18 +197,18 @@
                         </div>
                         <?php endforeach ?>
                     </div>
-                <?php endif ?>  
+                <?php endif ?>
                 <?php if($url->languages): ?>
                     <div class="mt-4">
                         <hr>
-                        <h4><?php echo e("Language Targeting")?></h4>                    
+                        <h4><?php echo e("Language Targeting")?></h4>
                         <?php foreach($url->languages as $language => $link):?>
                         <div class="row">
                             <div class="col-sm-6 mt-3">
                                 <div class="input-group input-select">
                                     <span class="input-group-text"><i data-feather="type"></i></span>
                                     <input readonly type="text" class="form-control border-start-0 ps-0" value="<?php echo $language ?>">
-                                </div>              
+                                </div>
                             </div>
                             <div class="col-sm-6 mt-3">
                                 <div class="input-group">
@@ -217,10 +217,10 @@
                                 </div>
                             </div>
                         </div>
-                        <?php endforeach ?> 
+                        <?php endforeach ?>
                     </div>
-                <?php endif ?> 
-            </div>    
+                <?php endif ?>
+            </div>
         </div>
     </div>
 </div>

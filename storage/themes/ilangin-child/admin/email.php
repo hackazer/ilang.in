@@ -40,16 +40,16 @@
             <div class="card-body">                            
                 <form method="post" action="<?php echo route('admin.email.send') ?>" enctype="multipart/form-data" data-trigger="editor">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="sendto" class="form-label"><?php ee('Send To') ?></label>
                         <input type="text" class="form-control" name="sendto" id="sendto" value="<?php echo (new \Core\Request)->email ?: 'list.newsletter' ?>" data-toggle="tags" placeholder="Type an email or a list and press enter">
                         <p class="form-text"><?php ee('You can choose to send email to a built-in list or send email to specific email adresses') ?></p>
                     </div>
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="subject" class="form-label"><?php ee('Subject') ?></label>
                         <input type="text" class="form-control p-2" name="subject" id="subject" value="<?php echo old('subject') ?>" placeholder="e.g. Annoucement...">
                     </div>                    
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="content" class="form-label"><?php ee('Content') ?></label>
                         <p class="form-text"><?php ee('You can send a custom message to your users to let them know of changes or important announcements. Simply enter your message below and press send. You can also use some shortcodes to add dynamic data.') ?></p>
                         <textarea id="editor" name="content"><?php echo old('content') ?></textarea>

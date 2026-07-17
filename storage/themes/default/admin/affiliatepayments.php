@@ -1,6 +1,6 @@
 <h1 class="h3 mb-5"><?php ee('Affiliate') ?></h1>
 <div class="row">
-    <div class="col-md-9">        
+    <div class="col-md-9">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title"><?php ee('Payments') ?></h5>
@@ -20,7 +20,7 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <?php echo $user->email ?>
                                         </div>
@@ -29,10 +29,10 @@
                                 </td>
                                 <td>
                                     <?php echo ($user->paypal)?"<strong>{$user->paypal}</strong>": 'No Paypal ID' ?>
-                                </td> 
+                                </td>
                                 <td>
                                     <?php echo \Helpers\App::currency(config('currency'), $user->pendingpayment) ?>
-                                </td>                                    
+                                </td>
                                 <td>
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
                                     <ul class="dropdown-menu">
@@ -43,7 +43,7 @@
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table>   
+                </table>
             </div>
         </div>
     </div>

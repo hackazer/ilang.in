@@ -22,7 +22,7 @@
                   <th></th>
                 </tr>
               </thead>
-              <tbody>          
+              <tbody>
                 <?php foreach ($languages as $language): ?>
                   <tr>
                     <td><?php echo $language["name"] ?> <?php echo config('default_lang') && config('default_lang') == $language["code"] ? '<span class="badge bg-primary">Default</span>': '' ?> <?php echo $language['rtl'] ? '<span class="badge bg-primary">RTL</span>' : '' ?></td>
@@ -49,14 +49,14 @@
                             <li><a class="dropdown-item" href="<?php echo route('admin.languages.edit', [$language["code"]]) ?>"><i data-feather="edit"></i> <?php ee('Edit') ?></a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><form action="<?php echo route('admin.languages.delete', [$language["code"], \Core\Helper::nonce('language.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
-                        </ul>                 
+                        </ul>
                     </td>
-                  </tr>      
+                  </tr>
                 <?php endforeach ?>
               </tbody>
-            </table> 
+            </table>
         </div>
-    </div>    
+    </div>
   </div>
   <div class="col-md-3">
     <div class="card card-default">
@@ -107,11 +107,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="file" class="form-label"><?php ee('Language File') ?></label>
                     <input type="file" class="form-control" name="file" id="file" value="" accept=".zip" placeholder="e.g. en.zip">
                     <p class="form-text"><?php ee('Upload the zip file that comes in the package. Usually it is named {LANGCODE}.zip. Please make sure the language respects the file structure.') ?></p>
-                </div>                
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>

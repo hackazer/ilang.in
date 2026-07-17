@@ -9,14 +9,14 @@
                     <div class="col-sm-9">
                         <h6><?php echo $url->meta_title ?></h6>
                     </div>
-                    <div class="col-sm-3 text-right">
+                    <div class="col-sm-3 text-end">
                         <span><?php echo $url->click+1 ?></span>
                         <?php echo e("Views") ?>
-                    </div>						
+                    </div>
                 </div>
                 <p class="mt-2">
-                    <?php echo $url->meta_description ?>				
-                </p>					
+                    <?php echo $url->meta_description ?>
+                </p>
             </div>
             <?php echo \Helpers\App::ads(728) ?>
         </div>
@@ -30,11 +30,11 @@
                 <?php if(config("sharing")): ?>
                     <hr>
                     <p>
-                        <a href="https://www.facebook.com/sharer.php?u=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>" class="btn btn-facebook btn-block"><?php echo e("Share on") ?> Facebook</a></p>
-                    <p><a href="https://twitter.com/share?url=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>&amp;text=Check+out+this+url" class="btn btn-twitter btn-block"><?php echo e("Share on") ?> Twitter</a>
+                        <a href="https://www.facebook.com/sharer.php?u=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>" class="btn btn-facebook w-100"><?php echo e("Share on") ?> Facebook</a></p>
+                    <p><a href="https://twitter.com/share?url=<?php echo \Helpers\App::shortRoute($url->domain, $url->alias.$url->custom) ?>&amp;text=Check+out+this+url" class="btn btn-twitter w-100"><?php echo e("Share on") ?> Twitter</a>
                     </p>
-                <?php endif ?>					
+                <?php endif ?>
             </div>
-        </div>				
+        </div>
     </div>
 </div>

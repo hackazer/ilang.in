@@ -25,7 +25,7 @@
                     <tr>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $subscription->useravatar ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $subscription->useravatar ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <a href="<?php echo route('admin.users.view', [$subscription->userid]) ?>"><?php echo $subscription->user ?></a>
                                     <?php if($subscription->user): ?>

@@ -31,7 +31,7 @@ final class ReleaseGateConfigurationTest extends TestCase
         $workflow = $this->contents('.github/workflows/php.yml');
 
         self::assertStringContainsString("browser:\n", $workflow);
-        self::assertStringContainsString('uses: actions/setup-node@v4', $workflow);
+        self::assertMatchesRegularExpression('/uses: actions\/setup-node@[0-9a-f]{40} # v7\.0\.0/', $workflow);
         self::assertStringContainsString("node-version: '24.18.0'", $workflow);
         self::assertStringContainsString('npm ci --ignore-scripts --no-audit --no-fund', $workflow);
         self::assertStringContainsString('npm audit --audit-level=high', $workflow);
@@ -50,7 +50,7 @@ final class ReleaseGateConfigurationTest extends TestCase
         self::assertStringNotContainsString('find app core public storage/themes', $script);
     }
 
-    public function testDependencyReleasePolicyNamesEveryApprovedException(): void
+    public function testDependencyReleasePolicyNamesManagedAssetsAndSupportedRuntimeMatrix(): void
     {
         $package = $this->json('package.json');
         $policy = $package['dependencyReleasePolicy'] ?? null;
@@ -59,12 +59,8 @@ final class ReleaseGateConfigurationTest extends TestCase
         self::assertContains('asset:editor-adapter', $policy['managedFirstPartyAssets'] ?? []);
         self::assertContains('bootstrap', $policy['allowedParallelRepresentations'] ?? []);
         self::assertContains('jquery', $policy['allowedDuplicatePackages'] ?? []);
-        self::assertArrayHasKey('browser:fontawesome-iconpicker', $policy['compatibilityHolds'] ?? []);
-
-        foreach ($policy['compatibilityHolds'] ?? [] as $dependency => $reason) {
-            self::assertNotSame('', trim((string) $dependency));
-            self::assertGreaterThanOrEqual(20, strlen(trim((string) $reason)));
-        }
+        self::assertSame([], $policy['compatibilityHolds'] ?? null);
+        self::assertStringContainsString('actively supported', $policy['runtimeMatrix']['phpunit'] ?? '');
     }
 
     public function testReleaseGateValidatesInventoryAgainstExplicitPolicy(): void

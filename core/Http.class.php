@@ -255,7 +255,9 @@ final class Http {
 	 * This keeps compatibility tests off cURL without admitting extra production schemes.
 	 */
 	private function executePhpunitFixture(){
-		if(PHP_SAPI !== 'cli' || !defined('PHPUNIT_COMPOSER_INSTALL')) return false;
+		$phpunitProcess = defined('PHPUNIT_COMPOSER_INSTALL')
+			|| class_exists('PHPUnit\\Framework\\TestCase', false);
+		if(PHP_SAPI !== 'cli' || !$phpunitProcess) return false;
 
 		$url = (string) $this->_HTTPURL;
 		$scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));

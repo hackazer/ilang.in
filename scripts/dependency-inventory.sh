@@ -327,8 +327,6 @@ function versionFromContents(string $name, array $files): string
         'feather-icons' => '/feather(?: icons)? v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
         'bootstrap-notify' => '/Bootstrap Notify\s*=\s*v([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
         'bootstrap-tagsinput' => '/bootstrap-tagsinput v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
-        'jquery-mask-plugin' => '/jQuery Mask Plugin v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
-        'fontawesome-picker' => '/fontawesome(?:-icon)?picker v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
         'svg-injector' => '/SVGInjector v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
         'chart.js' => '/Chart\.js v([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
         'cookieconsent' => '/cookieconsent(?:\.min)?\.js v?([0-9]+\.[0-9]+(?:\.[0-9]+)?)/i',
@@ -372,6 +370,7 @@ $rootNpmDependencies = array_merge($rootNpmRuntime, $rootNpmDev);
 $npmLock = jsonFile($root.'/package-lock.json') ?? [];
 $vendorManifest = jsonFile($root.'/public/static/vendor-manifest.json') ?? [];
 $manifestVersions = is_array($vendorManifest['versions'] ?? null) ? $vendorManifest['versions'] : [];
+$manifestEmbedded = is_array($vendorManifest['embedded'] ?? null) ? $vendorManifest['embedded'] : [];
 $manifestHolds = array_merge(
     is_array($rootNpm['browserCompatibility']['holds'] ?? null) ? $rootNpm['browserCompatibility']['holds'] : [],
     is_array($vendorManifest['holds'] ?? null) ? $vendorManifest['holds'] : [],
@@ -412,10 +411,9 @@ foreach ([['packages', 'runtime'], ['packages-dev', 'dev']] as [$lockKey, $scope
             $rowFlags[] = 'outdated';
         }
         $latestPhpMinimum = minimumConstraintVersion($metadata['requires_php']);
-        if ($projectPhpMinimum !== null && $latestPhpMinimum !== null && version_compare($latestPhpMinimum, $projectPhpMinimum, '>')) {
-            $rowFlags[] = 'compatibility-hold';
-        }
         if ($name === 'phpunit/phpunit' && $projectPhpMinimum !== null && version_compare($projectPhpMinimum, '8.4.1', '<') && version_compare($current, '13.0.0', '<')) {
+            $rowFlags[] = 'runtime-matrix';
+        } elseif ($projectPhpMinimum !== null && $latestPhpMinimum !== null && version_compare($latestPhpMinimum, $projectPhpMinimum, '>')) {
             $rowFlags[] = 'compatibility-hold';
         }
         if ($licenseText === '') {
@@ -434,16 +432,13 @@ foreach ([['packages', 'runtime'], ['packages-dev', 'dev']] as [$lockKey, $scope
 // Vendored browser packages.
 $libraryRoot = $root.'/public/static/frontend/libs';
 $npmNames = [
-    'bootstrap' => 'bootstrap', 'bootstrap-notify' => 'bootstrap-notify',
-    'bootstrap-tagsinput' => 'bootstrap-tagsinput', 'clipboard' => 'clipboard',
-    'feather-icons' => 'feather-icons', 'font-selector' => 'fontselect-jquery-plugin',
-    'fontawesome-picker' => 'fontawesome-iconpicker', 'jquery' => 'jquery',
-    'jquery-mask-plugin' => 'jquery-mask-plugin', 'jsvectormap' => 'jsvectormap',
+    'air-datepicker' => 'air-datepicker', 'bootstrap' => 'bootstrap',
+    'clipboard' => 'clipboard', 'coloris' => '@melloware/coloris',
+    'feather-icons' => 'feather-icons', 'fontawesome-free' => '@fortawesome/fontawesome-free',
+    'imask' => 'imask', 'jquery' => 'jquery', 'jsvectormap' => 'jsvectormap',
     'select2' => 'select2', 'svg-injector' => 'svg-injector',
-    'ace-builds' => 'ace-builds', 'datepicker' => '@chenfengyuan/datepicker',
-    'daterangepicker' => 'daterangepicker', 'devbridge-autocomplete' => 'devbridge-autocomplete',
-    'highlight.js' => '@highlightjs/cdn-assets', 'moment' => 'moment',
-    'spectrum' => 'spectrum-colorpicker', 'tagify' => '@yaireo/tagify',
+    'ace-builds' => 'ace-builds', 'devbridge-autocomplete' => 'devbridge-autocomplete',
+    'highlight.js' => '@highlightjs/cdn-assets', 'tagify' => '@yaireo/tagify',
 ];
 if (is_dir($libraryRoot)) {
     $directories = array_values(array_filter(scandir($libraryRoot) ?: [], static fn (string $name): bool => $name !== '.' && $name !== '..'));
@@ -480,15 +475,7 @@ if (is_dir($libraryRoot)) {
         if ($metadata['latest'] !== '-' && $version !== '-' && version_compare(ltrim($version, 'v'), ltrim($metadata['latest'], 'v'), '<')) {
             $rowFlags[] = 'outdated';
         }
-        if (($packageName === 'jquery' && isset($manifestHolds['jquery'])) || ($packageName === 'bootstrap' && isset($manifestHolds['publicBootstrap']))) {
-            $rowFlags[] = 'compatibility-hold';
-        }
         $status = $metadata['status'];
-        if ($packageName === 'fontawesome-iconpicker' && isset($manifestHolds['fontawesomeIconpicker'])) {
-            $rowFlags[] = 'compatibility-hold';
-            $rowFlags[] = 'discontinued';
-            $status = 'discontinued';
-        }
         if ($status === 'unknown' && (isset($rootNpmDependencies[$packageName]) || isset($manifestVersions[$packageName]))) {
             $status = 'managed';
         }
@@ -663,7 +650,7 @@ foreach ($standaloneGroups as $key => $files) {
 
 // Root npm packages without a standalone asset directory remain part of the reproducible browser build.
 foreach ($rootNpmDependencies as $packageName => $declaredVersion) {
-    if ($packageName === '@adminkit/core' || isset($inventoriedNpm[$packageName])) {
+    if (isset($inventoriedNpm[$packageName])) {
         continue;
     }
     $lockedNpm = npmLockMetadata($npmLock, $packageName);
@@ -674,9 +661,6 @@ foreach ($rootNpmDependencies as $packageName => $declaredVersion) {
     $rowFlags = [];
     if ($metadata['latest'] !== '-' && $current !== '-' && version_compare($current, $metadata['latest'], '<')) {
         $rowFlags[] = 'outdated';
-    }
-    if (($packageName === 'jquery' && isset($manifestHolds['jquery'])) || ($packageName === 'bootstrap' && isset($manifestHolds['publicBootstrap']))) {
-        $rowFlags[] = 'compatibility-hold';
     }
     addRow($rows, [
         'kind' => 'browser', 'name' => $packageName, 'relationship' => $relationship,
@@ -691,14 +675,13 @@ foreach ($rootNpmDependencies as $packageName => $declaredVersion) {
 // Parse CDN definitions as text. Never include or execute application PHP.
 $cdnPath = $root.'/app/config/cdn.php';
 $cdnPackages = [
-    'editor' => 'ckeditor4', 'simpleeditor' => 'ckeditor4', 'datetimepicker' => '@fengyuanchen/datepicker',
-    'codeeditor' => 'ace-builds', 'spectrum' => 'spectrum-colorpicker',
-    'autocomplete' => 'devbridge-autocomplete', 'daterangepicker' => 'daterangepicker',
+    'editor' => 'jodit', 'simpleeditor' => 'jodit', 'airdatepicker' => 'air-datepicker',
+    'codeeditor' => 'ace-builds', 'coloris' => '@melloware/coloris',
+    'autocomplete' => 'devbridge-autocomplete',
     'hljs' => 'highlight.js', 'blockadblock' => 'blockadblock',
 ];
 $lifecycle = [
     'ckeditor4' => ['eol', 'https://ckeditor.com/ckeditor-4-support/'],
-    'moment' => ['maintenance', 'https://momentjs.com/docs/#/-project-status/'],
 ];
 if (is_file($cdnPath)) {
     $contents = file_get_contents($cdnPath) ?: '';
@@ -715,9 +698,6 @@ if (is_file($cdnPath)) {
             $localAssets = $assetMatches[1] ?? [];
             sort($localAssets, SORT_STRING);
             $packageName = str_contains($body, 'vendor/jodit/') ? 'jodit' : ($cdnPackages[$key] ?? $key);
-            if ($key === 'datetimepicker' && $localAssets !== []) {
-                $packageName = '@chenfengyuan/datepicker';
-            }
             if ($key === 'hljs' && $localAssets !== []) {
                 $packageName = '@highlightjs/cdn-assets';
             }
@@ -764,21 +744,6 @@ if (is_file($cdnPath)) {
             if ($version === '-' || $packageName === $key && !array_key_exists($key, $cdnPackages)) {
                 addFinding($rows, $findings, 'unknown-or-unversioned', 'app/config/cdn.php:'.$key, 'definition unresolved', $key);
             }
-
-            foreach ($urls as $url) {
-                if (str_contains($url, 'moment')) {
-                    [$momentStatus, $momentUrl] = $lifecycle['moment'];
-                    $momentMetadata = officialMetadata('npm', 'moment', $metadataDir, $online);
-                    addRow($rows, [
-                        'kind' => 'cdn', 'name' => 'moment', 'relationship' => 'remote-subdependency',
-                        'current' => '-', 'latest' => $momentMetadata['latest'], 'license' => $momentMetadata['license'],
-                        'status' => $momentStatus, 'source' => 'app/config/cdn.php:'.$url,
-                        'call_sites' => callSites($sourceLines, ["CDN::load('".$key."'", 'CDN::load("'.$key.'"']),
-                        'flags' => 'maintenance,unversioned,url-unpinned', 'metadata_url' => $momentUrl,
-                    ]);
-                    addFinding($rows, $findings, 'unknown-or-unversioned', 'app/config/cdn.php:'.$url, 'remote version floats', 'moment');
-                }
-            }
         }
     }
 }
@@ -818,50 +783,41 @@ foreach ($layoutFiles as $layoutFile) {
     }
 }
 
-if (isset($manifestVersions['@adminkit/core'])) {
-    $metadata = officialMetadata('npm', '@adminkit/core', $metadataDir, $online);
-    $lockedNpm = npmLockMetadata($npmLock, '@adminkit/core');
-    $current = (string) $manifestVersions['@adminkit/core'];
-    $rowFlags = [];
-    if ($metadata['latest'] !== '-' && version_compare($current, $metadata['latest'], '<')) {
-        $rowFlags[] = 'outdated';
+$embeddedPackages = [];
+foreach ($manifestEmbedded as $asset => $packages) {
+    if (!is_array($packages)) {
+        continue;
     }
-    if (isset($manifestHolds['dashboardBundle'])) {
-        $rowFlags[] = 'compatibility-hold';
+    foreach ($packages as $packageName => $current) {
+        if (!isset($embeddedPackages[$packageName])) {
+            $embeddedPackages[$packageName] = ['version' => (string) $current, 'assets' => []];
+        }
+        $embeddedPackages[$packageName]['assets'][] = (string) $asset;
     }
-    $license = $metadata['license'] !== '-' ? $metadata['license'] : $lockedNpm['license'];
-    $status = $metadata['status'] === 'unknown' ? 'managed' : $metadata['status'];
-    addRow($rows, [
-        'kind' => 'admin-shell', 'name' => '@adminkit/core', 'relationship' => 'bundled',
-        'current' => $current, 'latest' => $metadata['latest'], 'license' => $license,
-        'status' => $status, 'source' => 'public/static/vendor-manifest.json;public/static/backend/js/app.js;public/static/backend/css/app.css',
-        'call_sites' => callSites($sourceLines, ['backend/js/app.js', 'backend/css/app.css']),
-        'flags' => flags($rowFlags), 'metadata_url' => $metadata['url'],
-    ]);
 }
-
-$adminNestedPrefix = 'node_modules/@adminkit/core/node_modules/';
-foreach (is_array($npmLock['packages'] ?? null) ? $npmLock['packages'] : [] as $lockPath => $package) {
-    if (!str_starts_with((string) $lockPath, $adminNestedPrefix) || !is_array($package)) {
-        continue;
-    }
-    $packageName = substr((string) $lockPath, strlen($adminNestedPrefix));
-    if ($packageName === '' || str_contains($packageName, '/node_modules/')) {
-        continue;
-    }
+ksort($embeddedPackages, SORT_STRING);
+foreach ($embeddedPackages as $packageName => $embedded) {
     $metadata = officialMetadata('npm', $packageName, $metadataDir, $online);
-    $license = $package['license'] ?? $metadata['license'];
+    $lockedNpm = npmLockMetadata($npmLock, $packageName);
+    $license = $packageName === '@adminkit/core' ? 'MIT' : ($lockedNpm['license'] !== '-' ? $lockedNpm['license'] : $metadata['license']);
     if (is_array($license)) {
         $license = implode(',', $license);
     }
+    $assets = array_values(array_unique($embedded['assets']));
+    sort($assets, SORT_STRING);
+    $current = $embedded['version'];
+    $rowFlags = ['embedded-version'];
+    if ($metadata['latest'] !== '-' && version_compare(ltrim($current, 'v'), ltrim($metadata['latest'], 'v'), '<')) {
+        $rowFlags[] = 'outdated';
+    }
     addRow($rows, [
         'kind' => 'admin-shell', 'name' => $packageName, 'relationship' => 'embedded',
-        'current' => (string) ($package['version'] ?? '-'), 'latest' => $metadata['latest'],
+        'current' => $current, 'latest' => $metadata['latest'],
         'license' => (string) $license ?: '-',
         'status' => $metadata['status'] === 'unknown' ? 'managed' : $metadata['status'],
-        'source' => 'package-lock.json;public/static/backend/js/app.js',
-        'call_sites' => callSites($sourceLines, ['backend/js/app.js']),
-        'flags' => isset($manifestHolds['dashboardBundle']) ? 'compatibility-hold,embedded-version' : 'embedded-version',
+        'source' => 'public/static/vendor-manifest.json:'.implode(',', $assets),
+        'call_sites' => callSites($sourceLines, $assets),
+        'flags' => flags($rowFlags),
         'metadata_url' => $metadata['url'],
     ]);
 }

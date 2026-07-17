@@ -12,34 +12,34 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('settings.update') ?>" enctype="multipart/form-data" id="settings-form" autocomplete="off">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4 d-flex align-items-center">
+                    <div class="mb-4 d-flex align-items-center">
 					    <div class="me-3">
                             <img src="<?php echo $user->avatar()?>" width="100" class="rounded">
                         </div>
                         <div>
-                            <label for="avatar" class="form-label"><?php ee('Avatar') ?></label>				    	
+                            <label for="avatar" class="form-label"><?php ee('Avatar') ?></label>
                             <input type="file" name="avatar" id="avatar" class="form-control mb-2">
                             <p class="form-text"><?php ee('By default, we will use the Gravatar associated to your email. Uploaded avatars must be square with the width ranging from 200-500px with a maximum size of 500kb.') ?></p>
                         </div>
                     </div>
                     <div class="row mb-4">
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="name" class="form-label"><?php ee('Name') ?></label>
                                 <input type="text" class="form-control" name="name" id="name" value="<?php echo $user->name ?>">
                             </div>
-                        </div>	
+                        </div>
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="email" class="form-label"><?php ee('Email') ?></label>
                                 <input type="text" class="form-control" name="email" id="email" value="<?php echo $user->email ?>">
                                 <?php if(config("user_activate")): ?>
                                     <p class="form-text"><?php echo e("Please note that if you change your email, you will need to activate your account again.") ?></p>
                                 <?php endif; ?>
                             </div>
-                        </div>			
+                        </div>
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="username" class="form-label"><?php ee('Username') ?></label>
                                 <input type="text" class="form-control" name="username" id="username" value="<?php echo $user->username ?>" <?php echo (empty($user->username)?"":" disabled")?>>
                                 <p class="form-text"><?php ee('A username is required for your public profile to be visible.') ?></p>
@@ -48,14 +48,14 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="f-password"><?php echo e("Password")?></label>
                                 <input type="password" value="" name="password" id="f-password" class="form-control" autocomplete="new-password" />
                                 <p class="form-text"><?php ee("Leave blank to keep current one.") ?></p>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="f-cpassword"><?php echo e("Confirm Password")?></label>
                                 <input type="password" value="" name="cpassword" id="f-cpassword" class="form-control" autocomplete="off" />
                                 <p class="form-text"><?php ee("Leave blank to keep current one.") ?></p>
@@ -64,10 +64,10 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="domain"><?php echo e("Default Domain")?></label>
                                 <div class="input-group input-select">
-                                    <select name="domain" id="domain" class="form-control border-start-0 ps-0" data-toggle="select">
+                                    <select name="domain" id="domain" class="form-select border-start-0 ps-0" data-toggle="select">
                                         <?php foreach(\Helpers\App::domains() as $domain): ?>
                                             <option value="<?php echo $domain ?>" <?php echo $user->domain == $domain ? 'selected' : '' ?>><?php echo $domain ?></option>
                                         <?php endforeach ?>
@@ -77,16 +77,16 @@
                         </div>
                         <?php if($user->pro()): ?>
                             <div class="col-md-6">
-                                <div class="form-group">
+                                <div class="mb-3">
                                     <label for="defaulttype" class="form-label"><?php echo e("Default Redirection") ?></label>
                                     <div class="input-group input-select">
                                         <select name="defaulttype" id="defaulttype" class="form-select p-2" data-toggle="select">
                                             <option value="direct" <?php echo ($user->defaulttype == "direct" || $user->defaulttype== "" ? " selected":"") ?>> <?php echo e("Direct") ?></option>
                                             <option value="frame" <?php echo ($user->defaulttype == "frame" ? " selected":"") ?>> <?php echo e("Frame") ?></option>
                                             <option value="splash" <?php echo ($user->defaulttype == "splash" ? " selected":"") ?>> <?php echo e("Splash") ?></option>
-                                        </select>		              
+                                        </select>
                                     </div>
-                                </div> 
+                                </div>
                             </div>
                         <?php endif ?>
                     </div>
@@ -94,69 +94,69 @@
                     <h4 class="card-title mt-5 mb-3"><?php ee('Billing Address') ?></h4>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="billingname"><?php echo e("Full Name") ?></label>
                                 <input type="text" class="form-control" id="billingname" name="billingname" placeholder="e.g. John Doe" value="<?php echo (isset($user->address->name) ? $user->address->name : $user->name ) ?>">
-                            </div>									
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="company"><?php echo e("Company Name") ?></label>
                                 <input type="text" class="form-control" id="company" name="company" placeholder="e.g. Acme Inc" value="<?php echo (isset($user->address->company) ? $user->address->company : "" ) ?>">
-                            </div>									
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group mb-3">
+                    <div class="mb-3">
                         <label class="form-label" for="address"><?php echo e("Address") ?></label>
                         <input type="text" class="form-control" id="address" name="address" value="<?php echo (isset($user->address->address) ? $user->address->address : "" ) ?>">
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="city"><?php echo e("City") ?></label>
                                 <input type="text" class="form-control" id="city" name="city" placeholder="e.g. New York" value="<?php echo (isset($user->address->city) ? $user->address->city : "" ) ?>">
-                            </div>									
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="state"><?php echo e("State/Province") ?></label>
                                 <input type="text" class="form-control" id="state" name="state" placeholder="e.g. NY" value="<?php echo (isset($user->address->state) ? $user->address->state : "" ) ?>">
-                            </div>										
+                            </div>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="form-group input-select">
+                            <div class="mb-3 input-select">
                                 <label class="form-label" for="country"><?php echo e("Country") ?></label>
-                                <select name="country" id="country" class="form-control" data-toggle="select">
+                                <select name="country" id="country" class="form-select" data-toggle="select">
                                     <?php echo \Core\Helper::Country($user->address->country ?? request()->country()['country'], true, true) ?>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="zip"><?php echo e("Zip/Postal code") ?></label>
                                 <input type="text" class="form-control" id="zip" name="zip" placeholder="e.g. 44205" value="<?php echo (isset($user->address->zip) ? $user->address->zip : "" ) ?>">
-                            </div>										
-                        </div>                                  
+                            </div>
+                        </div>
                     </div>
                     <hr>
                     <div class="row mb-2">
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="d-flex">
                                     <div>
                                         <label class="form-check-label" for="public"><?php ee('Public Profile') ?></label>
                                         <p class="form-text"><?php ee('Public profile will be activated only when this option is public.') ?></p>
                                     </div>
                                     <div class="form-check form-switch ms-auto">
-                                        <input class="form-check-input" type="checkbox" data-binary="true" id="public" name="public" value="1" <?php echo $user->public ? 'checked' : '' ?>>                                        
+                                        <input class="form-check-input" type="checkbox" data-binary="true" id="public" name="public" value="1" <?php echo $user->public ? 'checked' : '' ?>>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="d-flex">
                                     <div>
                                         <label class="form-check-label" for="media"><?php ee('Media Gateway') ?></label>
@@ -166,10 +166,10 @@
                                         <input class="form-check-input" type="checkbox" data-binary="true" id="media" name="media" value="1" <?php echo $user->media ? 'checked' : '' ?>>
                                     </div>
                                 </div>
-                            </div>                          
+                            </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="d-flex">
                                     <div>
                                         <label class="form-check-label" for="newsletter"><?php ee('Newsletter') ?></label>
@@ -179,7 +179,7 @@
                                         <input class="form-check-input" type="checkbox" data-binary="true" id="newsletter" name="newsletter" value="1" <?php echo $user->newsletter ? 'checked' : '' ?>>
                                     </div>
                                 </div>
-                            </div>                          
+                            </div>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary mt-4"><?php ee('Save Settings') ?></button>
@@ -194,17 +194,17 @@
                 <h4 class="mb-3"><?php echo e("Two-Factor Authentication (2FA)") ?></h4>
                 <p>
                 <?php echo e("2FA is an enhanced level security for your account. Each time you login, an extra step where you will need to enter a unique code will be required to gain access to your account. To enable 2FA, please click the button below and download the <strong>Google Authenticator</strong> app from Apple Store or Play Store.") ?></p>
-                <?php if($user->secret2fa): ?>						
+                <?php if($user->secret2fa): ?>
 
                     <a href="#qrcode" data-bs-toggle="collapse" data-bs-target="#qrcode" class="mb-4 btn btn-primary btn-sm"><?php ee("View QR") ?></a>
                     <div id="qrcode" class="<?php echo (!request()->qr) ? 'collapse' : '' ?> border p-3 mb-3">
                         <p><img src="<?php echo $QR2FA ?>" width="150"></p>
-                        <strong><small><?php echo e("Secret Key") ?></small></strong>: <small data-href="<?php echo $user->secret2fa ?>"><?php echo $user->secret2fa ?></small> <a href="#copy" class="copy inline-copy" data-clipboard-text="<?php echo $user->secret2fa ?>"><small><?php echo e("Copy")?></small></a>	 
+                        <strong><small><?php echo e("Secret Key") ?></small></strong>: <small data-href="<?php echo $user->secret2fa ?>"><?php echo $user->secret2fa ?></small> <a href="#copy" class="copy inline-copy" data-clipboard-text="<?php echo $user->secret2fa ?>"><small><?php echo e("Copy")?></small></a>
                     </div>
 
-                    <h5 class="mb-2"><?php echo e("Important") ?></h5>            
+                    <h5 class="mb-2"><?php echo e("Important") ?></h5>
 
-                    <p><?php echo e("You need to scan the code above with the app. You need to backup the QR code by saving it and save the key somewhere safe in case you lose your phone. You will not be able to login if you can't provide the code, in that case you will need to contact us. If you disable 2FA and re-enable it, you will need to scan a new code.") ?></p>	                
+                    <p><?php echo e("You need to scan the code above with the app. You need to backup the QR code by saving it and save the key somewhere safe in case you lose your phone. You will not be able to login if you can't provide the code, in that case you will need to contact us. If you disable 2FA and re-enable it, you will need to scan a new code.") ?></p>
                     <p><a href="<?php echo route("2fa", ['disable', \Core\Helper::nonce('2fa'.$user->id)]) ?>" class="btn btn-danger"><?php echo e("Disable 2FA") ?></a></p>
                 <?php else: ?>
                     <p><a href=""  data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#twofaModal" class="btn btn-primary"><?php echo e("Activate 2FA") ?></a></p>
@@ -213,11 +213,11 @@
         </div>
         <?php if(config('api') && $user->has('api') && $user->teamPermission('api.create')): ?>
 			<div class="card card-body">
-				<h4 class="mb-3"><?php echo e("Developer API Key") ?></h4>	
+				<h4 class="mb-3"><?php echo e("Developer API Key") ?></h4>
                 <code class="bg-dark text-white p-3 rounded mb-3 position-relative d-block"><?php echo $user->api ?> <a href="#" class="btn btn-success btn-sm position-absolute top-0 end-0 copy" data-clipboard-text="<?php echo $user->api ?>"><?php ee('Copy') ?></a></code>
 				<p><a href="#" class="btn btn-primary" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#apiModal"><?php echo e("Regenerate") ?></a></p>
 			</div>
-		<?php endif ?> 
+		<?php endif ?>
         <?php if(config('allowdelete')): ?>
 			<div class="card card-body">
 				<h4 class="mb-3"><?php echo e("Delete your account") ?></h4>
@@ -225,7 +225,7 @@
 				<p><a href="#" class="btn btn-danger" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#deleteModal"><?php echo e("Delete Permanently") ?></a></p>
 			</div>
 		<?php endif ?>
-        <?php plug('sidebar.settings') ?> 
+        <?php plug('sidebar.settings') ?>
     </div>
 </div>
 
@@ -240,10 +240,10 @@
         <div class="modal-body">
         <p><?php ee('We respect your privacy and as such you can delete your account permanently and remove all your data from our server. Please note that this action is permanent and cannot be reversed.') ?></p>
             <?php echo csrf() ?>
-            <div class="form-group">
+            <div class="mb-3">
                 <label class="form-label"><?php echo e("Confirm Password")?></label>
                 <input type="password" value="" name="cpassword" class="form-control" autocomplete="off" />
-            </div>        
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
@@ -264,7 +264,7 @@
       <form action="<?php echo route('regenerateapi') ?>" method="post">
         <div class="modal-body">
             <p><?php echo ee('If you regenerate your key, the current key will be revoked and your applications might stop working until you update the api key with the new one.') ?></p>
-            <?php echo csrf() ?>      
+            <?php echo csrf() ?>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
@@ -285,18 +285,18 @@
       <form action="<?php echo route("2fa", ['enable', \Core\Helper::nonce('2fa'.$user->id)]) ?>" method="get" autocomplete="off">
         <div class="modal-body">
 
-            <p><?php echo e("You need to scan the code above with the app then enter the 6-digit number that you see in the app to activate 2FA. It is highly recommended to backup the unique key somewhere safe.") ?></p>	                
-            
+            <p><?php echo e("You need to scan the code above with the app then enter the 6-digit number that you see in the app to activate 2FA. It is highly recommended to backup the unique key somewhere safe.") ?></p>
+
             <div class="border p-3 mb-3">
                 <p><img src="<?php echo $QR2FA ?>" width="150"></p>
-                <strong><small><?php echo e("Secret Key") ?></small></strong>: <small data-href="<?php echo request()->session('qr2fa_temp') ?>"><?php echo request()->session('qr2fa_temp') ?></small> <a href="#copy" class="copy inline-copy" data-clipboard-text="<?php echo request()->session('qr2fa_temp') ?>"><small><?php echo e("Copy")?></small></a>	 
+                <strong><small><?php echo e("Secret Key") ?></small></strong>: <small data-href="<?php echo request()->session('qr2fa_temp') ?>"><?php echo request()->session('qr2fa_temp') ?></small> <a href="#copy" class="copy inline-copy" data-clipboard-text="<?php echo request()->session('qr2fa_temp') ?>"><small><?php echo e("Copy")?></small></a>
             </div>
 
-            <div class="form-group">
+            <div class="mb-3">
                 <label class="form-label" for="secret-2fa"><?php ee('2FA Access Code') ?></label>
                 <input type="text" class="form-control" size="6" id="secret-2fa" name="secret" required>
             </div>
-            <?php echo csrf() ?>      
+            <?php echo csrf() ?>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>

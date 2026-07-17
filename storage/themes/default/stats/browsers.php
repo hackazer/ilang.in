@@ -15,9 +15,9 @@
                         <div>
                             <h5 class="card-title mb-0 fw-bold"><?php ee('Browsers') ?></h5>
                         </div>
-                        <div class="ml-auto">
+                        <div class="ms-auto">
                             <input type="text" name="customreport" data-action="customreport" class="form-control" placeholder="<?php echo e("Choose a date range to update stats") ?>">
-                        </div> 
+                        </div>
                     </div>
                     <div class="card-body px-4">
                         <canvas data-trigger="dynamic-pie" data-url="<?php echo route('data.browsers', [$url->id]) ?>" data-type="browsers"></canvas>

@@ -8,43 +8,33 @@
     "test:browser": "node --test tests/Compatibility/*.test.js"
   },
   "dependencies": {
-    "@adminkit/core": "3.4.0",
-    "@chenfengyuan/datepicker": "1.0.10",
+    "@fortawesome/fontawesome-free": "7.3.1",
     "@highlightjs/cdn-assets": "11.11.1",
+    "@melloware/coloris": "0.25.0",
     "@yaireo/tagify": "4.38.0",
     "ace-builds": "1.44.0",
-    "bootstrap": "4.6.2",
+    "air-datepicker": "3.6.0",
     "blockadblock": "3.2.1",
+    "bootstrap": "5.3.8",
     "chart.js": "4.5.1",
     "clipboard": "2.0.11",
     "cookieconsent": "3.1.1",
-    "daterangepicker": "3.1.0",
     "devbridge-autocomplete": "2.0.4",
     "feather-icons": "4.29.2",
-    "fontawesome-iconpicker": "3.2.0",
-    "fontselect-jquery-plugin": "1.1.0",
-    "jquery": "3.7.1",
-    "jquery-mask-plugin": "1.14.16",
+    "imask": "7.6.1",
+    "jodit": "4.13.5",
+    "jquery": "4.0.0",
     "jsvectormap": "1.7.0",
-    "moment": "2.30.1",
-    "popper.js": "1.16.1",
     "select2": "4.1.0",
-    "spectrum-colorpicker": "1.8.1",
     "svg-injector": "1.1.3"
   },
   "devDependencies": {
     "clean-css": "5.3.3",
+    "sass": "1.101.0",
     "terser": "5.49.0"
   },
   "browserCompatibility": {
-    "holds": {
-      "jquery": "jQuery 4 is outside Bootstrap 4.6.2's supported peer range, so the public theme remains on jQuery 3.7.1.",
-      "publicBootstrap": "The compiled public theme and inherited views use Bootstrap 4 data APIs and utility classes, so the safest stable line is Bootstrap 4.6.2 until a full theme migration is owned.",
-      "publicPopper": "Bootstrap 4.6.2 requires the discontinued Popper 1 package line. popper.js 1.16.1 is pinned for audit coverage, while the production bootstrap.bundle asset embeds the compatible runtime.",
-      "dashboardBundle": "AdminKit 3.4.0 is the newest stable shell, but it still embeds Bootstrap 5.3.0 and Chart.js 2.9.4 and installs deprecated Babel polyfill and Core-JS 2 transitives. Shared chart configuration detects that bundled major, while stats pages replace the global once with standalone Chart.js 4.5.1 after the shell loads.",
-      "fontawesomeIconpicker": "Font Awesome Icon Picker 3.2.0 is discontinued. It remains pinned at its final stable release because active theme-admin call sites depend on its jQuery API.",
-      "fontselectPackageLayout": "fontselect-jquery-plugin 1.1.0 is pinned for inventory and audit coverage, but its non-searchable anchor-based UI is incompatible with the active searchable span-based font selector and existing CSS. The shipped compatible asset remains held until its UI can be migrated and tested."
-    }
+    "holds": {}
   },
   "dependencyReleasePolicy": {
     "managedFirstPartyAssets": [
@@ -52,44 +42,43 @@
       "asset:bio",
       "asset:bookmarklet",
       "asset:bundle.pack",
-      "asset:chart-compat",
-      "asset:charts",
-      "asset:custom",
-      "asset:detect.app",
-      "asset:editor-adapter",
-      "asset:server"
+    "asset:chart-compat",
+    "asset:charts",
+    "asset:color-picker",
+    "asset:custom",
+    "asset:date-picker",
+    "asset:detect.app",
+    "asset:editor-adapter",
+    "asset:font-selector",
+    "asset:icon-picker",
+    "asset:input-mask",
+    "asset:server"
     ],
     "allowedParallelRepresentations": [
       "asset:animate",
       "asset:bio",
-      "asset:charts",
-      "asset:custom",
+    "asset:charts",
+    "asset:color-picker",
+    "asset:custom",
+    "asset:date-picker",
+    "asset:font-selector",
+    "asset:icon-picker",
+    "asset:input-mask",
       "asset:server",
       "bootstrap",
       "clipboard",
       "feather-icons",
-      "fontawesome-iconpicker",
+      "@fortawesome/fontawesome-free",
       "jquery",
-      "jquery-mask-plugin",
       "jsvectormap",
       "select2"
     ],
     "allowedDuplicatePackages": [
       "jquery"
     ],
-    "compatibilityHolds": {
-      "admin-shell:@adminkit/core": "AdminKit 3.4.0 is the latest compatible prebuilt dashboard shell and cannot be partially upgraded safely.",
-      "admin-shell:bootstrap": "Bootstrap 5.3.0 is embedded in the pinned AdminKit shell and will move only with a tested shell replacement.",
-      "admin-shell:chart.js": "Chart.js 2.9.4 is embedded in AdminKit and is isolated behind the tested dual-major compatibility adapter.",
-      "admin-shell:core-js": "The AdminKit artifact owns its embedded polyfill runtime, so replacement requires rebuilding or replacing the complete shell.",
-      "admin-shell:feather-icons": "The embedded icon runtime belongs to AdminKit and remains isolated from the separately managed browser package.",
-      "admin-shell:jsvectormap": "The embedded map runtime belongs to AdminKit and remains isolated from the separately managed browser package.",
-      "browser:bootstrap": "The public themes still use Bootstrap 4 data APIs and require a dedicated Bootstrap 5 migration with visual regression coverage.",
-      "browser:fontawesome-iconpicker": "The discontinued final release remains temporarily required by active theme editor call sites pending a tested replacement.",
-      "browser:fontselect-jquery-plugin": "The registry package has an incompatible DOM contract and cannot replace the active searchable selector without UI migration.",
-      "browser:jquery": "Bootstrap 4.6.2 supports jQuery 3 and is incompatible with the current jQuery 4 stable line.",
-      "browser:popper.js": "Bootstrap 4.6.2 requires Popper 1, while production uses the matching runtime embedded in bootstrap.bundle.",
-      "composer:phpunit/phpunit": "PHPUnit 13 requires PHP 8.4.1 and cannot satisfy the project PHP 8.3 minimum runtime."
+    "compatibilityHolds": {},
+    "runtimeMatrix": {
+      "phpunit": "PHPUnit 12.5.31 is the latest actively supported runner compatible with PHP 8.3; PHP 8.5 additionally runs PHPUnit 13.2.4."
     }
   }
 }

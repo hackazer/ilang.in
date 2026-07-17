@@ -315,7 +315,7 @@ class Stripe{
 
 				$charge = $stripe->charges->create([
 					'customer' => $user->customerid,
-					'amount' => $price * 100,
+					'amount' => self::toMinorUnits($price, (string) config('currency')),
 					'currency' => strtolower(config('currency')),
 					'description' =>  "$term - $text for {$user->email}",
 				]);
@@ -323,12 +323,20 @@ class Stripe{
 				$charge->paymentmethod = 'Stripe';
 
 				if($charge->status == 'succeeded'){
+					$chargeData = json_decode(json_encode($charge, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+					$chargeData['stripe_provider_mapping'] = [
+						'session_id' => '',
+						'payment_intent_id' => self::stripeObjectId($charge->payment_intent ?? null),
+						'charge_id' => self::stripeObjectId($charge->id ?? null),
+						'invoice_id' => self::stripeObjectId($charge->invoice ?? null),
+					];
+					$chargeData['currency'] = strtoupper((string) ($charge->currency ?? config('currency')));
 					$sub->status = 'Completed';
 					$sub->amount = $price;
 					$sub->expiry = Helper::dtime('+20 years');
 					$sub->tid = $charge->id;
 					$sub->data = json_encode(array_merge(
-						json_decode(json_encode($charge, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
+						$chargeData,
 						self::subscriptionData((string) $sub->data)
 					), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 					$sub->save();
@@ -413,7 +421,15 @@ class Stripe{
 			$payment->userid = $user->id;
 			$payment->status = 'Completed';
 			$payment->expiry = $user->expiration;
-			$payment->data = json_encode($charge);
+			$paymentData = json_decode(json_encode($charge, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+			$paymentData['stripe_provider_mapping'] = [
+				'session_id' => '',
+				'payment_intent_id' => self::stripeObjectId($charge->payment_intent ?? null),
+				'charge_id' => self::stripeObjectId($charge->id ?? null),
+				'invoice_id' => self::stripeObjectId($charge->invoice ?? null),
+			];
+			$paymentData['currency'] = strtoupper((string) ($charge->currency ?? config('currency')));
+			$payment->data = json_encode($paymentData, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 			$payment->save();
 		}
 
@@ -522,6 +538,11 @@ class Stripe{
 			return null;
 		}
 
+		if(in_array((string) $e->type, ['checkout.session.expired', 'checkout.session.async_payment_failed'], true)){
+			http_response_code(self::handleCheckoutSessionCancellation($e));
+			return null;
+		}
+
 		if(in_array((string) $e->type, ['checkout.session.completed', 'checkout.session.async_payment_succeeded'], true)){
 			http_response_code(self::handleCheckoutSessionPayment($e, $identity));
 			return null;
@@ -551,11 +572,21 @@ class Stripe{
 				return null;
 			}
 
-			if(!$user = DB::user()->where("customerid", $ey->customer)->first()){
-				$pdo->commit();
-				http_response_code(202);
-				return print("User does not exist");
-			}
+				if(!$user = DB::user()->where("customerid", $ey->customer)->first()){
+					$pdo->commit();
+					http_response_code(202);
+					return print("User does not exist");
+				}
+
+				if(self::providerMappingAlreadyProcessed($identity['event_id'], [
+					'charge_id' => self::stripeObjectId($ey->id ?? null),
+					'payment_intent_id' => self::stripeObjectId($ey->payment_intent ?? null),
+					'invoice_id' => self::stripeObjectId($ey->invoice ?? null),
+				])){
+					$pdo->commit();
+					http_response_code(200);
+					return null;
+				}
 
 			try {
 				$subscription = self::resolveWebhookSubscription($ey, $user, (string) $stripeConfig->secret);
@@ -591,15 +622,26 @@ class Stripe{
 	    		$payment->date = Helper::dtime('now');
 				$payment->cid = $identity['object_id'];
 				$payment->tid = $identity['event_id'];
-	    		$payment->amount =  $ey->amount / 100;
+				$payment->amount = self::fromMinorUnits((int) $ey->amount, (string) $ey->currency);
 	    		$payment->userid =  $user->id;
 	    		$payment->status = "Completed";
 	    		$payment->expiry =  $new_expiry;
-	    		$payment->data =  json_encode($ey);
+				$payment->data = json_encode([
+					'paymentmethod' => 'Stripe',
+					'local_subscription_id' => (int) $subscription->id,
+					'currency' => strtoupper((string) $ey->currency),
+					'stripe_provider_mapping' => [
+						'session_id' => '',
+						'payment_intent_id' => self::stripeObjectId($ey->payment_intent ?? null),
+						'charge_id' => self::stripeObjectId($ey->id ?? null),
+						'invoice_id' => self::stripeObjectId($ey->invoice ?? null),
+					],
+					'stripe_charge' => json_decode(json_encode($ey, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
+				], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
 				$payment->save();
 
-				$amount = $subscription->amount + ($ey->amount / 100);
+				$amount = (float) $subscription->amount + (float) self::fromMinorUnits((int) $ey->amount, (string) $ey->currency);
 
 				$subscription->amount = $amount;
 				$subscription->expiry = $new_expiry;
@@ -620,10 +662,20 @@ class Stripe{
 				$payment->date = Helper::dtime('now');
 				$payment->cid = $identity['object_id'];
 				$payment->tid = $identity['event_id'];
-				$payment->amount =  $ey->amount / 100;
+				$payment->amount = self::fromMinorUnits((int) $ey->amount, (string) $ey->currency);
 				$payment->userid =  $user->id;
 				$payment->status = "Failed";
-				$payment->data =  json_encode($ey);
+				$payment->data = json_encode([
+					'paymentmethod' => 'Stripe',
+					'currency' => strtoupper((string) $ey->currency),
+					'stripe_provider_mapping' => [
+						'session_id' => '',
+						'payment_intent_id' => self::stripeObjectId($ey->payment_intent ?? null),
+						'charge_id' => self::stripeObjectId($ey->id ?? null),
+						'invoice_id' => self::stripeObjectId($ey->invoice ?? null),
+					],
+					'stripe_charge' => json_decode(json_encode($ey, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
+				], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 				$payment->save();
 				
 				if(config('smtp')->user){
@@ -642,11 +694,11 @@ class Stripe{
 		
 				$message = '<table><tbody><tr>
 								<td>Subscription - '.$subscription->plan.'</td>
-								<td class="alignright">'.str_replace('$', '&#36;', \Helpers\App::currency(config('currency'), $ey->amount / 100)).'</td>
+								<td class="alignright">'.str_replace('$', '&#36;', \Helpers\App::currency(config('currency'), self::fromMinorUnits((int) $ey->amount, (string) $ey->currency))).'</td>
 							</tr>
 							<tr class="soustotal">
 								<td class="alignright" width="80%">Subtotal</td>
-								<td class="alignright">'.str_replace('$', '&#36;', \Helpers\App::currency(config('currency'), $ey->amount / 100)).'</td>
+								<td class="alignright">'.str_replace('$', '&#36;', \Helpers\App::currency(config('currency'), self::fromMinorUnits((int) $ey->amount, (string) $ey->currency))).'</td>
 							</tr>																												
 							<tr class="total">
 								<td class="alignright" width="80%">Failed on '.$ey->source->brand.' ('.$ey->source->last4.')</td>
@@ -671,6 +723,10 @@ class Stripe{
 				throw $exception;
 			} finally {
 				self::releaseWebhookLock($pdo, $lockName);
+			}
+
+			if($successfulPayment !== null){
+				self::replayPendingNegativeEvents($ey, (string) $stripeConfig->secret);
 			}
 
 			if($successfulPayment !== null){
@@ -715,6 +771,90 @@ class Stripe{
 	}
 
 	/**
+	 * Return the number of provider minor units used by a Stripe currency.
+	 */
+	public static function currencyMinorUnit(string $currency): int{
+		return in_array(strtoupper(trim($currency)), [
+			'BIF', 'CLP', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW', 'MGA',
+			'PYG', 'RWF', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
+		], true) ? 1 : 100;
+	}
+
+	public static function toMinorUnits(float|int|string $amount, string $currency): int{
+		return (int) round((float) $amount * self::currencyMinorUnit($currency));
+	}
+
+	public static function fromMinorUnits(int $amount, string $currency): int|float{
+		$value = $amount / self::currencyMinorUnit($currency);
+
+		return fmod($value, 1.0) === 0.0 ? (int) $value : $value;
+	}
+
+	/**
+	 * @param array<string, mixed> $mapping
+	 */
+	public static function providerIdentityMatches(array $mapping, string $providerObjectId): bool{
+		$providerObjectId = trim($providerObjectId);
+
+		if($providerObjectId === '') return false;
+
+		foreach($mapping as $value){
+			if(is_string($value) && trim($value) === $providerObjectId) return true;
+		}
+
+		return false;
+	}
+
+	public static function couponHasCapacity(int $used, int $maxUse, int $reservations = 0): bool{
+		return $maxUse <= 0 || max(0, $used) + max(0, $reservations) < $maxUse;
+	}
+
+	public static function checkoutSuccessResponse(bool $alreadyProcessed): int{
+		return 200;
+	}
+
+	public static function aggregateSubscriptionStatus(int $balanceMinor, int $disputedMinor, int $refundedMinor): string{
+		if($balanceMinor > 0) return 'Active';
+
+		return $disputedMinor > 0 ? 'Disputed' : 'Refunded';
+	}
+
+	/**
+	 * @param array{kind:string,charge_id:string,provider_object_id:string,amount_minor:int,currency:string} $action
+	 * @return array{event_id:string,charge_id:string,kind:string,provider_object_id:string,amount_minor:int,currency:string}
+	 */
+	public static function pendingNegativeWebhookState(array $action, string $eventId): array{
+		return [
+			'event_id' => trim($eventId),
+			'charge_id' => trim((string) ($action['charge_id'] ?? '')),
+			'kind' => (string) ($action['kind'] ?? ''),
+			'provider_object_id' => trim((string) ($action['provider_object_id'] ?? '')),
+			'amount_minor' => max(0, (int) ($action['amount_minor'] ?? 0)),
+			'currency' => strtoupper(trim((string) ($action['currency'] ?? ''))),
+		];
+	}
+
+	/**
+	 * @return array{session_id:string,payment_intent_id:string,charge_id:string,invoice_id:string,subscription_id:string}
+	 */
+	public static function checkoutSessionProviderMapping(object $session): array{
+		$paymentIntent = $session->payment_intent ?? null;
+		$latestCharge = is_object($paymentIntent) ? ($paymentIntent->latest_charge ?? null) : null;
+
+		return [
+			'session_id' => self::stripeObjectId($session->id ?? null),
+			'payment_intent_id' => self::stripeObjectId($paymentIntent),
+			'charge_id' => self::stripeObjectId(
+				$latestCharge
+					?? ($session->latest_charge ?? null)
+					?? ($session->charge ?? null)
+			),
+			'invoice_id' => self::stripeObjectId($session->invoice ?? null),
+			'subscription_id' => self::stripeObjectId($session->subscription ?? null),
+		];
+	}
+
+	/**
 	 * Only events whose contained charge state is authoritative may mutate billing.
 	 */
 	public static function isSupportedWebhookEventType(string $eventType): bool{
@@ -723,10 +863,14 @@ class Stripe{
 			'charge.failed',
 			'charge.refunded',
 			'charge.refund.updated',
+			'refund.failed',
+			'refund.updated',
 			'charge.dispute.funds_withdrawn',
 			'charge.dispute.funds_reinstated',
 			'checkout.session.completed',
 			'checkout.session.async_payment_succeeded',
+			'checkout.session.expired',
+			'checkout.session.async_payment_failed',
 		], true);
 	}
 
@@ -746,6 +890,12 @@ class Stripe{
 			'charge.refund.updated' => in_array((string) ($object->status ?? ''), ['failed', 'canceled'], true)
 				? 'refund_reversed'
 				: null,
+			'refund.failed' => 'refund_reversed',
+			'refund.updated' => match ((string) ($object->status ?? '')) {
+				'succeeded' => 'refund',
+				'failed', 'canceled' => 'refund_reversed',
+				default => null,
+			},
 			'charge.dispute.funds_withdrawn' => 'dispute',
 			'charge.dispute.funds_reinstated' => 'dispute_reversed',
 			default => null,
@@ -753,11 +903,11 @@ class Stripe{
 
 		if($kind === null) return null;
 
-		$chargeId = $kind === 'refund'
+		$chargeId = in_array($type, ['charge.refunded'], true)
 			? self::stripeObjectId($object->id ?? null)
 			: self::stripeObjectId($object->charge ?? null);
 		$providerObjectId = self::stripeObjectId($object->id ?? null);
-		$amount = $kind === 'refund'
+		$amount = $type === 'charge.refunded'
 			? (int) ($object->amount_refunded ?? -1)
 			: (int) ($object->amount ?? -1);
 		$currency = strtoupper(trim((string) ($object->currency ?? '')));
@@ -863,18 +1013,20 @@ class Stripe{
 
 		$session = $event->data->object ?? null;
 
-		if(!is_object($session) || (string) ($session->payment_status ?? '') !== 'paid') return null;
+		if(!is_object($session) || !in_array((string) ($session->payment_status ?? ''), ['paid', 'no_payment_required'], true)) return null;
 
-		$sessionId = self::stripeObjectId($session->id ?? null);
+		$mapping = self::checkoutSessionProviderMapping($session);
+		$sessionId = $mapping['session_id'];
 		$mode = trim((string) ($session->mode ?? ''));
-		$providerPaymentId = self::stripeObjectId(
-			$session->payment_intent ?? $session->invoice ?? $session->subscription ?? null
-		);
+		$providerPaymentId = $mapping['payment_intent_id']
+			?: $mapping['invoice_id']
+			?: $mapping['subscription_id'];
+		if($providerPaymentId === '' && (int) ($session->amount_total ?? -1) === 0) $providerPaymentId = $sessionId;
 		$customerId = self::stripeObjectId($session->customer ?? null);
 		$subscriptionId = (int) ($session->metadata->local_subscription_id ?? 0);
 		$subscriptionUniqueId = trim((string) ($session->metadata->local_subscription_uniqueid ?? ''));
 		$amount = (int) ($session->amount_total ?? -1);
-		$currency = strtoupper(trim((string) ($session->currency ?? '')));
+		$currency = strtoupper(trim((string) ($session->currency ?? config('currency'))));
 
 		if($sessionId === ''
 			|| !in_array($mode, ['payment', 'subscription'], true)
@@ -889,6 +1041,9 @@ class Stripe{
 
 		return [
 			'session_id' => $sessionId,
+			'payment_intent_id' => $mapping['payment_intent_id'],
+			'charge_id' => $mapping['charge_id'],
+			'invoice_id' => $mapping['invoice_id'],
 			'mode' => $mode,
 			'provider_payment_id' => $providerPaymentId,
 			'customer_id' => $customerId,
@@ -943,16 +1098,17 @@ class Stripe{
 		try {
 			$pdo->beginTransaction();
 
-			if(self::webhookAlreadyProcessed($identity['event_id'], $context['provider_payment_id'])){
-				$pdo->commit();
-				return 200;
-			}
+				if(self::webhookAlreadyProcessed($identity['event_id'], $context['provider_payment_id'])
+					|| self::providerMappingAlreadyProcessed($identity['event_id'], $context)){
+					$pdo->commit();
+					return self::checkoutSuccessResponse(true);
+				}
 
 			$user = DB::user()->where('customerid', $context['customer_id'])->first();
 
-			if(!$user){
-				$pdo->commit();
-				return 409;
+				if(!$user){
+					$pdo->commit();
+					return 200;
 			}
 
 			$subscription = DB::subscription()
@@ -961,9 +1117,9 @@ class Stripe{
 				->where('uniqueid', $context['subscription_uniqueid'])
 				->first();
 
-			if(!$subscription || !hash_equals((string) ($subscription->tid ?? ''), $context['session_id'])){
-				$pdo->commit();
-				return 409;
+				if(!$subscription || !hash_equals((string) ($subscription->tid ?? ''), $context['session_id'])){
+					$pdo->commit();
+					return 200;
 			}
 
 			$data = self::subscriptionData((string) ($subscription->data ?? ''));
@@ -1007,28 +1163,44 @@ class Stripe{
 			$payment->date = Helper::dtime();
 			$payment->cid = $context['provider_payment_id'];
 			$payment->tid = $identity['event_id'];
-			$payment->amount = $context['amount_minor'] / 100;
+			$payment->amount = self::fromMinorUnits($context['amount_minor'], $context['currency']);
 			$payment->userid = $user->id;
 			$payment->status = 'Completed';
 			$payment->expiry = $expiry;
-			$payment->data = json_encode([
-				'paymentmethod' => 'Stripe',
-				'local_subscription_id' => (int) $subscription->id,
-				'stripe_checkout' => json_decode(json_encode($event, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
+				$payment->data = json_encode([
+					'paymentmethod' => 'Stripe',
+					'local_subscription_id' => (int) $subscription->id,
+					'stripe_provider_mapping' => [
+						'session_id' => $context['session_id'],
+						'payment_intent_id' => $context['payment_intent_id'],
+						'charge_id' => $context['charge_id'],
+						'invoice_id' => $context['invoice_id'],
+					],
+					'stripe_checkout' => json_decode(json_encode($event, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
 			], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 			$payment->save();
 
 			$session = $event->data->object;
 			$providerSubscriptionId = self::stripeObjectId($session->subscription ?? null);
-			$subscription->tid = $providerSubscriptionId !== ''
+			$subscription->tid = $providerSubscriptionId !== '' && $context['mode'] === 'subscription'
 				? $providerSubscriptionId
-				: $context['provider_payment_id'];
-			$subscription->amount = (float) ($subscription->amount ?? 0) + ($context['amount_minor'] / 100);
+				: $context['session_id'];
+			$subscription->amount = (float) ($subscription->amount ?? 0) + (float) self::fromMinorUnits($context['amount_minor'], $context['currency']);
 			$subscription->expiry = $expiry;
 			$subscription->lastpayment = Helper::dtime();
 			$subscription->status = 'Active';
 			$data['stripe_checkout_session_id'] = $context['session_id'];
 			$data['stripe_provider_payment_id'] = $context['provider_payment_id'];
+			$data['stripe_payment_intent_id'] = $context['payment_intent_id'];
+			$data['stripe_charge_id'] = $context['charge_id'];
+			$data['stripe_invoice_id'] = $context['invoice_id'];
+			$data['stripe_provider_mapping'] = [
+				'session_id' => $context['session_id'],
+				'payment_intent_id' => $context['payment_intent_id'],
+				'charge_id' => $context['charge_id'],
+				'invoice_id' => $context['invoice_id'],
+				'subscription_id' => $providerSubscriptionId,
+			];
 			$subscription->data = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 			$subscription->save();
 			self::consumeCouponForSubscription($subscription);
@@ -1049,6 +1221,30 @@ class Stripe{
 		}
 
 		if($dispatch !== null) \Core\Plugin::dispatch('payment.success', $dispatch);
+
+		return 200;
+	}
+
+	private static function handleCheckoutSessionCancellation(\Stripe\Event $event): int{
+		$session = $event->data->object ?? null;
+		if(!is_object($session)) return 200;
+
+		$subscriptionId = (int) ($session->metadata->local_subscription_id ?? 0);
+		$uniqueId = trim((string) ($session->metadata->local_subscription_uniqueid ?? ''));
+		$sessionId = self::stripeObjectId($session->id ?? null);
+
+		if($subscriptionId <= 0 || $uniqueId === '' || $sessionId === '') return 200;
+
+		$subscription = DB::subscription()
+			->where('id', $subscriptionId)
+			->where('uniqueid', $uniqueId)
+			->first();
+
+		if($subscription && hash_equals((string) ($subscription->tid ?? ''), $sessionId)
+			&& (string) ($subscription->status ?? '') === 'Pending'){
+			$subscription->status = 'Canceled';
+			$subscription->save();
+		}
 
 		return 200;
 	}
@@ -1074,7 +1270,14 @@ class Stripe{
 		try {
 			$pdo->beginTransaction();
 
-			if(DB::payment()->where('tid', $identity['event_id'])->first()){
+			$pending = self::pendingNegativeRecord($identity['event_id']);
+			if(DB::payment()->where('tid', $identity['event_id'])->first() && !$pending){
+				$pdo->commit();
+				return 200;
+			}
+			if(!$pending
+				&& self::negativeProviderObjectDedupSafe((string) $event->type)
+				&& self::negativeProviderObjectAlreadyProcessed($action['provider_object_id'], $action['kind'])){
 				$pdo->commit();
 				return 200;
 			}
@@ -1082,15 +1285,17 @@ class Stripe{
 			$original = self::findOriginalStripePayment($charge);
 
 			if(!$original){
+				self::persistPendingNegativeEvent($event, $action, $identity);
 				$pdo->commit();
-				return 409;
+				return 200;
 			}
 
 			$user = DB::user()->where('id', $original->userid)->first();
 
 			if(!$user){
+				self::persistPendingNegativeEvent($event, $action, $identity);
 				$pdo->commit();
-				return 409;
+				return 200;
 			}
 
 			$originalData = self::subscriptionData((string) ($original->data ?? ''));
@@ -1100,11 +1305,12 @@ class Stripe{
 				: self::resolveWebhookSubscription($charge, $user, $secret);
 
 			if(!$subscription){
+				self::persistPendingNegativeEvent($event, $action, $identity);
 				$pdo->commit();
-				return 409;
+				return 200;
 			}
 
-			$originalMinor = (int) round(((float) $original->amount) * 100);
+			$originalMinor = self::toMinorUnits((string) $original->amount, $action['currency']);
 			$chargeMinor = (int) ($charge->amount ?? -1);
 			$chargeCurrency = strtoupper(trim((string) ($charge->currency ?? '')));
 
@@ -1125,6 +1331,10 @@ class Stripe{
 				$totals['disputed_minor'],
 				$originalMinor
 			);
+			if($deltaMinor === 0){
+				$pdo->commit();
+				return 200;
+			}
 			$newRefunded = $totals['refunded_minor'];
 			$newDisputed = $totals['disputed_minor'];
 
@@ -1139,7 +1349,7 @@ class Stripe{
 			$adjustment->date = date('Y-m-d H:i:s', $action['occurred_at']);
 			$adjustment->cid = $action['charge_id'];
 			$adjustment->tid = $identity['event_id'];
-			$adjustment->amount = $deltaMinor / 100;
+			$adjustment->amount = self::fromMinorUnits($deltaMinor, $action['currency']);
 			$adjustment->userid = $original->userid;
 			$adjustment->status = match ($action['kind']) {
 				'refund' => 'Refunded',
@@ -1148,30 +1358,45 @@ class Stripe{
 				default => 'Reinstated',
 			};
 			$adjustment->expiry = $original->expiry;
-			$adjustment->data = json_encode([
-				'paymentmethod' => 'Stripe',
-				'stripe_action' => $action['kind'],
-				'provider_object_id' => $action['provider_object_id'],
-				'event' => json_decode(json_encode($event, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
+				$adjustment->data = json_encode([
+					'paymentmethod' => 'Stripe',
+					'stripe_action' => $action['kind'],
+					'provider_object_id' => $action['provider_object_id'],
+					'currency' => $action['currency'],
+					'event' => json_decode(json_encode($event, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
 			], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 			$adjustment->save();
+
+			if($pending){
+				$pending->status = 'Reconciled';
+				$pendingData = self::subscriptionData((string) ($pending->data ?? ''));
+				$pendingData['stripe_action'] = 'stripe_pending_negative_reconciled';
+				$pending->data = json_encode($pendingData, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+				$pending->save();
+			}
 
 			$original->status = $fullyNegative
 				? ($newDisputed > 0 ? 'Disputed' : 'Refunded')
 				: 'Completed';
 			$original->save();
 
-			$subscription->amount = max(0, (float) ($subscription->amount ?? 0) + ($deltaMinor / 100));
+			$subscription->amount = max(0, (float) ($subscription->amount ?? 0) + (float) self::fromMinorUnits($deltaMinor, $action['currency']));
 
-			if($fullyNegative){
-				$subscription->status = $newDisputed > 0 ? 'Disputed' : 'Refunded';
-			} elseif(in_array((string) ($subscription->status ?? ''), ['Disputed', 'Refunded'], true)){
-				$subscription->status = 'Active';
-			}
+			$aggregateMinor = self::toMinorUnits((string) $subscription->amount, $action['currency']);
+			$subscription->status = self::aggregateSubscriptionStatus($aggregateMinor, $newDisputed, $newRefunded);
 
 			$subscription->save();
 
-			if(self::negativeEventAffectsCurrentEntitlement(
+			if($aggregateMinor > 0){
+				$coverage = self::activePaidEntitlement(DB::subscription()->where('userid', $user->id)->findMany());
+
+				if($coverage && (!$user->pro || strtotime($coverage['expiration']) > strtotime((string) $user->expiration))){
+					$user->pro = 1;
+					$user->planid = $coverage['plan_id'];
+					$user->expiration = $coverage['expiration'];
+					$user->save();
+				}
+			} elseif(self::negativeEventAffectsCurrentEntitlement(
 				$negativeMinor,
 				$originalMinor,
 				(int) ($user->planid ?? 0),
@@ -1215,6 +1440,74 @@ class Stripe{
 		}
 
 		return 200;
+	}
+
+	private static function pendingNegativeRecord(string $eventId): ?object{
+		$record = DB::payment()->where('tid', $eventId)->first();
+		if(!$record) return null;
+
+		$data = self::subscriptionData((string) ($record->data ?? ''));
+
+		return ($data['stripe_action'] ?? '') === 'stripe_pending_negative' ? $record : null;
+	}
+
+	private static function negativeProviderObjectAlreadyProcessed(string $providerObjectId, string $kind): bool{
+		foreach(DB::payment()->findMany() as $payment){
+			$data = self::subscriptionData((string) ($payment->data ?? ''));
+			if((string) ($data['stripe_action'] ?? '') === $kind
+				&& hash_equals($providerObjectId, (string) ($data['provider_object_id'] ?? ''))){
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static function negativeProviderObjectDedupSafe(string $eventType): bool{
+		return $eventType !== 'charge.refunded';
+	}
+
+	private static function persistPendingNegativeEvent(\Stripe\Event $event, array $action, array $identity): void{
+		if(self::pendingNegativeRecord($identity['event_id'])) return;
+
+		$pending = DB::payment()->create();
+		$pending->date = date('Y-m-d H:i:s', $action['occurred_at']);
+		// Do not put the charge ID in cid. webhookAlreadyProcessed uses cid as
+		// the fulfilled-payment identity, and doing so would suppress the later
+		// charge.succeeded event that must replay this pending negative event.
+		$pending->cid = null;
+		$pending->tid = $identity['event_id'];
+		$pending->amount = 0;
+		$pending->userid = 0;
+		$pending->status = 'Pending';
+		$pending->data = json_encode([
+			'paymentmethod' => 'Stripe',
+			'stripe_action' => 'stripe_pending_negative',
+			'pending_action' => $action,
+			'event' => json_decode(json_encode($event, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR),
+		], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+		$pending->save();
+	}
+
+	private static function replayPendingNegativeEvents(object $charge, string $secret): void{
+		$chargeId = self::stripeObjectId($charge->id ?? null);
+		if($chargeId === '') return;
+
+		$pendingRecords = DB::payment()
+			->where('status', 'Pending')
+			->whereRaw(
+				"JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.pending_action.charge_id')) = ?",
+				[$chargeId]
+			)
+			->findMany();
+
+		foreach($pendingRecords as $pending){
+			$data = self::subscriptionData((string) ($pending->data ?? ''));
+			if(($data['stripe_action'] ?? '') !== 'stripe_pending_negative' || !is_array($data['event'] ?? null)) continue;
+
+			$event = \Stripe\Event::constructFrom($data['event']);
+			self::handleNegativeWebhookEvent($event, self::webhookIdentity($event), $secret);
+		}
 	}
 
 	public static function subscriptionGrantsEntitlement(string $status): bool{
@@ -1270,6 +1563,20 @@ class Stripe{
 			throw new \InvalidArgumentException('Stripe charge context is incomplete.');
 		}
 
+		if($subscription = self::findSubscriptionByStripeProviderMapping($user, $charge)){
+			$data = self::subscriptionData((string) ($subscription->data ?? ''));
+			$expectedAmount = isset($data['expected_amount_minor'])
+				? (int) $data['expected_amount_minor']
+				: self::toMinorUnits((string) ($subscription->amount ?? 0), $chargeCurrency);
+			$expectedCurrency = (string) ($data['currency'] ?? config('currency'));
+
+			if(!self::webhookChargeContextIsValid($chargeAmount, $chargeCurrency, $expectedAmount, $expectedCurrency)){
+				throw new \InvalidArgumentException('Stripe charge does not match its canonical local checkout mapping.');
+			}
+
+			return $subscription;
+		}
+
 		$stripe = new \Stripe\StripeClient($secret);
 
 		if($invoiceId === '' && $paymentIntentId !== ''){
@@ -1290,7 +1597,7 @@ class Stripe{
 
 		if($invoiceId === ''){
 			$subscription = DB::subscription()->where('userid', $user->id)->where('tid', $chargeId)->first();
-			$expectedAmount = $subscription ? (int) round(((float) $subscription->amount) * 100) : -1;
+			$expectedAmount = $subscription ? self::toMinorUnits((string) $subscription->amount, (string) config('currency')) : -1;
 
 			if(!$subscription || !self::webhookChargeContextIsValid($chargeAmount, $chargeCurrency, $expectedAmount, (string) config('currency'))){
 				throw new \InvalidArgumentException('Stripe one-time charge does not match its local checkout.');
@@ -1320,6 +1627,34 @@ class Stripe{
 			->where('userid', $user->id)
 			->where('tid', $providerSubscriptionId)
 			->first();
+	}
+
+	private static function findSubscriptionByStripeProviderMapping(object $user, object $charge): ?object{
+		$providerIds = array_values(array_unique(array_filter([
+			self::stripeObjectId($charge->id ?? null),
+			self::stripeObjectId($charge->payment_intent ?? null),
+			self::stripeObjectId($charge->invoice ?? null),
+		])));
+
+		if($providerIds === []) return null;
+
+		foreach(DB::subscription()->where('userid', $user->id)->findMany() as $subscription){
+			$data = self::subscriptionData((string) ($subscription->data ?? ''));
+			$mapping = is_array($data['stripe_provider_mapping'] ?? null)
+				? $data['stripe_provider_mapping']
+				: [
+					'session_id' => $data['stripe_checkout_session_id'] ?? '',
+					'payment_intent_id' => $data['stripe_payment_intent_id'] ?? $data['stripe_provider_payment_id'] ?? '',
+					'charge_id' => $data['stripe_charge_id'] ?? '',
+					'invoice_id' => $data['stripe_invoice_id'] ?? '',
+				];
+
+			foreach($providerIds as $providerId){
+				if(self::providerIdentityMatches($mapping, $providerId)) return $subscription;
+			}
+		}
+
+		return null;
 	}
 
 	/** @return array<string, mixed> */
@@ -1364,7 +1699,7 @@ class Stripe{
 
 		foreach($payments as $payment){
 			$data = self::subscriptionData((string) ($payment->data ?? ''));
-			$minor = (int) round(abs((float) ($payment->amount ?? 0)) * 100);
+			$minor = self::toMinorUnits((string) abs((float) ($payment->amount ?? 0)), (string) ($data['currency'] ?? config('currency')));
 
 			switch((string) ($data['stripe_action'] ?? '')){
 				case 'refund':
@@ -1413,6 +1748,29 @@ class Stripe{
 		$statement->execute(['lock_name' => $lockName]);
 	}
 
+	private static function acquireStripeCouponLock(int $couponId): ?string{
+		$lockName = 'stripe-coupon:'.substr(hash('sha256', (string) $couponId), 0, 48);
+		$statement = DB::get_db()->prepare('SELECT GET_LOCK(:lock_name, 10)');
+		$statement->execute(['lock_name' => $lockName]);
+
+		return (int) $statement->fetchColumn() === 1 ? $lockName : null;
+	}
+
+	private static function releaseStripeCouponLock(string $lockName): void{
+		$statement = DB::get_db()->prepare('SELECT RELEASE_LOCK(:lock_name)');
+		$statement->execute(['lock_name' => $lockName]);
+	}
+
+	private static function pendingCouponReservations(int $couponId): int{
+		return (int) DB::subscription()
+			->where('status', 'Pending')
+			->whereRaw(
+				"CAST(JSON_UNQUOTE(JSON_EXTRACT(`data`, '$.coupon_id')) AS UNSIGNED) = ?",
+				[$couponId]
+			)
+			->count();
+	}
+
 	/**
 	 * Check both the Stripe event and contained object before applying entitlement.
 	 */
@@ -1422,6 +1780,41 @@ class Stripe{
 		};
 
 		return $lookup('tid', $eventId) || $lookup('cid', $objectId);
+	}
+
+	/**
+	 * Check event IDs and all known Stripe object IDs stored in the existing payment JSON.
+	 * This keeps legacy tid and cid values valid while preventing lifetime double fulfillment.
+	 *
+	 * @param array<string, mixed> $mapping
+	 */
+	private static function providerMappingAlreadyProcessed(string $eventId, array $mapping): bool{
+		$providerIds = array_values(array_unique(array_filter(array_map(
+			static fn(mixed $value): string => is_string($value) ? trim($value) : '',
+			$mapping
+		))));
+
+		if(self::webhookAlreadyProcessed($eventId, $providerIds[0] ?? '')) return true;
+
+		foreach(DB::payment()->findMany() as $payment){
+			if(hash_equals((string) ($payment->tid ?? ''), $eventId)
+				|| in_array((string) ($payment->tid ?? ''), $providerIds, true)
+				|| in_array((string) ($payment->cid ?? ''), $providerIds, true)){
+				return true;
+			}
+
+			$data = self::subscriptionData((string) ($payment->data ?? ''));
+			if(in_array((string) ($data['stripe_action'] ?? ''), ['stripe_pending_negative', 'stripe_pending_negative_reconciled'], true)) continue;
+			$storedMapping = is_array($data['stripe_provider_mapping'] ?? null)
+				? $data['stripe_provider_mapping']
+				: $data;
+
+			foreach($providerIds as $providerId){
+				if(self::providerIdentityMatches($storedMapping, $providerId)) return true;
+			}
+		}
+
+		return false;
 	}
 	/**
 	 * Create Plan
@@ -1446,7 +1839,7 @@ class Stripe{
 
 		try {
 			$planMonthly = $stripe->plans->create([
-				"amount" => $plan->price_monthly*100,
+				"amount" => self::toMinorUnits($plan->price_monthly, (string) config("currency")),
 				"interval" => "month",
 				"nickname" => "{$plan->name} - Monthly",
 				"product" => $product->id,           
@@ -1460,7 +1853,7 @@ class Stripe{
 	  
 		try {
 			$planYearly = $stripe->plans->create([
-				"amount" => $plan->price_yearly*100,
+				"amount" => self::toMinorUnits($plan->price_yearly, (string) config("currency")),
 				"interval" => "year",
 				"nickname" => "{$plan->name} - Yearly",
 				"product" => $product->id,            
@@ -1501,7 +1894,7 @@ class Stripe{
 		
 			try {
 				$planMonthly = $stripe->plans->create([
-					"amount" => $request->price_monthly*100,
+					"amount" => self::toMinorUnits($request->price_monthly, (string) config("currency")),
 					"interval" => "month",
 					"nickname" => "{$plan->name} - Monthly",
 					"product" => $productid,
@@ -1521,7 +1914,7 @@ class Stripe{
 		
 			try {
 				$planYearly = $stripe->plans->create([
-					"amount" => $request->price_yearly*100,
+					"amount" => self::toMinorUnits($request->price_yearly, (string) config("currency")),
 					"interval" => "year",
 					"nickname" => "{$plan->name} - Yearly",
 					"product" => $productid,
@@ -1563,7 +1956,7 @@ class Stripe{
 
 		try {
 			$planMonthly = $stripe->plans->create([
-				"amount" => $plan->price_monthly*100,
+				"amount" => self::toMinorUnits($plan->price_monthly, (string) config("currency")),
 				"interval" => "month",
 				"nickname" => "{$plan->name} - Monthly",
 				"product" => $product->id,           
@@ -1577,7 +1970,7 @@ class Stripe{
 		try {
 
 			$planYearly = $stripe->plans->create([
-				"amount" => $plan->price_yearly*100,
+				"amount" => self::toMinorUnits($plan->price_yearly, (string) config("currency")),
 				"interval" => "year",
 				"nickname" => "{$plan->name} - Yearly",
 				"product" => $product->id,            
@@ -1642,7 +2035,8 @@ class Stripe{
 
 			if(($charge === '' && $paymentIntent === '') || $billingContext['start'] <= 0 || $billingContext['end'] <= 0) return null;
 
-			$amount = $invoice->total / 100;
+			$invoiceCurrency = (string) ($invoice->currency ?? config('currency'));
+			$amount = self::fromMinorUnits((int) $invoice->total, $invoiceCurrency);
 			$start = $billingContext['start'];
 			$end = $billingContext['end'];
 
@@ -1656,7 +2050,7 @@ class Stripe{
 
 			$refund = round(($diff - 1) * $amount / 12, 2);
 
-			$refundRequest = ['amount' => (int) round($refund * 100)];
+			$refundRequest = ['amount' => self::toMinorUnits($refund, $invoiceCurrency)];
 			if($charge !== ''){
 				$refundRequest['charge'] = $charge;
 			}else{
@@ -1807,7 +2201,7 @@ class Stripe{
 						  'product_data' =>[
 							  'name' => $term.'-'.$text,
 						  ],
-						  'unit_amount' => $price * 100
+						  'unit_amount' => self::toMinorUnits($price, (string) config('currency'))
 					  ],
 					  'quantity' => 1,
 					],
@@ -1830,6 +2224,30 @@ class Stripe{
 			];
 		}
 
+		$coupon = null;
+		$couponLock = null;
+		if($request->coupon && ($candidateCoupon = DB::coupons()->where('code', clean($request->coupon))->first())){
+			$validUntil = strtotime((string) ($candidateCoupon->validuntil ?? ''));
+			$valid = $validUntil !== false && time() <= strtotime(date('Y-m-d 11:59:00', $validUntil));
+
+			if($valid && (int) ($candidateCoupon->maxuse ?? 0) > 0){
+				$couponLock = self::acquireStripeCouponLock((int) $candidateCoupon->id);
+
+				if($couponLock === null || !self::couponHasCapacity(
+					(int) ($candidateCoupon->used ?? 0),
+					(int) ($candidateCoupon->maxuse ?? 0),
+					self::pendingCouponReservations((int) $candidateCoupon->id)
+				)){
+					if($couponLock !== null) self::releaseStripeCouponLock($couponLock);
+					return back()->with('danger', e('Promo code has expired. Please try again.'));
+				}
+			}
+
+			if($valid) $coupon = $candidateCoupon;
+		}
+
+		try {
+
 		$uniqueid = Helper::rand(16);
 
 		$sub = DB::subscription()->create();
@@ -1846,15 +2264,7 @@ class Stripe{
 		$sub->uniqueid = $uniqueid;
 		$sub->save();
 
-		if($request->coupon && $coupon = DB::coupons()->where('code', clean($request->coupon))->first()){
-			
-			$valid = true;
-
-			if(strtotime("now") > strtotime(date("Y-m-d 11:59:00", strtotime($coupon->validuntil)))) $valid = false;
-
-            if($coupon->maxuse > 0 && $coupon->used >= $coupon->maxuse) $valid = false;
-
-			if($valid) {				
+		if($coupon){
 				$price = round((1 - ($coupon->discount / 100)) * $price, 2);
 				$sub->coupon = $coupon->id;
 				$sub->data = json_encode([
@@ -1867,7 +2277,6 @@ class Stripe{
 				$checkout['discounts'] = [[
 					'coupon' => $coupon->data->stripe
 				]];
-			}
 		}
 
 		if($tax = DB::taxrates()->whereRaw('countries LIKE ?', ["%".clean($request->country)."%"])->first()){
@@ -1880,7 +2289,7 @@ class Stripe{
 			? round($price * (1 + ((float) $tax->rate / 100)), 2)
 			: $price;
 		$subscriptionData = self::subscriptionData((string) $sub->data);
-		$subscriptionData['expected_amount_minor'] = (int) round($expectedPrice * 100);
+		$subscriptionData['expected_amount_minor'] = self::toMinorUnits($expectedPrice, (string) config('currency'));
 		$subscriptionData['currency'] = strtoupper((string) config('currency'));
 		$sub->data = json_encode($subscriptionData, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 		$sub->save();
@@ -1893,6 +2302,8 @@ class Stripe{
 		try{
 			$session = $stripe->checkout->sessions->create($checkout);
 		} catch(\Exception $e){
+			$sub->status = 'Canceled';
+			$sub->save();
 			\GemError::log('Stripe Error: '.$e->getMessage());
 			return back()->with("warning", e("An error ocurred, please try again. You have not been charged."));
 		}
@@ -1901,5 +2312,16 @@ class Stripe{
 		$sub->save();
 
 		return Helper::redirect()->to($session->url);
+		} finally {
+			if($couponLock !== null && isset($sub) && (string) ($sub->status ?? '') === 'Pending' && empty($sub->tid)){
+				try {
+					$sub->status = 'Canceled';
+					$sub->save();
+				} catch(\Throwable $exception) {
+					\GemError::log('Stripe Coupon reservation cleanup failed: '.$exception::class);
+				}
+			}
+			if($couponLock !== null) self::releaseStripeCouponLock($couponLock);
+		}
 	}
 }

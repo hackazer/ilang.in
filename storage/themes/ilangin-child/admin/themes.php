@@ -85,7 +85,7 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="file" class="form-label"><?php ee('Theme File') ?></label>
                     <input type="file" class="form-control" name="file" id="file" value="" accept=".zip" placeholder="e.g. theme.zip">
                     <p class="form-text"><?php ee('Upload the zip file that comes in the package. Usually it is named THEMENAME.zip. Please make sure the theme respects the file structure.') ?></p>

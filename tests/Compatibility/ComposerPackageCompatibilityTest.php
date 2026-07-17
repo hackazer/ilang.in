@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Compatibility;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
-use Endroid\QrCode\Writer\SvgWriter;
+use chillerlan\QRCode\Output\QRMarkupSVG;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -35,7 +35,7 @@ final class ComposerPackageCompatibilityTest extends TestCase
             ->create('uri');
 
         self::assertStringStartsWith('data:image/svg+xml;base64,', $uri);
-        self::assertTrue(class_exists(SvgWriter::class));
+        self::assertTrue(class_exists(QRMarkupSVG::class));
     }
 
     public function testQrHelperFallsBackToSafeColorsForInvalidCssValues(): void

@@ -12,7 +12,7 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('settings.update') ?>" enctype="multipart/form-data" id="settings-form" autocomplete="off">
                     <?php echo csrf() ?>
-                    <div class="form-group mb-4 d-flex align-items-center">
+                    <div class="mb-4 d-flex align-items-center">
 					    <div class="me-3">
                             <img src="<?php echo $user->avatar()?>" width="100" class="rounded">
                         </div>
@@ -24,13 +24,13 @@
                     </div>
                     <div class="row mb-4">
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="name" class="form-label"><?php ee('Name') ?></label>
                                 <input type="text" class="form-control" name="name" id="name" value="<?php echo $user->name ?>">
                             </div>
                         </div>	
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="email" class="form-label"><?php ee('Email') ?></label>
                                 <input type="text" class="form-control" name="email" id="email" value="<?php echo $user->email ?>">
                                 <?php if(config("user_activate")): ?>
@@ -39,7 +39,7 @@
                             </div>
                         </div>			
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label for="username" class="form-label"><?php ee('Username') ?></label>
                                 <input type="text" class="form-control" name="username" id="username" value="<?php echo $user->username ?>" <?php echo (empty($user->username)?"":" disabled")?>>
                                 <p class="form-text"><?php ee('A username is required for your public profile to be visible.') ?></p>
@@ -48,14 +48,14 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="f-password"><?php echo e("Password")?></label>
                                 <input type="password" value="" name="password" id="f-password" class="form-control" autocomplete="new-password" />
                                 <p class="form-text"><?php ee("Leave blank to keep current one.") ?></p>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="f-cpassword"><?php echo e("Confirm Password")?></label>
                                 <input type="password" value="" name="cpassword" id="f-cpassword" class="form-control" autocomplete="off" />
                                 <p class="form-text"><?php ee("Leave blank to keep current one.") ?></p>
@@ -64,7 +64,7 @@
                     </div>
                     <div class="row mt-3">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="domain"><?php echo e("Default Domain")?></label>
                                 <div class="input-group input-select">
                                     <select name="domain" id="domain" class="form-control border-start-0 ps-0" data-toggle="select">
@@ -77,7 +77,7 @@
                         </div>
                         <?php if($user->pro()): ?>
                             <div class="col-md-6">
-                                <div class="form-group">
+                                <div class="mb-3">
                                     <label for="defaulttype" class="form-label"><?php echo e("Default Redirection") ?></label>
                                     <div class="input-group input-select">
                                         <select name="defaulttype" id="defaulttype" class="form-select p-2" data-toggle="select">
@@ -92,23 +92,23 @@
                     </div>
                     <hr>
                     <h4 class="card-title mt-5 mb-3"><?php ee('Billing Address') ?></h4></h3>
-                    <div class="form-group mb-2">
+                    <div class="mb-2">
                         <label class="form-label" for="name"><?php echo e("Full Name") ?></label>
                         <input type="text" class="form-control" id="name" name="name" value="<?php echo $user->name ?>" required>
                     </div>							
-                    <div class="form-group mb-2">
+                    <div class="mb-2">
                         <label class="form-label" for="address"><?php echo e("Address") ?></label>
                         <input type="text" class="form-control" id="address" name="address" value="<?php echo (isset($user->address->address) ? $user->address->address : "" ) ?>" required>
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="city"><?php echo e("City") ?></label>
                                 <input type="text" class="form-control" id="city" name="city" placeholder="e.g. New York" value="<?php echo (isset($user->address->city) ? $user->address->city : "" ) ?>" required>
                             </div>									
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="state"><?php echo e("State/Province") ?></label>
                                 <input type="text" class="form-control" id="state" name="state" placeholder="e.g. NY" value="<?php echo (isset($user->address->state) ? $user->address->state : "" ) ?>" required>
                             </div>										
@@ -116,7 +116,7 @@
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6">
-                            <div class="form-group input-select">
+                            <div class="mb-3 input-select">
                                 <label class="form-label" for="country"><?php echo e("Country") ?></label>
                                 <select name="country" id="country" class="form-control" data-toggle="select" required>
                                     <?php echo \Core\Helper::Country($user->address->country ?? request()->country()['country'], true, true) ?>
@@ -124,7 +124,7 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <label class="form-label" for="zip"><?php echo e("Zip/Postal code") ?></label>
                                 <input type="text" class="form-control" id="zip" name="zip" placeholder="e.g. 44205" value="<?php echo (isset($user->address->zip) ? $user->address->zip : "" ) ?>" required>
                             </div>										
@@ -133,7 +133,7 @@
                     <hr>
                     <div class="row mb-2">
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="d-flex">
                                     <div>
                                         <label class="form-check-label" for="public"><?php ee('Public Profile') ?></label>
@@ -146,7 +146,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="d-flex">
                                     <div>
                                         <label class="form-check-label" for="media"><?php ee('Media Gateway') ?></label>
@@ -159,7 +159,7 @@
                             </div>                          
                         </div>
                         <div class="col-md-4">
-                            <div class="form-group">
+                            <div class="mb-3">
                                 <div class="d-flex">
                                     <div>
                                         <label class="form-check-label" for="newsletter"><?php ee('Newsletter') ?></label>
@@ -230,7 +230,7 @@
         <div class="modal-body">
         <p><?php ee('We respect your privacy and as such you can delete your account permanently and remove all your data from our server. Please note that this action is permanent and cannot be reversed.') ?></p>
             <?php echo csrf() ?>
-            <div class="form-group">
+            <div class="mb-3">
                 <label class="form-label"><?php echo e("Confirm Password")?></label>
                 <input type="password" value="" name="cpassword" class="form-control" autocomplete="off" />
             </div>        
@@ -282,7 +282,7 @@
                 <strong><small><?php echo e("Secret Key") ?></small></strong>: <small data-href="<?php echo request()->session('qr2fa_temp') ?>"><?php echo request()->session('qr2fa_temp') ?></small> <a href="#copy" class="copy inline-copy" data-clipboard-text="<?php echo request()->session('qr2fa_temp') ?>"><small><?php echo e("Copy")?></small></a>	 
             </div>
 
-            <div class="form-group">
+            <div class="mb-3">
                 <label class="form-label" for="secret-2fa"><?php ee('2FA Access Code') ?></label>
                 <input type="text" class="form-control" size="6" id="secret-2fa" name="secret" required>
             </div>

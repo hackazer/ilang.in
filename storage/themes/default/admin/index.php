@@ -9,8 +9,8 @@
                         <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> +<?php echo $id == 'payments' ? \Helpers\App::currency(config('currency')):'' ?><?php echo $count['count.today']?:'0' ?> <?php ee('Today') ?></span>
                     </div>
                 </div>
-            </div>          
-        </div>      
+            </div>
+        </div>
     <?php endforeach ?>
 </div>
 <div class="row">
@@ -21,10 +21,10 @@
             </div>
             <div class="card-body no-checkbox">
                 <?php foreach($urls->latest as $url): ?>
-                    <?php view('admin.partials.links', compact('url')) ?>      
-                <?php endforeach ?>            
+                    <?php view('admin.partials.links', compact('url')) ?>
+                <?php endforeach ?>
             </div>
-        </div>        
+        </div>
     </div>
     <div class="col-md-6">
         <div class="card">
@@ -33,23 +33,23 @@
             </div>
             <div class="card-body no-checkbox">
                 <?php foreach($urls->top as $url): ?>
-                    <?php view('admin.partials.links', compact('url')) ?> 
-                <?php endforeach ?>            
+                    <?php view('admin.partials.links', compact('url')) ?>
+                <?php endforeach ?>
             </div>
-        </div>        
+        </div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">                
+            <div class="card-header">
                 <div class="d-flex align-items-center">
                     <h5 class="card-title mb-0"><?php ee('Users') ?></h5>
                     <div class="ms-auto">
                         <a href="<?php echo route('admin.users') ?>" class="btn btn-sm btn-primary"><?php ee('View All') ?></a>
                     </div>
                 </div>
-            </div>    
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover my-0">
@@ -66,7 +66,7 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                            <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                             <div class="ms-2">
                                                 <?php echo ($user->auth)? ucfirst($user->auth).' Auth: '.$user->auth_id : ''?>
                                                 <?php echo ($user->admin)?"<strong>{$user->email}</strong>":$user->email ?> <?php echo ($user->trial)?"(Free Trial)":"" ?> <?php echo ($user->teamid)?"<strong class=\"badge bg-primary\">Team</strong>":'' ?>
@@ -74,7 +74,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><?php echo ($user->active ? '<span class="badge bg-success">Active</span>':'<span class="badge bg-danger">Not Active</span>') ?> <?php echo $user->banned ? '<span class="badge bg-danger">'.e('Banned').'</span>':'' ?> <?php echo ($user->pro ? '<span class="badge bg-success">Pro</span>':'<span class="badge bg-warning">Free</span>') ?></td>                
+                                    <td><?php echo ($user->active ? '<span class="badge bg-success">Active</span>':'<span class="badge bg-danger">Not Active</span>') ?> <?php echo $user->banned ? '<span class="badge bg-danger">'.e('Banned').'</span>':'' ?> <?php echo ($user->pro ? '<span class="badge bg-success">Pro</span>':'<span class="badge bg-warning">Free</span>') ?></td>
                                     <td><?php echo date("d-m-y",strtotime($user->date)) ?></td>
                                     <td>
                                         <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
@@ -98,7 +98,7 @@
                     </table>
                 </div>
             </div>
-        </div>    
+        </div>
     </div>
     <div class="col-md-6">
         <div class="card flex-fill">
@@ -107,7 +107,7 @@
                     <h5 class="card-title mb-0"><?php ee('Subscriptions') ?></h5>
                     <div class="ms-auto">
                         <a href="<?php echo route('admin.subscriptions') ?>" class="btn btn-sm btn-primary"><?php ee('View All') ?></a>
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="table-responsive">
@@ -126,24 +126,24 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $subscription->useravatar ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $subscription->useravatar ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <a href="<?php echo route('admin.users.view', [$subscription->userid]) ?>"><?php echo $subscription->user ?></a>
                                             <a href="<?php echo route('admin.email', ['email' => $subscription->user]) ?>"><span class="badge bg-success"><?php ee('Send email') ?></span></a><br>
                                             <span class="badge bg-primary"><?php echo $subscription->plan ?></span>
                                         </div>
-                                    </div> 
+                                    </div>
                                 </td>
                                 <td><?php echo $subscription->status ?></td>
                                 <td><?php echo \Helpers\App::currency(config('currency'), $subscription->amount) ?></td>
-                                <td><?php echo \Core\Helper::dtime($subscription->date, 'd-m-y') ?></td>                                
+                                <td><?php echo \Core\Helper::dtime($subscription->date, 'd-m-y') ?></td>
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table>    
-            </div> 
-        </div>   
-    </div>    
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="row">
     <div class="col-md-6">
@@ -153,8 +153,8 @@
                     <h5 class="card-title mb-0"><?php ee('Payments') ?></h5>
                     <div class="ms-auto">
                         <a href="<?php echo route('admin.payments') ?>" class="btn btn-sm btn-primary"><?php ee('View All') ?></a>
-                    </div>                     
-                </div> 
+                    </div>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover my-0">
@@ -187,16 +187,16 @@
                                         <?php else: ?>
                                             <li><form action="<?php echo route('admin.payments.markas', [$payment->id, 'paid']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Mark as Paid') ?></button></form></li>
                                         <?php endif ?>
-                                        <li><hr class="dropdown-divider"></li>   
+                                        <li><hr class="dropdown-divider"></li>
                                         <li><form action="<?php echo route('admin.payments.delete', [$payment->id, \Core\Helper::nonce('payment.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                     </ul>
                                 </td>
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table>    
+                </table>
             </div>
-        </div>   
+        </div>
     </div>
     <div class="col-md-6">
         <div class="card flex-fill">
@@ -205,7 +205,7 @@
                     <h5 class="card-title mb-0"><?php ee('Reported Links') ?></h5>
                     <div class="ms-auto">
                         <a href="<?php echo route('admin.links.report') ?>" class="btn btn-sm btn-primary"><?php ee('View All') ?></a>
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="table-responsive">
@@ -224,7 +224,7 @@
                                 <td><?php echo ucfirst($report->type) ?></td>
                                 <td>
                                     <button type="button" class="btn btn-default shadow-lg bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-horizontal"></i></button>
-                                    <ul class="dropdown-menu">                    
+                                    <ul class="dropdown-menu">
                                         <li><form action="<?php echo route('admin.links.report.action', [$report->id, 'banurl']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x-circle"></i> <?php ee('Ban URL') ?></button></form></li>
                                         <li><form action="<?php echo route('admin.links.report.action', [$report->id, 'bandomain']) ?>" method="post"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="x-circle"></i> <?php ee('Ban Domain') ?></button></form></li>
                                         <li><hr class="dropdown-divider"></li>
@@ -235,8 +235,8 @@
                         <?php endforeach ?>
                     </tbody>
                 </table>
-            </div> 
-        </div>   
+            </div>
+        </div>
     </div>
 </div>
 <div class="modal fade" id="deleteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">

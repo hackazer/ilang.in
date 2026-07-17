@@ -21,7 +21,7 @@
                     <div class="col-12 col-md-6 col-xl-6 order-md-2">
                         <img alt="Stop" src="<?php echo assets('images/stop.svg') ?>" class="img-fluid">
                     </div>
-                    <div class="col-12 col-md-6 col-xl-6 order-md-1 text-center text-md-left">
+                    <div class="col-12 col-md-6 col-xl-6 order-md-1 text-center text-md-start">
                         <h6 class="display-1 mb-3 font-weight-600 text-success"><?php ee('Oops') ?></h6>
                         <p class="lead text-lg mb-5">
                             <?php ee("The link you are trying to access is now expired either because the campaign ended or the link was disabled. If you have any questions, feel free to contact us.") ?>

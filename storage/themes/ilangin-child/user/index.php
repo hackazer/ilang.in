@@ -232,7 +232,7 @@
                 </div>
             </div>
             <div class="mt-2">
-                <div class="form-group">
+                <div class="mb-3">
                     <label for="short" class="form-label"><?php ee('Short Link') ?></label>
                     <div class="input-group">
                         <input type="text" class="form-control" id="modal-input" name="shortlink" value="">
@@ -264,7 +264,7 @@
         </div>
         <div class="modal-body">
             <label for="campaigns" class="form-label d-block mb-2"><?php ee('Campaigns') ?></label>
-            <div class="form-group rounded input-select">
+            <div class="mb-3 rounded input-select">
                 <select name="campaigns" id="campaigns" class="form-control" data-toggle="select">
                     <option value="0"><?php ee('None') ?></option>
                     <?php foreach(\Core\DB::bundle()->where('userid', user()->rID())->findArray() as $campaign): ?>
@@ -293,7 +293,7 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
+            <div class="mb-3 rounded input-select">
                 <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>

@@ -115,7 +115,7 @@ class Bio {
         
         View::set('title', e('Create Bio'));
 
-        \Helpers\CDN::load('spectrum');
+        \Helpers\CDN::load('coloris');
         
         View::push('<script>var biolang = '.json_encode([
                 'icon' => e('Icon'),
@@ -155,11 +155,12 @@ class Bio {
         ]).';
         </script>', 'custom')->toHeader();
         
-        View::push(assets('frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css'))->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js'), 'script')->toFooter();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.css'))->toHeader();
+        View::push(assets('frontend/libs/fontawesome-free/css/all.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.js'), 'script')->toFooter();
+        View::push('<script>window.appIconPickerOptions = {catalogUrl: '.json_encode(assets('frontend/libs/fontawesome-free/metadata/icons.json')).'};</script>', 'custom')->toHeader();
         View::push(assets('animate.min.css'))->toHeader();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.js'), 'script')->toFooter();
+        View::push(assets('font-selector.min.js'), 'script')->toFooter();
 
         View::push(assets('bio.min.js'), 'script')->toFooter();
 
@@ -179,7 +180,7 @@ class Bio {
 
         View::push("<script>                        
                         EditorAdapter.create('editor');
-                        $('input[name=icon]').iconpicker();
+                        IconPicker.init('input[name=icon]', window.appIconPickerOptions);
                     </script>", "custom")->toFooter();
 
         return View::with('bio.new', compact('domains'))->extend('layouts.dashboard');
@@ -443,7 +444,7 @@ class Bio {
 
         View::set('title', e('Update Bio').' '.$bio->name);
 
-        \Helpers\CDN::load('spectrum');
+        \Helpers\CDN::load('coloris');
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
         View::push('<script>
             
@@ -489,15 +490,16 @@ class Bio {
         </script>', 'custom')->toHeader();
         \Helpers\CDN::load('simpleeditor');
         
-        View::push(assets('frontend/libs/fontawesome-picker/dist/css/fontawesome-iconpicker.min.css'))->toHeader();
-        View::push(assets('frontend/libs/fontawesome-picker/dist/js/fontawesome-iconpicker.min.js'), 'script')->toFooter();
+        View::push(assets('frontend/libs/fontawesome-free/css/all.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.css'))->toHeader();
+        View::push(assets('icon-picker.min.js'), 'script')->toFooter();
+        View::push('<script>window.appIconPickerOptions = {catalogUrl: '.json_encode(assets('frontend/libs/fontawesome-free/metadata/icons.json')).'};</script>', 'custom')->toHeader();
         View::push(assets('animate.min.css'))->toHeader();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.css'))->toHeader();
-        View::push(assets('frontend/libs/font-selector/jquery.fontselect.min.js'), 'script')->toFooter();
+        View::push(assets('font-selector.min.js'), 'script')->toFooter();
 
         View::push("<script>                        
                         EditorAdapter.create('editor');
-                        $('input[name=icon]').iconpicker();                        
+                        IconPicker.init('input[name=icon]', window.appIconPickerOptions);
                     </script>", "custom")->toFooter();
 
         View::push(assets('bio.min.js'), 'script')->toFooter();

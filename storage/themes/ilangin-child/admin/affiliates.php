@@ -22,7 +22,7 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $sale->user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $sale->user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <a href="<?php echo route('admin.user.edit', [$sale->user->id]) ?>"><?php echo $sale->user->email ?></a>
                                         </div>
@@ -31,7 +31,7 @@
                                 <td>
                                     <?php if($sale->referred): ?>
                                     <div class="d-flex align-items-center">
-                                        <img src="<?php echo $sale->referred->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                        <img src="<?php echo $sale->referred->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                         <div class="ms-2">
                                             <a href="<?php echo route('admin.user.edit', [$sale->referred->id]) ?>"><?php echo $sale->referred->email ?></a>
                                         </div>
@@ -79,7 +79,7 @@
             <div class="card-body">
                 <form method="post" action="<?php echo route('admin.settings.save') ?>" enctype="multipart/form-data">
                     <?php echo csrf() ?>       
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="affiliate[enabled]" class="form-label"><?php ee('Enable Affiliates') ?></label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" data-binary="true" id="affiliate[enabled]" name="affiliate[enabled]" value="1" <?php echo config("affiliate")->enabled ? 'checked':'' ?>>
@@ -87,17 +87,17 @@
                         </div>
                         <p class="form-text"><?php ee('Enable customers to earn commission on qualifying sales.') ?></p>
                     </div>                                  
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="affiliate[rate]" class="form-label"><?php ee('Commission Rate') ?></label>
                         <input type="text" class="form-control" name="affiliate[rate]" id="affiliate[rate]" value="<?php echo config('affiliate')->rate ?>">
                         <p class="form-text"><?php ee('Enter the commission you want to give to users.') ?></p>
                     </div>   
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="affiliate[payout]" class="form-label"><?php ee('Minimum Payout') ?></label>
                         <input type="text" class="form-control" name="affiliate[payout]" id="affiliate[payout]" value="<?php echo config('affiliate')->payout ?>">
                         <p class="form-text"><?php ee('Enter the minimum amount of commission to qualify for a payout.') ?></p>
                     </div> 
-                    <div class="form-group">
+                    <div class="mb-3">
                         <label for="affiliate[terms]" class="form-label"><?php ee('Terms') ?></label>
                         <textarea id="affiliate[terms]" class="form-control" name="affiliate[terms]"><?php echo config('affiliate')->terms ?></textarea>
                         <p class="form-text"><?php ee('Add your custom terms for affiliate.') ?></p>

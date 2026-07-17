@@ -61,7 +61,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Links'));
 
@@ -98,7 +98,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Expired Links'));
 
@@ -135,7 +135,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Archived Links'));        
         return View::with('admin.links.index', compact('urls'))->extend('admin.layouts.main');
@@ -172,7 +172,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         View::set('title', e('Pending Links'));        
         return View::with('admin.links.index', compact('urls'))->extend('admin.layouts.main');
@@ -209,7 +209,7 @@ class Links {
         $urls = $query->paginate(is_numeric($request->perpage) ? $request->perpage : 15);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
         
         View::set('title', e('Anonymous Links'));        
         return View::with('admin.links.index', compact('urls'))->extend('admin.layouts.main');
@@ -365,7 +365,7 @@ class Links {
 
         View::set('title', e('Edit Link'));
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
 
         return View::with('admin.links.edit', compact('url', 'locations'))->extend('admin.layouts.main');
     }

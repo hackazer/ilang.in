@@ -10,14 +10,14 @@
         </div>
         <div class="row">
             <div class="col-md-8">
-                <div class="card flex-fill w-100">                    
+                <div class="card flex-fill w-100">
                     <div class="card-header d-flex d-block align-items-center">
                         <div>
                             <h5 class="card-title mb-0 fw-bold"><?php ee('Platforms') ?></h5>
                         </div>
-                        <div class="ml-auto">
+                        <div class="ms-auto">
                             <input type="text" name="customreport" data-action="customreport" class="form-control" placeholder="<?php echo e("Choose a date range to update stats") ?>">
-                        </div> 
+                        </div>
                     </div>
                     <div class="card-body px-4">
                         <canvas data-trigger="dynamic-pie" data-url="<?php echo route('data.platforms', [$url->id]) ?>" data-type="os"></canvas>

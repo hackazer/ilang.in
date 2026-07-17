@@ -4,13 +4,13 @@ $(document).ready(function(){
 
         charts($('[data-trigger=chart').data('url'));
        			
-        $('input[name=customreport]').on('apply.daterangepicker', function(ev, picker) {
+        document.querySelector('input[name=customreport]').addEventListener('app:date-range-apply', function(event) {
             
             if( window.clickchart !== undefined) window.clickchart.destroy();
 
-            charts($('[data-trigger=chart').data('url')+'?from='+picker.startDate.format('MM/DD/YYYY')+'&to='+picker.endDate.format('MM/DD/YYYY'));
+            charts($('[data-trigger=chart').data('url')+'?from='+event.detail.start+'&to='+event.detail.end);
         
-            $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+            $(this).val(event.detail.start + ' - ' + event.detail.end);
         });
     }   
     
@@ -18,26 +18,26 @@ $(document).ready(function(){
 
         maps($('[data-trigger=dynamic-map]'), $('[data-trigger=dynamic-map]').data('url'));		
 
-        $('input[name=customreport]').on('apply.daterangepicker', function(ev, picker) {
+        document.querySelector('input[name=customreport]').addEventListener('app:date-range-apply', function(event) {
 
             window.map.reset();
             
-            maps($('[data-trigger=dynamic-map]'), $('[data-trigger=dynamic-map]').data('url')+'?from='+picker.startDate.format('MM/DD/YYYY')+'&to='+picker.endDate.format('MM/DD/YYYY'));
+            maps($('[data-trigger=dynamic-map]'), $('[data-trigger=dynamic-map]').data('url')+'?from='+event.detail.start+'&to='+event.detail.end);
         
-            $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+            $(this).val(event.detail.start + ' - ' + event.detail.end);
         });        
 	}
 
     if($('[data-trigger=dynamic-pie]').length > 0){
         piechart($('[data-trigger=dynamic-pie]'), $('[data-trigger=dynamic-pie]').data('url'));
 
-        $('input[name=customreport]').on('apply.daterangepicker', function(ev, picker) {
+        document.querySelector('input[name=customreport]').addEventListener('app:date-range-apply', function(event) {
 
             if( window.datachart !== undefined) window.datachart.destroy();
             
-            piechart($('[data-trigger=dynamic-pie]'), $('[data-trigger=dynamic-pie]').data('url')+'?from='+picker.startDate.format('MM/DD/YYYY')+'&to='+picker.endDate.format('MM/DD/YYYY'));
+            piechart($('[data-trigger=dynamic-pie]'), $('[data-trigger=dynamic-pie]').data('url')+'?from='+event.detail.start+'&to='+event.detail.end);
         
-            $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+            $(this).val(event.detail.start + ' - ' + event.detail.end);
         });    
 	}
 });

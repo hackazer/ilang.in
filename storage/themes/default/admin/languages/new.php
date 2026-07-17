@@ -12,24 +12,24 @@
 <div class="card">
     <div class="card-body">
         <form method="post" action="<?php echo route('admin.languages.save') ?>" enctype="multipart/form-data">
-            <?php echo csrf() ?>                      
+            <?php echo csrf() ?>
             <div class="row">
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="name" class="form-label"><?php ee('Name') ?></label>
                         <input type="text" class="form-control p-2" name="name" id="name" value="<?php echo old('name') ?>" placeholder="E.g. French">
                         <p class="form-text"><?php ee('The name of the language you are translating.') ?></p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="code" class="form-label"><?php ee('Code') ?></label>
                         <input type="text" class="form-control p-2" name="code" id="code" value="<?php echo old('code') ?>" placeholder="E.g. fr">
                         <p class="form-text"><?php ee('If you leave this empty, we will use the first two letters of the name. To use the auto-translate feature, the code must be added first and should be ISO 639-1 <a href="https://www.loc.gov/standards/iso639-2/php/code_list.php" target="_blank">more info</a>.') ?></p>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group mb-4">
+                    <div class="mb-4">
                         <label for="code" class="form-label"><?php ee('Direction') ?></label>
                         <select name="rtl" id="rtl" class="form-select p-2">
                             <option value="0"><?php ee('LTL') ?></option>
@@ -38,12 +38,12 @@
                         <p class="form-text"><?php ee('Is this language RTL?') ?></p>
                     </div>
                 </div>
-            </div>            
+            </div>
             <hr>
             <div class="row">
                 <?php $i = 0; foreach($strings as $base => $string): ?>
                     <div class="col-md-4">
-                        <div class="form-group mb-4 position-relative">
+                        <div class="mb-4 position-relative">
                             <a href="#" class="btn btn-sm btn-success text-sm position-absolute top-0 end-0 translate-middle" data-url="<?php echo route('admin.translate') ?>" data-trigger="translate" data-string="<?php echo htmlentities($base) ?>"><?php ee("Auto") ?></a>
                             <textarea class="form-control mb-1 p-2" readonly="readonly" name="base[]"><?php echo $base ?></textarea>
                             <textarea class="form-control p-2" data-new name="string[]"><?php echo $string ?></textarea>
@@ -54,7 +54,7 @@
             </div>
             <hr>
             <h5 class="card-title fw-bold"><?php ee('Add a custom string') ?></h5>
-            <div class="form-group mb-4 position-relative">                
+            <div class="mb-4 position-relative">
                 <div class="row">
                     <div class="col-md-6">
                         <label for="string" class="form-label"><?php ee('String') ?></label>

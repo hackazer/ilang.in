@@ -12,6 +12,7 @@ use Stats;
 use User\Dashboard as UserDashboard;
 
 require_once dirname(__DIR__, 2).'/app/traits/Links.php';
+require_once dirname(__DIR__, 2).'/app/traits/DateRangePicker.php';
 require_once dirname(__DIR__, 2).'/app/controllers/StatsController.php';
 require_once dirname(__DIR__, 2).'/app/controllers/user/DashboardController.php';
 require_once dirname(__DIR__, 2).'/app/controllers/admin/LinksController.php';

@@ -94,11 +94,11 @@
         </div>
         <div class="modal-body">
             <?php echo csrf() ?>
-            <div class="form-group mb-3">
+            <div class="mb-3">
                 <label for="email" class="label-control mb-2"><?php echo e("Email") ?></label>
                 <input type="email" value="" name="email" class="form-control" placeholder="johndoe@email.tld" />				
             </div>	
-            <div class="form-group input-select">
+            <div class="mb-3 input-select">
                 <label for="permissions" class="label-control mb-2"><?php echo e("Permissions") ?></label>
                 <select name="permissions[]" class="form-control" placeholder="<?php echo e("Permissions") ?>" data-placeholder="<?php echo e("Permissions") ?>" multiple data-toggle="select">	
                     <optgroup label="<?php echo e("Links") ?>">

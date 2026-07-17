@@ -139,7 +139,7 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
+            <div class="mb-3 rounded input-select">
                 <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>

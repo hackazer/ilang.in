@@ -15,7 +15,7 @@ window.AppNotify = window.AppNotify || {
 		toast.querySelector('.toast-body').textContent = message;
 		container.appendChild(toast);
 		if (window.bootstrap && window.bootstrap.Toast) {
-			const instance = new window.bootstrap.Toast(toast, { delay: 5000 });
+			const instance = window.bootstrap.Toast.getOrCreateInstance(toast, { delay: 5000 });
 			toast.addEventListener('hidden.bs.toast', function() { toast.remove(); });
 			instance.show();
 		} else {
@@ -115,18 +115,18 @@ $(document).ready(function(){
 	let $dtpicker = $('[data-toggle=datetimepicker]');
 	if ($dtpicker.length) {
 		$dtpicker.each(function() {
-			$(this).datepicker({
+			AppDatePicker.init(this, {
 				autoPick: true,
-				format: "yyyy-mm-dd"
+				dateFormat: "yyyy-MM-dd"
 			}); 
 		});
 	}	
 	let $dpicker = $('[data-toggle=datepicker]');
 	if ($dpicker.length) {
 		$dpicker.each(function() {
-			$(this).datepicker({
+			AppDatePicker.init(this, {
 				autoPick: false,
-				format: "yyyy-mm-dd"
+				dateFormat: "yyyy-MM-dd"
 			}); 
 		});
 	}
@@ -177,7 +177,7 @@ $(document).ready(function(){
 				
 				$(target).find('#'+input).val(content[input]);
 
-				$('[data-trigger="colorpicker"]').spectrum({
+				$('[data-trigger="colorpicker"]').appColorPicker({
 					color: content[input],
 					showInput: true,
 					preferredFormat: "hex"
@@ -185,7 +185,7 @@ $(document).ready(function(){
 
 			}else if($(target).find('#'+input).attr('type') == 'checkbox'){
 				if(content[input] == '1'){
-					$(target).find('#'+input).attr('checked', true);
+					$(target).find('#'+input).prop('checked', true);
 				}
 			} else {
 				$(target).find('#'+input).val(content[input]);
@@ -397,12 +397,14 @@ $(document).ready(function(){
 	});
 	var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
 	tooltipTriggerList.map(function (tooltipTriggerEl) {
-		return new bootstrap.Tooltip(tooltipTriggerEl)
+		return bootstrap.Tooltip.getOrCreateInstance(tooltipTriggerEl)
 	});
 
 	$('[data-bs-toggle=collapse]').click(function() {
 		let parent = $(this).data('bs-parent')
-		$(parent).find('.collapse.show').collapse('hide');
+		$(parent).find('.collapse.show').each(function() {
+			bootstrap.Collapse.getOrCreateInstance(this, { toggle: false }).hide();
+		});
 		$(this).parents('.btn-group').find('.active').removeClass('active');
 		$(this).parents('.list-group').find('.active').removeClass('active');
 		$(this).parents('.nav-pills').find('.active').removeClass('active');
@@ -481,7 +483,7 @@ $(document).ready(function(){
 		$(this).addClass('active');
 	});
 	if($('[data-trigger="colorpicker"]').length > 0){
-		$('[data-trigger="colorpicker"]').spectrum({
+		$('[data-trigger="colorpicker"]').appColorPicker({
 			showInput: true,
 			preferredFormat: "hex"
 		});

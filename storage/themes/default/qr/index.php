@@ -6,16 +6,16 @@
         <?php if(user()->teamPermission('qr.create')): ?>
             <a href="<?php echo route('qr.create') ?>" class="btn btn-primary"><i data-feather="plus"></i> <?php ee('Create QR') ?></a>
         <?php endif ?>
-    </div>    
+    </div>
 </div>
 <div class="row">
     <div class="col-md-9">
         <?php if($qrs): ?>
-            <div class="row">                    
+            <div class="row">
                 <?php foreach($qrs as $qr): ?>
                     <div class="col-md-4 col-sm-6">
                         <div class="card flex-fill">
-                            <div class="card-body text-center position-relative">        
+                            <div class="card-body text-center position-relative">
                                 <div class="mb-3">
                                     <a href="<?php echo route('qr.generate', [$qr->alias]) ?>" target="_blank"><img src="<?php echo route('qr.generate', [$qr->alias]) ?>" width="150" class="img-fluid"></a>
                                 </div>
@@ -23,10 +23,10 @@
                                     <button type="button" class="btn btn-default bg-white" data-bs-toggle="dropdown" aria-expanded="false"><i data-feather="more-vertical"></i></button>
                                     <ul class="dropdown-menu">
                                         <?php if($qr->urlid): ?>
-                                            <li><a class="dropdown-item" href="<?php echo route('stats', [$qr->urlid]) ?>"><i data-feather="bar-chart-2"></i> <?php ee('Statistics') ?></span></a></li>   
-                                        <?php endif ?>                                        
+                                            <li><a class="dropdown-item" href="<?php echo route('stats', [$qr->urlid]) ?>"><i data-feather="bar-chart-2"></i> <?php ee('Statistics') ?></span></a></li>
+                                        <?php endif ?>
                                         <?php if(user()->teamPermission('qr.edit')): ?>
-                                            <li><a class="dropdown-item" href="<?php echo route('qr.edit', [$qr->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit QR') ?></a></li>    
+                                            <li><a class="dropdown-item" href="<?php echo route('qr.edit', [$qr->id]) ?>"><i data-feather="edit"></i> <?php ee('Edit QR') ?></a></li>
                                         <?php endif ?>
                                         <li><a class="dropdown-item" href="<?php echo route('qr.download', [$qr->alias, 'png', 1000]) ?>"><i data-feather="download"></i> <?php ee('Download as PNG') ?></a></li>
                                         <li><a class="dropdown-item" href="<?php echo route('qr.download', [$qr->alias, 'svg', 1000]) ?>"><i data-feather="download"></i> <?php ee('Download as SVG') ?></a></li>
@@ -40,7 +40,7 @@
                                             <li class="dropdown-divier"></li>
                                             <li><form action="<?php echo route('qr.delete', [$qr->id, \Core\Helper::nonce('qr.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                         <?php endif ?>
-                                    </ul>                       
+                                    </ul>
                                 </div>
                                 <strong><?php echo $qr->name ?: 'n\a' ?></strong> <small class="badge bg-primary"><?php echo $qr->data->type ?></small>
                                 <?php if($channels = $qr->channels): ?>
@@ -58,8 +58,8 @@
                     </div>
                 <?php endforeach ?>
             </div>
-        <?php else: ?>            
-            <div class="card flex-fill">         
+        <?php else: ?>
+            <div class="card flex-fill">
                 <div class="card-body text-center">
                     <p><?php ee('No content found. You can create some.') ?></p>
                     <?php if(user()->teamPermission('qr.create')): ?>
@@ -76,7 +76,7 @@
                 <h5 class="card-title mb-3"><?php ee('QR Codes') ?></h5>
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" style="width: <?php echo $total == 0 ? 100 : round($count*100/$total) ?>%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"><?php echo $count ?> / <?php echo $total == 0 ? e('Unlimited') : $total ?></div>
-                </div>            
+                </div>
             </div>
         </div>
         <div class="card">
@@ -86,7 +86,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <p> <?php echo ee('A QR code is a machine-readable code consisting of an array of black and white squares, typically used for storing URLs or other information for reading by the camera on a smartphone.') ?></p>                
+                <p> <?php echo ee('A QR code is a machine-readable code consisting of an array of black and white squares, typically used for storing URLs or other information for reading by the camera on a smartphone.') ?></p>
             </div>
         </div>
         <?php plug('sidebar.qr') ?>
@@ -129,7 +129,7 @@
   </div>
 </div>
 <div class="modal fade" id="channelModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">    
+  <div class="modal-dialog">
     <div class="modal-content">
       <form action="<?php echo route('channel.addto', ['qr', null]) ?>" data-trigger="server-form">
         <?php echo csrf() ?>
@@ -139,8 +139,8 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
-                <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
+            <div class="mb-3 rounded input-select">
+                <select name="channels[]" id="channels" class="form-select" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>
                     <?php endforeach ?>
@@ -151,7 +151,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
             <button type="submit" class="btn btn-success" class="btn btn-success" data-bs-dismiss="modal" data-trigger="addtocampaign"><?php ee('Add') ?></button>
-        </div>          
+        </div>
       </form>
     </div>
   </div>

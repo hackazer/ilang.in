@@ -93,14 +93,14 @@ class QR {
         
         View::set('title', e('Create QR'));
 
-        \Helpers\CDN::load("spectrum");
+        \Helpers\CDN::load("coloris");
 		
 		View::push('<script type="text/javascript">																			    						    				    
-						$("#bg").spectrum({
+						$("#bg").appColorPicker({
 					        color: "rgb(255,255,255)",					        
 					        preferredFormat: "rgb",
 						});	
-                        $("#fg").spectrum({
+                        $("#fg").appColorPicker({
 					        color: "rgb(0,0,0)",					        
 					        preferredFormat: "rgb"
 						});
@@ -108,19 +108,19 @@ class QR {
 
         if(\Helpers\QR::hasImagick()){
             View::push('<script type="text/javascript">
-                            $("#gbg").spectrum({
+                            $("#gbg").appColorPicker({
                                 color: "rgb(255,255,255)",                                
                                 preferredFormat: "rgb"
                             });	
-                            $("#gfg").spectrum({
+                            $("#gfg").appColorPicker({
                                 color: "rgb(0,0,0)",                                
                                 preferredFormat: "rgb"
                             });
-                            $("#gfgs").spectrum({
+                            $("#gfgs").appColorPicker({
                                 color: "rgb(0,0,0)",                                
                                 preferredFormat: "rgb"
                             });
-                            $("#eyecolor").spectrum({
+                            $("#eyecolor").appColorPicker({
                                 preferredFormat: "rgb",
                                 allowEmpty:true                            
                             });
@@ -348,15 +348,15 @@ class QR {
             $url = DB::url()->first($qr->urlid);
         }
 
-        \Helpers\CDN::load("spectrum");
+        \Helpers\CDN::load("coloris");
 		
 		View::push('<script type="text/javascript">																			    						    				    
-						$("#bg").spectrum({
+						$("#bg").appColorPicker({
 					        color: "'.(isset($qr->data->color->bg) ? $qr->data->color->bg : 'rba(255,255,255)').'",
 					        showInput: true,
 					        preferredFormat: "rgb"
 						});	
-                        $("#fg").spectrum({
+                        $("#fg").appColorPicker({
 					        color: "'.(isset($qr->data->color->fg) ? $qr->data->color->fg : 'rgb(0,0,0)').'",
 					        showInput: true,
 					        preferredFormat: "rgb"
@@ -365,22 +365,22 @@ class QR {
 
         if(\Helpers\QR::hasImagick()){
             View::push('<script type="text/javascript">
-                            $("#gbg").spectrum({
+                            $("#gbg").appColorPicker({
                                 color: "'.(isset($qr->data->gradient) ? $qr->data->gradient[1] : 'rgb(255,255,255)').'",
                                 showInput: true,
                                 preferredFormat: "rgb"
                             });	
-                            $("#gfg").spectrum({
+                            $("#gfg").appColorPicker({
                                 color: "'.(isset($qr->data->gradient) ? $qr->data->gradient[0][0] : 'rgb(0,0,0)').'",
                                 showInput: true,
                                 preferredFormat: "rgb"
                             });
-                            $("#gfgs").spectrum({
+                            $("#gfgs").appColorPicker({
                                 color: "'.(isset($qr->data->gradient) ? $qr->data->gradient[0][1] : 'rgb(0,0,0)').'",
                                 showInput: true,
                                 preferredFormat: "rgb"
                             });
-                            $("#eyecolor").spectrum({
+                            $("#eyecolor").appColorPicker({
                                 color: "'.(isset($qr->data->eyecolor) ? $qr->data->eyecolor : '').'",
                                 preferredFormat: "rgb",
                                 allowEmpty:true                            

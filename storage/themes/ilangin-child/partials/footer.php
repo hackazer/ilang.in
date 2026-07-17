@@ -10,8 +10,8 @@
                                 <?php ee('Start your marketing campaign now and reach your customers efficiently.') ?>
                             </p>
                         </div>
-                        <div class="col-lg-5 text-lg-right mt-4 mt-lg-0">
-                            <a href="<?php echo route('register') ?>" class="btn btn-primary my-2 ml-0 ml-sm-3">
+                        <div class="col-lg-5 text-lg-end mt-4 mt-lg-0">
+                            <a href="<?php echo route('register') ?>" class="btn btn-primary my-2 ms-0 ms-sm-3">
                                 <?php ee('Get Started') ?>
                             </a>
                         </div>
@@ -22,7 +22,7 @@
             <div class="row">
                 <div class="col-lg-4 mb-5 mb-lg-0">
                     <p class=""><a href="<?php echo route('home')?>" target="_blank""><img align="center" border="0" src="https://ilang.in/content/logo.min.png" style="text-decoration: none; -ms-interpolation-mode: bicubic; border: 0; height: auto; width: 100%; max-width: 166px; display: block;" title="Image" width="166"/></a></p>
-                    <p class="mt-4 text-sm opacity-8 pr-lg-4"><?php echo config('description') ?></p>
+                    <p class="mt-4 text-sm opacity-8 pe-lg-4"><?php echo config('description') ?></p>
                     <ul class="nav mt-4">
                         <?php if($facebook = config('facebook')): ?>
                             <li class="nav-item">
@@ -54,7 +54,7 @@
                         <?php endif ?>
                     </ul>
                 </div>
-                <div class="col-lg-4 col-6 col-sm-6 ml-lg-auto mb-5 mb-lg-0">
+                <div class="col-lg-4 col-6 col-sm-6 ms-lg-auto mb-5 mb-lg-0">
                     <h6 class="heading mb-3"><?php ee('Solutions') ?></h6>
                     <ul class="list-unstyled">
                         <li><a href="<?php echo route('page.qr') ?>"><?php ee('QR Codes') ?></a></li>
@@ -86,8 +86,8 @@
             <hr class="divider divider-fade divider-dark my-4">
             <div class="row align-items-center justify-content-md-between pb-4">
                 <div class="col-md-4">
-                    <div class="copyright text-sm font-weight-bold text-center text-md-left">                                
-                        &copy; <?php echo date("Y") ?> <a href="<?php echo config('url') ?>" class="font-weight-bold"><?php echo config('title') ?></a>. <?php ee('All Rights Reserved') ?>
+                    <div class="copyright text-sm fw-bold text-center text-md-start">
+                        &copy; <?php echo date("Y") ?> <a href="<?php echo config('url') ?>" class="fw-bold"><?php echo config('title') ?></a>. <?php ee('All Rights Reserved') ?>
                     </div>
                 </div>
                 <div class="col-md-8">
@@ -103,7 +103,7 @@
                         <?php endif ?>
                         <?php if($langs = \Helpers\App::langs()): ?>
                             <li class="nav-item dropup">
-                                <a class="nav-link" data-toggle="dropdown" href="#"><i data-feather="globe" class="mr-1"></i> <?php echo strtoupper(\Core\Localization::locale()) ?></a>
+                                <a class="nav-link" data-bs-toggle="dropdown" href="#"><i data-feather="globe" class="me-1"></i> <?php echo strtoupper(\Core\Localization::locale()) ?></a>
                                 <ul class="dropdown-menu">
                                     <?php foreach($langs  as $lang): ?>
                                         <li><a class="dropdown-item" href="?lang=<?php echo $lang['code'] ?>"><?php echo $lang['name'] ?></a></li>

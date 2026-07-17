@@ -9,9 +9,9 @@
 </div>
 <div class="row">
      <?php foreach($themes as $theme): ?>
-        <div class="col-md-3">        
+        <div class="col-md-3">
             <div class="card">
-                <div class="card-body">          
+                <div class="card-body">
                     <?php if($theme->thumbnail): ?>
                         <img src="<?php echo url($theme->thumbnail) ?>" alt="<?php echo $theme->name ?>">
                     <?php endif ?>
@@ -19,8 +19,8 @@
                       <?php if($theme->child): ?>
                         <span class="badge bg-primary text-sm"><?php ee('Child') ?></span>
                       <?php endif ?>
-                    </h5>                   
-                    <a href="<?php echo $theme->link ?>" target="_blank"><small class="text-muted"><?php ee('By') ?> <?php echo $theme->author ?></small></a> -                    
+                    </h5>
+                    <a href="<?php echo $theme->link ?>" target="_blank"><small class="text-muted"><?php ee('By') ?> <?php echo $theme->author ?></small></a> -
                     <small class="text-muted"><?php ee('Since') ?> <?php echo $theme->date ?></small>
                     <br>
                     <div class="d-flex mt-4">
@@ -85,11 +85,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-4">
+                <div class="mb-4">
                     <label for="file" class="form-label"><?php ee('Theme File') ?></label>
                     <input type="file" class="form-control" name="file" id="file" value="" accept=".zip" placeholder="e.g. theme.zip">
                     <p class="form-text"><?php ee('Upload the zip file that comes in the package. Usually it is named THEMENAME.zip. Please make sure the theme respects the file structure.') ?></p>
-                </div>                
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>

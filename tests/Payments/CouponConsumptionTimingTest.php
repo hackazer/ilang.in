@@ -12,6 +12,19 @@ require_once dirname(__DIR__, 2).'/app/helpers/payments/Bank.php';
 
 final class CouponConsumptionTimingTest extends TestCase
 {
+    public function testBankCouponIsConsumedAfterAdministrativeConfirmation(): void
+    {
+        $controller = file_get_contents(dirname(__DIR__, 2).'/app/controllers/admin/MembershipController.php');
+
+        self::assertIsString($controller);
+        $save = strpos($controller, '$payment->save();');
+        $consume = strpos($controller, '\Helpers\Payments\Bank::consumeCouponOnConfirmation($payment);');
+
+        self::assertNotFalse($save);
+        self::assertNotFalse($consume);
+        self::assertGreaterThan($save, $consume);
+    }
+
     public function testBankCheckoutDefersCouponConsumptionAndPersistsConfirmationContext(): void
     {
         $payment = $this->methodSource(

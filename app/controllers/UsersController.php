@@ -178,7 +178,8 @@ class Users {
         
         View::set('title', e("Enter your 2FA access code"));
 
-        View::push(assets('frontend/libs/jquery-mask-plugin/dist/jquery.mask.min.js'), 'js')->tofooter();
+        View::push(assets('frontend/libs/imask/imask.min.js'), 'js')->tofooter();
+        View::push(assets('input-mask.min.js'), 'js')->tofooter();
 
         return View::with('auth.2fa')->extend('layouts.auth');
     }

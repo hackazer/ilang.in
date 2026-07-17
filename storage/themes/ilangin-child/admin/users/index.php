@@ -40,7 +40,7 @@
                         <td><input class="form-check-input me-2" type="checkbox" data-dynamic="1" value="<?php echo $user->id ?>"></td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <?php echo ($user->admin)?"<strong>{$user->email}</strong>":$user->email ?> <?php echo ($user->trial)?"(".e('Free Trial').")":"" ?>
                                     <?php echo ($user->teamid)?"<strong class=\"badge bg-primary\">".e("Team")."</strong>":'' ?>

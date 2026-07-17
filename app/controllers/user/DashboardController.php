@@ -60,7 +60,7 @@ class Dashboard {
                 
         View::set('title', e('Dashboard'));
 
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
         CDN::load('autocomplete');
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
@@ -124,7 +124,7 @@ class Dashboard {
         View::set('title', $title);
 
         View::push(assets('frontend/libs/clipboard/dist/clipboard.min.js'), 'js')->toFooter();
-        CDN::load('datetimepicker');
+        CDN::load('airdatepicker');
         
         return View::with('user.links', compact('urls', 'title'))->extend('layouts.dashboard');
     }

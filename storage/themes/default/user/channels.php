@@ -25,7 +25,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><form action="<?php echo route('channel.delete', [$channel->id, \Core\Helper::nonce('channel.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                         <?php endif ?>
-                        </ul>                        
+                        </ul>
                     </div>
                     <h4 class="align-middle mb-2"><span class="badge me-2 px-2" style="background:<?php echo $channel->color ?>">&nbsp;</span> <?php echo $channel->name ?></h4>
                     <p><?php echo $channel->description ?></p>
@@ -77,18 +77,18 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>
                     <input type="text" value="" name="name" class="form-control">
-                </div> 
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Description") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Description") ?></label>
                     <input type="text" value="" name="description" class="form-control">
-                </div>   
-                <div class="form-group mb-3">
-                    <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block"><?php ee("Badge Color") ?></label>
                     <input type="color" value="" name="color" class="form-control" data-trigger="colorpicker">
-                </div> 
+                </div>
                 <div class="d-flex">
                     <div>
                         <label class="form-check-label" for="starred"><?php ee('Star Channel') ?></label>
@@ -96,7 +96,7 @@
                     </div>
                     <div class="form-check form-switch ms-auto">
                         <input class="form-check-input" type="checkbox" data-binary="true" id="starred" name="starred" value="1">
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -119,16 +119,16 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>
                     <input type="text" value="" name="newname" id="newname" class="form-control">
-                </div> 
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Description") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Description") ?></label>
                     <input type="text" value="" name="newdescription" id="newdescription" class="form-control">
-                </div>   
-                <div class="form-group mb-3">
-                    <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-block"><?php ee("Badge Color") ?></label>
                     <input type="color" value="" name="newcolor" id="newcolor" class="form-control" data-trigger="colorpicker">
                 </div>
                 <div class="d-flex">
@@ -138,7 +138,7 @@
                     </div>
                     <div class="form-check form-switch ms-auto">
                         <input class="form-check-input" type="checkbox" data-binary="true" id="newstarred" name="newstarred" value="1">
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

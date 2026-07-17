@@ -1,19 +1,19 @@
 <?php
 /**
  * =======================================================================================
- *                           GemFramework (c) GemPixel                                     
+ *                           GemFramework (c) GemPixel
  * ---------------------------------------------------------------------------------------
  *  This software is packaged with an exclusive framework as such distribution
  *  or modification of this framework is not allowed before prior consent from
- *  GemPixel. If you find that this framework is packaged in a software not distributed 
+ *  GemPixel. If you find that this framework is packaged in a software not distributed
  *  by GemPixel or authorized parties, you must not use this software and contact gempixel
  *  at https://gempixel.com/contact to inform them of this misuse.
  * =======================================================================================
  *
  * @package GemPixel\Premium-URL-Shortener
- * @author GemPixel (https://gempixel.com) 
+ * @author GemPixel (https://gempixel.com)
  * @license https://gempixel.com/licenses
- * @link https://gempixel.com  
+ * @link https://gempixel.com
  */
 
 use Core\Plugin;
@@ -22,16 +22,16 @@ use Core\DB;
 
 
 class themeSettings {
-    
+
     /**
      * Generate extra menu
      *
-     * @author GemPixel <https://gempixel.com> 
+     * @author GemPixel <https://gempixel.com>
      * @version 6.0
      * @return void
      */
     public static function menu(){
-        
+
         $option = config("theme_config");
 
         if(!isset($option->homelinks)) return null;
@@ -41,18 +41,18 @@ class themeSettings {
             [$title, $link] = array_map('trim', explode("|", $list));
             print('<li class="nav-item nav-item-spaced d-lg-block">
                     <a class="nav-link" href="'.$link.'">'.$title.'</a>
-                </li>');            
+                </li>');
         }
     }
     /**
      * Theme Settings
      *
-     * @author GemPixel <https://gempixel.com> 
+     * @author GemPixel <https://gempixel.com>
      * @version 6.0
      * @return void
      */
     public static function settings(){
-        
+
         if(!$option = config("theme_config")){
             $option = new \stdClass;
         }
@@ -68,92 +68,89 @@ class themeSettings {
             $option->homecolor->c1 = '#DD7BFF';
             $option->homecolor->c2 = '#FF6C6C';
         }
-                     
+
         \Helpers\CDN::load('simpleeditor');
 
         \Core\View::push("<script>
                             EditorAdapter.create('homedescription');
-                        </script>", "custom")->toFooter();  
+                        </script>", "custom")->toFooter();
 
-        
-        \Helpers\CDN::load("spectrum");
-		
-        \Core\View::push('<script type="text/javascript">																			    						    				    
-                        $("#c1").spectrum({
-                            color: "'.(isset($option->homecolor->c1) ? $option->homecolor->c1 : '#DD7BFF').'",
-                            showInput: true,
-                            preferredFormat: "hex"
-                        });	
-                        $("#c2").spectrum({
-                            color: "'.(isset($option->homecolor->c1) ? $option->homecolor->c2 : '#FF6C6C').'",
-                            showInput: true,
-                            preferredFormat: "hex"
+
+        \Helpers\CDN::load('coloris');
+
+        \Core\View::push('<script type="text/javascript">
+                        document.addEventListener("DOMContentLoaded", function () {
+                            if (typeof AppColorPicker === "undefined") return;
+
+                            AppColorPicker.init("#c1, #c2", {
+                                preferredFormat: "hex",
+                                alpha: false
+                            });
                         });
-                    </script>', 'custom')->tofooter(); 
+                    </script>', 'custom')->toFooter();
 
         $content = '<div class="row">
                         <div class="col-md-8">
                             <div class="card card-default">
                                 <div class="card-body">
                                     <form action="'.route("admin.themes.update").'" method="post" enctype="multipart/form-data" id="setting-form">
-                                        <div class="form-group">
-                                            <label for="style" class="form-label mb-3">Theme Scheme</label><br>
-                                            <div class="btn-group btn-group-toggle mb-4 border rounded" data-toggle="buttons">
-                                                <label class="btn btn-dark text-light px-3 py-4">
-                                                    <input type="radio" name="homestyle" value="darkmode" class="me-2" autocomplete="off" '.($option->homestyle == 'darkmode' ? 'checked' : '').'> Pure Dark
-                                                </label>
-                                                <label class="btn btn-primary text-light px-3 py-4">
-                                                    <input type="radio" name="homestyle" value="dark" class="me-2" autocomplete="off" '.($option->homestyle == 'dark' ? 'checked' : '').'> Bluelit
-                                                </label>
-                                                <label class="btn btn-light text-dark px-3 py-4">
-                                                    <input type="radio" name="homestyle" value="light" class="me-2" autocomplete="off" '.($option->homestyle == 'light' ? 'checked' : '').'> White Sky
-                                                </label>
+                                        <fieldset class="mb-3">
+                                            <legend class="form-label mb-3">Theme Scheme</legend>
+                                            <div class="btn-group mb-4 border rounded" role="group" aria-label="Theme scheme">
+                                                <input type="radio" class="btn-check" name="homestyle" id="homestyle-darkmode" value="darkmode" autocomplete="off" '.($option->homestyle == 'darkmode' ? 'checked' : '').'>
+                                                <label class="btn btn-dark text-light px-3 py-4" for="homestyle-darkmode">Pure Dark</label>
+
+                                                <input type="radio" class="btn-check" name="homestyle" id="homestyle-dark" value="dark" autocomplete="off" '.($option->homestyle == 'dark' ? 'checked' : '').'>
+                                                <label class="btn btn-primary text-light px-3 py-4" for="homestyle-dark">Bluelit</label>
+
+                                                <input type="radio" class="btn-check" name="homestyle" id="homestyle-light" value="light" autocomplete="off" '.($option->homestyle == 'light' ? 'checked' : '').'>
+                                                <label class="btn btn-light text-dark px-3 py-4" for="homestyle-light">White Sky</label>
                                             </div>
                                             <p class="form-text">This option will change the color scheme for frontend.</p>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="style" class="form-label mb-4 d-block">Main Header Background Color</label>
+                                        </fieldset>
+                                        <fieldset class="mb-3">
+                                            <legend class="form-label mb-4 d-block">Main Header Background Color</legend>
 
                                             <label>
                                                 <input type="radio" name="homecolor[type]" value="default" class="me-2" autocomplete="off" '.(isset($option->homecolor->type) && $option->homecolor->type == 'default' ? 'checked' : '').'> Default
                                             </label>
                                             <label>
-                                                <input type="radio" name="homecolor[type]" value="custom" class="ms-4 me-2" autocomplete="off" '.(isset($option->homecolor->type) && $option->homecolor->type ==  'custom' ? 'checked' : '').'> Custom                                        
+                                                <input type="radio" name="homecolor[type]" value="custom" class="ms-4 me-2" autocomplete="off" '.(isset($option->homecolor->type) && $option->homecolor->type ==  'custom' ? 'checked' : '').'> Custom
                                             </label>
                                             <p class="form-text my-2">Use the default colors for the homepage background or custom colors defined below. If you want to set a single color, choose the same color for both otherwise you can create some cool gradients.</p>
-                                        </div>
+                                        </fieldset>
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <div class="form-group mb-3">
+                                                <div class="mb-3">
                                                     <label class="form-label" for="c1">'.e("Color 1").'</label><br>
-                                                    <input type="text" name="homecolor[c1]" id="c1" value="'.(isset($option->homecolor->c1) && $option->homecolor->c1 ? $option->homecolor->c1 : '#DD7BFF').'">
+                                                    <input type="text" class="form-control" name="homecolor[c1]" id="c1" value="'.(isset($option->homecolor->c1) && $option->homecolor->c1 ? $option->homecolor->c1 : '#DD7BFF').'" autocomplete="off" inputmode="text">
                                                 </div>
-                                            </div>	
+                                            </div>
                                             <div class="col-md-6">
-                                                <div class="form-group mb-3">
+                                                <div class="mb-3">
                                                     <label class="form-label" for="c2">'.e("Color 2").'</label><br>
-                                                    <input type="text" name="homecolor[c2]" id="c2" value="'.(isset($option->homecolor->c2) && $option->homecolor->c2 ? $option->homecolor->c2 : '#FF6C6C').'">
+                                                    <input type="text" class="form-control" name="homecolor[c2]" id="c2" value="'.(isset($option->homecolor->c2) && $option->homecolor->c2 ? $option->homecolor->c2 : '#FF6C6C').'" autocomplete="off" inputmode="text">
                                                 </div>
                                             </div>
                                         </div>
                                         <hr>
-                                        <div class="form-group mt-3">                                            
+                                        <div class="mb-3 mt-3">
                                             <label for="hero" class="form-label">Custom Home Page Image</label>
                                             <input type="file" class="form-control" name="hero" id="hero" value="'.$option->hero.'">
                                             <p class="form-text">This will replace the default hero image that comes shipped with the script. JPG or PNG. 500 kb max. Recommended size: 560x710</p>
                                             '.(!empty($option->hero) ? '<p class="form-text"><a href="#" id="remove_logo" data-trigger="removeimage" class="btn btn-danger btn-sm">'.e('Remove Logo').'</a></p>':"").'
                                         </div>
-                                        <div class="form-group">
+                                        <div class="mb-3">
                                             <label for="homeheader" class="form-label">Home Main Header</label>
                                             <input type="text" class="form-control" name="homeheader" id="homeheader" value="'.$option->homeheader.'">
                                             <p class="form-text">This will replace the home main header right before the shortener form. If you leave it empty, the site title will be shown.</p>
-                                        </div>	
-                                        <div class="form-group">
+                                        </div>
+                                        <div class="mb-3">
                                             <label for="homedescription" class="form-label">Home Main Description</label>
                                             <textarea class="form-control" name="homedescription" id="homedescription">'.$option->homedescription.'</textarea>
                                             <p class="form-text">This will replace the home main description right before the shortener form. If you leave it empty, the site description will be shown.</p>
                                         </div>
-                                        <div class="form-group">
+                                        <div class="mb-3">
                                             <label for="homelinks" class="form-label">Menu Links</label>
                                             <textarea class="form-control" name="homelinks" id="homelinks" rows="5" placeholder="e.g. Google|https://google.com">'.$option->homelinks.'</textarea>
                                             <p class="form-text">You can add custom links to the menu using the following format (one per line): TITLE|LINK</p>
@@ -167,7 +164,7 @@ class themeSettings {
                         <div class="col-md-4">
                             <div class="card card-default">
                                 <div class="card-header">Help</div>
-                                <div class="card-body">	
+                                <div class="card-body">
                                     <p><strong>HTML Usage</strong></p>
                                     <p>You can use the following HTML elements: '.htmlentities("<b> <i> <s> <u> <strong> <span> <p> <br>").'</p>
 
@@ -177,7 +174,7 @@ class themeSettings {
                             </div>
                             <div class="card card-default">
                                 <div class="card-header">Custom Home Page Color</div>
-                                <div class="card-body">	
+                                <div class="card-body">
                                     <p>You can now create your own background color for the homepage and some other pages. You can either choose a single color and a cool gradient using the color selector. You can play with the Scheme and Color to create your background. For example if your background is too bright, choose the "White Sky" scheme to change the text to dark otherwise choose the "Bluelit".</p>
 
                                     <p><strong>Note</strong> The custom background does not apply to the Pure Dark scheme or Dark Mode.</p>
@@ -187,7 +184,7 @@ class themeSettings {
                             </div>
                             <div class="card card-default">
                                 <div class="card-header">Menu Link</div>
-                                <div class="card-body">	
+                                <div class="card-body">
                                     <p>You can add custom links to the menu using the following format (one per line): TITLE|LINK</p>
 
                                     <p><strong>Example</strong></p>
@@ -195,15 +192,15 @@ class themeSettings {
 
                                     <p>You can add as much as you want however you need to make sure it does not break the template</p>
                                 </div>
-                            </div>		     
+                            </div>
                         </div>
                     </div>';
-        return $content;        
+        return $content;
     }
     /**
-     * Update 
+     * Update
      *
-     * @author GemPixel <https://gempixel.com> 
+     * @author GemPixel <https://gempixel.com>
      * @version 6.0
      * @return void
      */
@@ -229,11 +226,11 @@ class themeSettings {
             if(isset($option->hero) && !empty($option->hero) && file_exists(ROOT."/content/".$option->hero)){
 				unlink(appConfig('app.storage')['uploads']['path'].$option->hero);
 			}
-            $data['hero'] = null;            
+            $data['hero'] = null;
         }
 
         if($image = $request->file('hero')){
-            
+
             if(!$image->mimematch || !in_array($image->ext, ['jpg', 'png'])) return Helper::redirect()->back()->with('danger', e('The custom image is not valid. Only a JPG or PNG are accepted.'));
 
             if($image->sizekb > 500) return Helper::redirect()->back()->with('danger', e('Custom image must be either a PNG or a JPEG (Max 500kb).'));
@@ -254,7 +251,7 @@ class themeSettings {
         } else {
             $request->cookie('darkmode', 1, -3600);
         }
-        
+
         $setting = DB::settings()->where('config', 'theme_config')->first();
 
         $setting->var = json_encode($data);
@@ -264,7 +261,7 @@ class themeSettings {
     /**
      * Theme Config
      *
-     * @author GemPixel <https://gempixel.com> 
+     * @author GemPixel <https://gempixel.com>
      * @version 6.3
      * @param string $name
      * @return void

@@ -2,7 +2,7 @@
     <div class="container d-flex align-items-center" data-offset-top="#navbar-main">
         <div class="row align-items-center py-8">
             <div class="col-md-7">
-                <h1 class="display-4 <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'text-dark', 'text-white') ?> font-weight-bolder mb-4">
+                <h1 class="display-4 <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'text-dark', 'text-white') ?> fw-bolder mb-4">
                     <?php ee('Bio Profiles') ?>
                 </h1>                    
                 <p class="lead <?php echo \Helpers\App::themeConfig('homestyle', 'light', 'text-dark', 'text-white') ?> opacity-8">
@@ -23,10 +23,10 @@
                     </div>
                     <div id="content" class="mt-5">
                         <div class="item mb-3">
-                            <a href="#" class="btn btn-block btn-white btn-custom">🛒 New Merch</a>
+                            <a href="#" class="btn w-100 btn-white btn-custom">🛒 New Merch</a>
                         </div>
                         <div class="item mb-3">
-                            <a href="#" class="btn btn-block btn-white btn-custom">🔥 Shop</a>
+                            <a href="#" class="btn w-100 btn-white btn-custom">🔥 Shop</a>
                         </div>
                     </div>                     
                 </div>               
@@ -46,9 +46,9 @@
                     <a href="<?php echo route('register') ?>" class="btn btn-primary btn-sm"><?php ee('Get Started') ?></a>
                 </div>
                 <div class="col-lg-6 order-lg-1">
-                    <div class="card mb-0 mr-lg-5">
+                    <div class="card mb-0 me-lg-5">
                         <div class="card-body p-2">
-                            <img src="<?php echo assets('images/profiles.png') ?>" alt="<?php ee('The new standard') ?>" class="img-responsive w-100">
+                            <img src="<?php echo assets('images/profiles.png') ?>" alt="<?php ee('The new standard') ?>" class="img-fluid w-100">
                         </div>
                     </div>
                 </div>
@@ -64,9 +64,9 @@
                     <a href="<?php echo route('register') ?>" class="btn btn-primary btn-sm"><?php ee('Get Started') ?></a>
                 </div>
                 <div class="col-lg-6">
-                    <div class="card mb-0 ml-lg-5">
+                    <div class="card mb-0 ms-lg-5">
                         <div class="card-body p-2">
-                            <img src="<?php echo assets('images/map.png') ?>" alt="<?php ee('Trackable to the dot') ?>" class="img-responsive w-100 py-5">
+                            <img src="<?php echo assets('images/map.png') ?>" alt="<?php ee('Trackable to the dot') ?>" class="img-fluid w-100 py-5">
                         </div>
                     </div>
                 </div>

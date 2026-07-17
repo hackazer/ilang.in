@@ -11,7 +11,7 @@
 
 <div class="row">
     <div class="col-md-9">
-        <div class="card flex-fill">  
+        <div class="card flex-fill">
             <?php if($campaigns): ?>
                 <div class="table-responsive">
                     <table class="table table-hover my-0">
@@ -27,7 +27,7 @@
                         <tbody>
                         <?php foreach($campaigns as $campaign): ?>
                             <tr>
-                                <td>                                    
+                                <td>
                                    <strong><?php echo $campaign->name ?></strong>
                                    <?php echo $campaign->access == 'private' ? '<span class="badge float-end bg-danger">'.e('Inactive').'</span>' : '<span class="badge float-end bg-success">'.e('Active').'</span>' ?>
                                 </td>
@@ -46,8 +46,8 @@
                                     <?php endif ?>
                                 </td>
                                 <td>
-                                    <small class="text-navy"><?php echo $campaign->view ?> <?php ee('views') ?></small> - 
-                                    <small class="text-navy"><?php echo $campaign->urlcount ?> <?php ee('links') ?></small> - 
+                                    <small class="text-navy"><?php echo $campaign->view ?> <?php ee('views') ?></small> -
+                                    <small class="text-navy"><?php echo $campaign->urlcount ?> <?php ee('links') ?></small> -
                                     <small class="text-navy"><?php echo \Core\Helper::timeago($campaign->date) ?></small>
                                 </td>
                                 <td>
@@ -62,10 +62,10 @@
                                         <?php if(user()->teamPermission('bundle.delete')): ?>
                                         <li><form action="<?php echo route('campaigns.delete', [$campaign->id, \Core\Helper::nonce('campaign.delete')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="trash"></i> <?php ee('Delete') ?></button></form></li>
                                         <?php endif ?>
-                                    </ul> 
+                                    </ul>
                                 </td>
-                            </tr>                        
-                        <?php endforeach ?>                        
+                            </tr>
+                        <?php endforeach ?>
                         </tbody>
                     </table>
                 </div>
@@ -75,12 +75,12 @@
                     <?php if(user()->teamPermission('bundle.create')): ?>
                     <a href="" data-bs-toggle="modal" data-bs-target="#addModal" class="btn btn-primary btn-sm"><?php ee('Create a Campaign') ?></a>
                     <?php endif ?>
-                </div>            
+                </div>
             <?php endif ?>
             <?php echo pagination() ?>
         </div>
     </div>
-    <div class="col-md-3">        
+    <div class="col-md-3">
         <?php if(!user()->public || !user()->defaultbio): ?>
             <div class="card">
                 <div class="card-header">
@@ -95,7 +95,7 @@
                     <p><i <?php echo (user()->public ? 'data-feather="check-circle" class="text-success"' : 'data-feather="x-circle" class="text-danger"') ?>></i> <?php ee('Public Profile') ?></p>
                 </div>
             </div>
-        <?php endif ?>        
+        <?php endif ?>
         <div class="card">
             <div class="card-header">
                 <div class="d-flex">
@@ -103,7 +103,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <p class="text-justify"> <?php echo ee('A campaign can be used to group links together for various purpose. You can use the dedicated rotator link where a random link will be chosen and redirected to among the group. You will also be able to view aggregated statistics for a campaign.') ?></p>            
+                <p class="text-justify"> <?php echo ee('A campaign can be used to group links together for various purpose. You can use the dedicated rotator link where a random link will be chosen and redirected to among the group. You will also be able to view aggregated statistics for a campaign.') ?></p>
             </div>
         </div>
     </div>
@@ -119,12 +119,12 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Campaign Name") ?> (<?php ee("required") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Campaign Name") ?> (<?php ee("required") ?>)</label>
                     <input type="text" value="" name="name" class="form-control">
                 </div>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Rotator Slug") ?> (<?php ee("optional") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Rotator Slug") ?> (<?php ee("optional") ?>)</label>
                     <input type="text" value="" name="slug" class="form-control">
                     <p class="form-text"><?php ee("If you want to set a custom alias for the rotator link, you can fill this field.") ?></p>
                 </div>
@@ -135,7 +135,7 @@
                     </div>
                     <div class="form-check form-switch ms-auto">
                         <input class="form-check-input" type="checkbox" data-binary="true" id="access" name="access" value="1">
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -158,12 +158,12 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Campaign Name") ?> (<?php ee("required") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Campaign Name") ?> (<?php ee("required") ?>)</label>
                     <input type="text" value="" name="newname" id="newname" class="form-control">
                 </div>
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Rotator Slug") ?> (<?php ee("optional") ?>)</label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Rotator Slug") ?> (<?php ee("optional") ?>)</label>
                     <input type="text" value="" name="newslug" id="newslug" class="form-control">
                     <p class="form-text"><?php ee("If you want to set a custom alias for the rotator link, you can fill this field.") ?></p>
                 </div>
@@ -174,7 +174,7 @@
                     </div>
                     <div class="form-check form-switch ms-auto">
                         <input class="form-check-input" type="checkbox" data-binary="true" id="newaccess" name="newaccess" value="1">
-                    </div>                    
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

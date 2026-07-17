@@ -2,37 +2,35 @@
     <div data-offset-top="#navbar-main">
         <div class="container position-relative">
             <div class="row align-items-center">
-                <div class="col-12 col-lg-6 pr-lg-5">
-                    <h1 class="display-4 <?php echo themeSettings::config('homestyle', 'light', 'text-dark', 'text-white') ?> font-weight-bolder mb-4">
+                <div class="col-12 col-lg-6 pe-lg-5">
+                    <h1 class="display-4 <?php echo themeSettings::config('homestyle', 'light', 'text-dark', 'text-white') ?> fw-bolder mb-4">
                         <?php echo themeSettings::config('title') ?>
-                    </h1>                    
+                    </h1>
                     <div class="lead <?php echo themeSettings::config('homestyle', 'light', 'text-dark', 'text-white') ?> opacity-8">
                         <?php echo themeSettings::config('description') ?>
-                    </div>                 
-                    <?php message() ?>                    
+                    </div>
+                    <?php message() ?>
                     <form class="mt-5" method="post" action="<?php echo route('shorten') ?>" data-trigger="shorten-form">
                         <div class="input-group input-group-lg mb-3">
                             <input type="text" class="form-control" placeholder="<?php echo e("Paste a long url") ?>" name="url" id="url">
-                            <div class="input-group-append">
-                                <button class="btn btn-warning d-none" type="button"><?php ee('Copy') ?></button>
+                            <button class="btn btn-warning d-none" type="button"><?php ee('Copy') ?></button>
                                 <button class="btn btn-success" type="submit"><?php ee('Shorten') ?></button>
-                            </div>
                         </div>
                         <?php if(!config('pro')): ?>
-                            <a href="#advanced" data-toggle="collapse" class="btn btn-xs btn-primary mb-2"><?php ee('Advanced') ?></a>
+                            <a href="#advanced" data-bs-toggle="collapse" class="btn btn-xs btn-primary mb-2"><?php ee('Advanced') ?></a>
                             <div class="collapse row" id="advanced">
                                 <div class="col-md-6 mt-3">
-                                    <div class="form-group">
-                                        <label for="custom" class="control-label"><?php ee('Custom') ?></label>
+                                    <div class="mb-3">
+                                        <label for="custom" class="form-label"><?php ee('Custom') ?></label>
                                         <input type="text" class="form-control" name="custom" id="custom" placeholder="<?php echo e("Type your custom alias here")?>" autocomplete="off">
                                     </div>
                                 </div>
                                 <div class="col-md-6 mt-3">
-                                    <div class="form-group">
-                                        <label for="pass" class="control-label"><?php ee('Password Protection') ?></label>                                    
+                                    <div class="mb-3">
+                                        <label for="pass" class="form-label"><?php ee('Password Protection') ?></label>
                                         <input type="text" class="form-control border-start-0 ps-0" name="pass" id="pass" placeholder="<?php echo e("Type your password here")?>" autocomplete="off">
                                     </div>
-                                </div>                                
+                                </div>
                             </div>
                         <?php endif ?>
                         <?php if(!\Core\Auth::logged()) { echo \Helpers\Captcha::display(); } ?>
@@ -45,9 +43,9 @@
                                 <a href="<?php echo route('register') ?>" class="btn btn-sm btn-primary"><?php ee('Get started') ?></a>
                             </div>
                         </div>
-                    </div>                    
+                    </div>
                 </div>
-                <div class="col-12 col-lg-6 mt-7 mt-lg-0">                    
+                <div class="col-12 col-lg-6 mt-7 mt-lg-0">
                     <div class="position-relative left-8 left-lg-0 d-none d-lg-block">
                         <figure>
                         <?php if (isset($themeconfig->hero) && !empty($themeconfig->hero)): ?>
@@ -60,7 +58,7 @@
                 </div>
             </div>
         </div>
-    </div>    
+    </div>
     <div class="shape-container shape-line shape-position-bottom zindex-102">
         <svg width="2560px" height="100px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" x="0px" y="0px" viewBox="0 0 2560 100" style="enable-background:new 0 0 2560 100;" xml:space="preserve" class="fill-section-secondary">
             <polygon points="2560 0 2560 100 0 100"></polygon>
@@ -84,7 +82,7 @@
                                 <div class="opacity-8">
                                     <?php ee('Want more options to customize the link, QR codes, branding and advanced metrics?') ?>
                                 </div>
-                                <div class="ml-auto">
+                                <div class="ms-auto">
                                     <a href="<?php echo route('register') ?>" class="btn btn-primary btn-xs"><?php ee('Get Started') ?></a>
                                 </div>
                             </div>
@@ -96,7 +94,7 @@
                 </div>
             </div>
         </div>
-    </section>    
+    </section>
 <?php endif ?>
 <?php if(config('public_dir')): ?>
     <section class="slice pt-md-8 pb-0 bg-section-secondary">
@@ -110,7 +108,7 @@
                                 <h6><a href="<?php echo $url['url'] ?>" target="_blank" class="text-white"><?php echo $url['meta_title'] ?></a></h6>
                                 <a href="<?php echo \Helpers\App::shortRoute($url['domain'], $url['alias'].$url['custom']) ?>"><?php echo \Helpers\App::shortRoute($url['domain'], $url['alias'].$url['custom']) ?></a>
                                 <hr class="border-primary opacity-5">
-                            <?php endforeach ?>                            
+                            <?php endforeach ?>
                         </div>
                     </div>
                 </div>
@@ -119,9 +117,9 @@
                 </div>
             </div>
         </div>
-    </section> 
+    </section>
 <?php else: ?>
-    <section class="slice slice-lg bg-section-secondary">    
+    <section class="slice slice-lg bg-section-secondary">
         <div class="container pt-6 pt-lg-8">
             <div class="mb-8 text-center">
                 <h2><?php ee('One short link, infinite possibilities.') ?></h2>
@@ -130,7 +128,7 @@
                         <?php ee('A short link is a powerful marketing tool when you use it carefully. It is not just a link but a medium between your customer and their destination. A short link allows you to collect so much data about your customers and their behaviors.') ?>
                     </p>
                 </div>
-            </div>            
+            </div>
             <div class="row mx-lg-n5 mt-sm-4">
                 <div class="col-md-4 px-lg-5">
                     <div class="card bg-primary hover-translate-y-n10 shadow-none border-0">
@@ -199,7 +197,7 @@
                             <li class="py-2">
                                 <div class="d-flex align-items-center">
                                     <div>
-                                        <div class="icon icon-shape bg-primary text-white icon-sm rounded-circle mr-3">
+                                        <div class="icon icon-shape bg-primary text-white icon-sm rounded-circle me-3">
                                             <i class="fas fa-layer-group"></i>
                                         </div>
                                     </div>
@@ -211,7 +209,7 @@
                             <li class="py-2">
                                 <div class="d-flex align-items-center">
                                     <div>
-                                        <div class="icon icon-shape bg-primary text-white icon-sm rounded-circle mr-3">
+                                        <div class="icon icon-shape bg-primary text-white icon-sm rounded-circle me-3">
                                             <i class="fas fa-chart-line"></i>
                                         </div>
                                     </div>
@@ -223,7 +221,7 @@
                             <li class="py-2">
                                 <div class="d-flex align-items-center">
                                     <div>
-                                        <div class="icon icon-shape bg-primary text-white icon-sm rounded-circle mr-3">
+                                        <div class="icon icon-shape bg-primary text-white icon-sm rounded-circle me-3">
                                             <i class="fas fa-user"></i>
                                         </div>
                                     </div>
@@ -235,9 +233,9 @@
                         </ul>
                     </div>
                     <div class="col-lg-6 order-lg-1">
-                        <div class="card mb-0 mr-lg-5">
+                        <div class="card mb-0 me-lg-5">
                             <div class="card-body p-2">
-                                <img src="<?php echo assets('images/profiles.png') ?>" alt="<?php ee('Perfect for sales & marketing') ?>" class="img-responsive w-100">
+                                <img src="<?php echo assets('images/profiles.png') ?>" alt="<?php ee('Perfect for sales & marketing') ?>" class="img-fluid w-100">
                             </div>
                         </div>
                     </div>
@@ -254,7 +252,7 @@
                             <li class="py-2">
                                 <div class="d-flex align-items-center">
                                     <div>
-                                        <div class="icon icon-shape bg-success text-white icon-sm rounded-circle mr-3">
+                                        <div class="icon icon-shape bg-success text-white icon-sm rounded-circle me-3">
                                             <i class="fas fa-lock"></i>
                                         </div>
                                     </div>
@@ -266,7 +264,7 @@
                             <li class="py-2">
                                 <div class="d-flex align-items-center">
                                     <div>
-                                        <div class="icon icon-shape bg-success text-white icon-sm rounded-circle mr-3">
+                                        <div class="icon icon-shape bg-success text-white icon-sm rounded-circle me-3">
                                             <i class="fas fa-user-secret"></i>
                                         </div>
                                     </div>
@@ -278,7 +276,7 @@
                             <li class="py-2">
                                 <div class="d-flex align-items-center">
                                     <div>
-                                        <div class="icon icon-shape bg-success text-white icon-sm rounded-circle mr-3">
+                                        <div class="icon icon-shape bg-success text-white icon-sm rounded-circle me-3">
                                             <i class="fas fa-tachometer-alt"></i>
                                         </div>
                                     </div>
@@ -290,9 +288,9 @@
                         </ul>
                     </div>
                     <div class="col-lg-6">
-                        <div class="card mb-0 ml-lg-5">
+                        <div class="card mb-0 ms-lg-5">
                             <div class="card-body p-2">
-                                <img src="<?php echo assets('images/filters.png') ?>" alt="<?php ee('Powerful tools that work') ?>" class="img-responsive w-100 py-5">
+                                <img src="<?php echo assets('images/filters.png') ?>" alt="<?php ee('Powerful tools that work') ?>" class="img-fluid w-100 py-5">
                             </div>
                         </div>
                     </div>
@@ -301,65 +299,45 @@
             <div class="section-process-step">
                 <div class="row row-grid justify-content-between align-items-center">
                     <div class="col-lg-6">
-                        <div class="card mb-0 ml-lg-5">
+                        <div class="card mb-0 ms-lg-5">
                             <div class="card-body p-2">
-                                <img src="<?php echo assets('images/qrcodes.png') ?>" alt="<?php ee('Powerful tools that work') ?>" class="img-responsive w-100 py-5">
+                                <img src="<?php echo assets('images/qrcodes.png') ?>" alt="<?php ee('Powerful tools that work') ?>" class="img-fluid w-100 py-5">
                             </div>
                         </div>
-                    </div>                    
+                    </div>
                     <div class="col-lg-5">
                         <h5 class="h3"><?php ee('QR Codes') ?></h5>
                         <p class="lead my-4">
                             <?php ee('Easy to use, dynamic and customizable QR codes for your marketing campaigns. Analyze statistics and optimize your marketing strategy and increase engagement.') ?>
-                        </p>                        
+                        </p>
                         <a href="<?php echo route('register') ?>" class="btn btn-primary my-3">
                             <?php ee('Get Started') ?>
                         </a>
-                    </div>                    
+                    </div>
                 </div>
             </div>
         </div>
-    </section>        
+    </section>
     <section class="slice slice-lg bg-dark">
-        <div class="container position-relative zindex-100">       
+        <div class="container position-relative zindex-100">
             <div class="row row-grid align-items-center justify-content-between">
                 <div class="col-lg-5">
                     <div class="card mb-2">
                         <div class="card-body p-3">
                             <div class="row row-grid align-items-center">
                                 <div class="col-lg-8">
-                                    <div class="media align-items-center">
-                                        <img alt="<?php ee('New York, United States') ?>" src="<?php echo assets('images/flags/us.svg') ?>" class="avatar text-white rounded mr-3">
-                                        <div class="media-body">
+                                    <div class="d-flex align-items-center">
+                                        <img alt="<?php ee('New York, United States') ?>" src="<?php echo assets('images/flags/us.svg') ?>" class="avatar text-white rounded me-3">
+                                        <div class="flex-grow-1">
                                             <h6 class="mb-1"><?php ee('Someone visited your link') ?></h6>
                                             <div class="h6 mb-0 text-sm">
-                                                <span class="font-weight-bold"><?php ee('New York, United States') ?></span>
+                                                <span class="fw-bold"><?php ee('New York, United States') ?></span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-auto flex-fill mt-4 mt-sm-0 text-sm-right d-none d-lg-block">
-                                    <span class="badge badge-pill badge-soft-success"><?php ee('{d} minutes ago', null, ['d' => 2]) ?></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>      
-                    <div class="card mb-2">
-                        <div class="card-body p-3">
-                            <div class="row row-grid align-items-center">
-                                <div class="col-lg-8">
-                                    <div class="media align-items-center">
-                                        <img alt="<?php ee('Paris, France') ?>" src="<?php echo assets('images/flags/fr.svg') ?>" class="avatar text-white rounded mr-3">
-                                        <div class="media-body">
-                                            <h6 class="mb-1"><?php ee('Someone visited your link') ?></h6>
-                                            <div class="h6 mb-0 text-sm">
-                                                <span class="font-weight-bold"><?php ee('Paris, France') ?></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-auto flex-fill mt-4 mt-sm-0 text-sm-right d-none d-lg-block">
-                                    <span class="badge badge-pill badge-soft-success"><?php ee('{d} minutes ago', null, ['d' => 5]) ?></span>
+                                    <span class="badge rounded-pill badge-soft-success"><?php ee('{d} minutes ago', null, ['d' => 2]) ?></span>
                                 </div>
                             </div>
                         </div>
@@ -368,26 +346,46 @@
                         <div class="card-body p-3">
                             <div class="row row-grid align-items-center">
                                 <div class="col-lg-8">
-                                    <div class="media align-items-center">
-                                        <img alt="<?php ee('London, United Kingdom') ?>" src="<?php echo assets('images/flags/gb.svg') ?>" class="avatar text-white rounded mr-3">
-                                        <div class="media-body">
+                                    <div class="d-flex align-items-center">
+                                        <img alt="<?php ee('Paris, France') ?>" src="<?php echo assets('images/flags/fr.svg') ?>" class="avatar text-white rounded me-3">
+                                        <div class="flex-grow-1">
                                             <h6 class="mb-1"><?php ee('Someone visited your link') ?></h6>
                                             <div class="h6 mb-0 text-sm">
-                                                <span class="font-weight-bold"><?php ee('London, United Kingdom') ?></span>
+                                                <span class="fw-bold"><?php ee('Paris, France') ?></span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-auto flex-fill mt-4 mt-sm-0 text-sm-right d-none d-lg-block">
-                                    <span class="badge badge-pill badge-soft-success"><?php ee('{d} minutes ago', null, ['d' => 8]) ?></span>
+                                    <span class="badge rounded-pill badge-soft-success"><?php ee('{d} minutes ago', null, ['d' => 5]) ?></span>
                                 </div>
                             </div>
                         </div>
-                    </div>          
+                    </div>
+                    <div class="card mb-2">
+                        <div class="card-body p-3">
+                            <div class="row row-grid align-items-center">
+                                <div class="col-lg-8">
+                                    <div class="d-flex align-items-center">
+                                        <img alt="<?php ee('London, United Kingdom') ?>" src="<?php echo assets('images/flags/gb.svg') ?>" class="avatar text-white rounded me-3">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1"><?php ee('Someone visited your link') ?></h6>
+                                            <div class="h6 mb-0 text-sm">
+                                                <span class="fw-bold"><?php ee('London, United Kingdom') ?></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto flex-fill mt-4 mt-sm-0 text-sm-right d-none d-lg-block">
+                                    <span class="badge rounded-pill badge-soft-success"><?php ee('{d} minutes ago', null, ['d' => 8]) ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-lg-6">
-                    <div class="media d-flex mb-4">                 
-                        <div class="media-body ml-4">
+                    <div class="d-flex align-items-start mb-4">
+                        <div class="flex-grow-1 ms-4">
                             <h2 class="text-white mt-4"><?php ee('Optimize your marketing strategy') ?></h2>
                             <p class="text-white opacity-8">
                                 <?php ee('Understanding your users and customers will help you increase your conversion. Our system allows you to track everything. Whether it is the amount of clicks, the country or the referrer, the data is there for you to analyze it.') ?>
@@ -396,7 +394,7 @@
                                 <?php ee('Get Started') ?>
                             </a>
                         </div>
-                    </div>                
+                    </div>
                 </div>
             </div>
             <div class="row my-5 justify-content-center text-center">
@@ -409,7 +407,7 @@
                     <div class="card">
                         <div class="p-3 d-flex">
                             <div>
-                                <div class="icon icon-shape rounded-circle bg-warning text-white mr-4">
+                                <div class="icon icon-shape rounded-circle bg-warning text-white me-4">
                                     <i data-feather="loader"></i>
                                 </div>
                             </div>
@@ -426,7 +424,7 @@
                     <div class="card">
                         <div class="p-3 d-flex">
                             <div>
-                                <div class="icon icon-shape rounded-circle bg-primary text-white mr-4">
+                                <div class="icon icon-shape rounded-circle bg-primary text-white me-4">
                                     <i data-feather="layers"></i>
                                 </div>
                             </div>
@@ -443,7 +441,7 @@
                     <div class="card">
                         <div class="p-3 d-flex">
                             <div>
-                                <div class="icon icon-shape rounded-circle bg-danger text-white mr-4">
+                                <div class="icon icon-shape rounded-circle bg-danger text-white me-4">
                                     <i data-feather="compass"></i>
                                 </div>
                             </div>
@@ -455,12 +453,12 @@
                             </div>
                         </div>
                     </div>
-                </div>            
+                </div>
                 <div class="col-lg-4 col-md-6 px-lg-4">
                     <div class="card">
                         <div class="p-3 d-flex">
                             <div>
-                                <div class="icon icon-shape rounded-circle bg-success text-white mr-4">
+                                <div class="icon icon-shape rounded-circle bg-success text-white me-4">
                                     <i data-feather="users"></i>
                                 </div>
                             </div>
@@ -477,7 +475,7 @@
                     <div class="card">
                         <div class="p-3 d-flex">
                             <div>
-                                <div class="icon icon-shape rounded-circle bg-info text-white mr-4">
+                                <div class="icon icon-shape rounded-circle bg-info text-white me-4">
                                     <i data-feather="globe"></i>
                                 </div>
                             </div>
@@ -494,7 +492,7 @@
                     <div class="card">
                         <div class="p-3 d-flex">
                             <div>
-                                <div class="icon icon-shape rounded-circle bg-warning text-white mr-4">
+                                <div class="icon icon-shape rounded-circle bg-warning text-white me-4">
                                     <i data-feather="terminal"></i>
                                 </div>
                             </div>
@@ -506,9 +504,9 @@
                             </div>
                         </div>
                     </div>
-                </div>            
+                </div>
             </div>
-        </div>    
+        </div>
         <div class="shape-container shape-line shape-position-bottom">
             <svg width="2560px" height="100px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" x="0px" y="0px" viewBox="0 0 2560 100" style="enable-background:new 0 0 2560 100;" xml:space="preserve">
                 <polygon points="2560 0 2560 100 0 100"></polygon>
@@ -525,63 +523,63 @@
                     <div class="blurable-item client-group row justify-content-center">
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Slack" src="<?php echo assets("images/wp.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">WordPress</p>
+                            <p class="fw-bold text-dark my-3">WordPress</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Slack" src="<?php echo assets("images/slack.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Slack</p>
+                            <p class="fw-bold text-dark my-3">Slack</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Slack" src="<?php echo assets("images/shortcuts.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Shortcuts</p>
+                            <p class="fw-bold text-dark my-3">Shortcuts</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
-                            <img alt="Google Tag Manager" src="<?php echo assets("images/gtm.svg") ?>" style="height:50px">     
-                            <p class="font-weight-bold text-dark my-3">Google Tag Manager</p>                   
+                            <img alt="Google Tag Manager" src="<?php echo assets("images/gtm.svg") ?>" style="height:50px">
+                            <p class="fw-bold text-dark my-3">Google Tag Manager</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
-                            <img alt="Facebook Pixels" src="<?php echo assets("images/facebook.svg") ?>" style="height:50px"> 
-                            <p class="font-weight-bold text-dark my-3">Facebook</p>                        
+                            <img alt="Facebook Pixels" src="<?php echo assets("images/facebook.svg") ?>" style="height:50px">
+                            <p class="fw-bold text-dark my-3">Facebook</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Zapier" src="<?php echo assets("images/zapier.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Zapier</p>                           
+                            <p class="fw-bold text-dark my-3">Zapier</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Bing" src="<?php echo assets("images/bing.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Bing</p>                
+                            <p class="fw-bold text-dark my-3">Bing</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Twitter" src="<?php echo assets("images/twitter.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Twitter</p>                           
+                            <p class="fw-bold text-dark my-3">Twitter</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Snapchat" src="<?php echo assets("images/snapchat.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Snapchat</p>                          
+                            <p class="fw-bold text-dark my-3">Snapchat</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Reddit" src="<?php echo assets("images/reddit.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Reddit</p>                        
+                            <p class="fw-bold text-dark my-3">Reddit</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
-                            <img alt="Google Analytics" src="<?php echo assets("images/ga.svg") ?>" style="width:50px">   
-                            <p class="font-weight-bold text-dark my-3">Google Analytics</p>                      
+                            <img alt="Google Analytics" src="<?php echo assets("images/ga.svg") ?>" style="width:50px">
+                            <p class="fw-bold text-dark my-3">Google Analytics</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="LinkedIn" src="<?php echo assets("images/linkedin.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">LinkedIn</p>                           
+                            <p class="fw-bold text-dark my-3">LinkedIn</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Pinterest" src="<?php echo assets("images/pinterest.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Pinterest</p>                
+                            <p class="fw-bold text-dark my-3">Pinterest</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Quora" src="<?php echo assets("images/quora.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Quora</p>                           
+                            <p class="fw-bold text-dark my-3">Quora</p>
                         </div>
                         <div class="client col-lg-2 col-md-3 col-4 py-3 text-center mb-3">
                             <img alt="Quora" src="<?php echo assets("images/adroll.svg") ?>" style="height:50px">
-                            <p class="font-weight-bold text-dark my-3">Adroll</p>                           
+                            <p class="fw-bold text-dark my-3">Adroll</p>
                         </div>
                     </div>
                     <span class="blurable-hidden btn btn-sm btn-primary"><?php ee('Get Started') ?></span>
@@ -607,9 +605,9 @@
                                         <div>
                                             <?php echo $testimonial->email ? '<div class="h-100"><img src="https://www.gravatar.com/avatar/'.md5(trim($testimonial->email)).'?s=64&d=identicon" class="avatar avatar-sm rounded-circle bg-warning text-white" alt="'.$testimonial->name.'"></div>': '' ?>
                                         </div>
-                                        <div class="pl-3">
+                                        <div class="ps-3">
                                             <span class="h6 text-sm mb-0 text-white"><?php echo $testimonial->name ?>  <?php echo $testimonial->job  ? "<br><small class=\"opacity-8\">{$testimonial->job}</small>" : "" ?></span>
-                                        </div>                                        
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -617,11 +615,11 @@
                     <?php endforeach ?>
                 </div>
             </div>
-        </section>   
+        </section>
     <?php endif ?>
     <?php if (config("homepage_stats")): ?>
     <section class="py-lg-6 bg-section-secondary">
-        <div class="container pt-4 position-relative zindex-100">        
+        <div class="container pt-4 position-relative zindex-100">
             <div class="row mt-4">
                 <div class="col-lg-12 mx-auto">
                     <div class="row">
@@ -654,11 +652,11 @@
                                 </div>
                                 <h3 class="h6 text-capitalize"><?php ee('Happy Customers') ?></h3>
                             </div>
-                        </div>                
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>    
+        </div>
     </section>
-    <?php endif ?>    
+    <?php endif ?>
 <?php endif ?>

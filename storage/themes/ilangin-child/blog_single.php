@@ -16,9 +16,9 @@
                         </div>
                         <div class="row align-items-center mt-5 pt-5 delimiter-top">
                             <div class="col mb-3 mb-lg-0">
-                                <div class="media align-items-center">
-                                    <img src="<?php echo $post->avatar ?>" alt="<?php echo $post->author ?>" class="avatar text-white rounded-circle mr-3">
-                                    <div class="media-body">
+                                <div class="d-flex align-items-center">
+                                    <img src="<?php echo $post->avatar ?>" alt="<?php echo $post->author ?>" class="avatar text-white rounded-circle me-3">
+                                    <div class="flex-grow-1">
                                         <span class="d-block h6 mb-0"><?php echo $post->author ?></span>
                                         <span class="text-sm text-muted"><?php ee('Published on') ?> <?php echo $post->date ?></span>
                                     </div>

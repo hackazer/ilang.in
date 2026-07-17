@@ -24,7 +24,7 @@
                         <td><?php echo $bio->id ?></td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <img src="<?php echo $bio->user->avatar() ?>" alt="" width="36" class="img-responsive rounded-circle">
+                                <img src="<?php echo $bio->user->avatar() ?>" alt="" width="36" class="img-fluid rounded-circle">
                                 <div class="ms-2">
                                     <?php echo ($bio->user->admin)?"<strong>{$bio->user->email}</strong>":$bio->user->email ?>
                                 </div>

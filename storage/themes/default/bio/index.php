@@ -6,12 +6,12 @@
         <?php if(user()->teamPermission('bio.create')): ?>
             <a href="<?php echo route('bio.create') ?>" class="btn btn-primary"><i data-feather="plus"></i> <?php ee('Create Bio') ?></a>
         <?php endif ?>
-    </div>    
+    </div>
 </div>
 <div class="row">
     <div class="col-md-9">
         <?php if($bios): ?>
-            <div class="row">                    
+            <div class="row">
                 <?php foreach($bios as $bio): ?>
                     <div class="col-md-6 mb-3">
                         <div class="card flex-fill h-100">
@@ -29,7 +29,7 @@
                                         <li><form action="<?php echo route('bio.default', [$bio->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="check-circle"></i> <?php ee('Set as Default') ?></button></form></li>
                                         <?php endif ?>
                                         <?php if(user()->teamPermission('bio.edit')): ?>
-                                            <li><a class="dropdown-item" href="#" data-id="<?php echo $bio->id ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#channelModal" data-toggle="addtochannel"><i data-feather="package"></i> <?php ee('Add to Channel') ?></a></li>                                            
+                                            <li><a class="dropdown-item" href="#" data-id="<?php echo $bio->id ?>" data-bs-toggle="modal" data-trigger="modalopen" data-bs-target="#channelModal" data-toggle="addtochannel"><i data-feather="package"></i> <?php ee('Add to Channel') ?></a></li>
                                             <li><form action="<?php echo route('links.reset', [$bio->urlid, \Core\Helper::nonce('link.reset')]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="rotate-ccw"></i> <?php ee('Reset Stats') ?></button></form></li>
                                             <li><form action="<?php echo route('bio.duplicate', [$bio->id]) ?>" method="post" class="m-0"><?php echo csrf() ?><button type="submit" class="dropdown-item"><i data-feather="copy"></i> <?php ee('Duplicate') ?></button></form></li>
                                         <?php endif ?>
@@ -52,7 +52,7 @@
                                         <form action="<?php echo route('channel.removefrom', [$channel->id, 'bio', $bio->id]) ?>" method="post" class="d-inline-block"><?php echo csrf() ?><span class="badge text-xs me-2" style="background-color: <?php echo $channel->color ?>"><?php echo $channel->name ?> <button type="submit" class="btn btn-link border-0 p-0 ms-2 text-light" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php ee('Remove from channel') ?>" aria-label="<?php ee('Remove from channel') ?>">X</button></span></form>
                                     <?php endforeach ?>
                                     </div>
-                                <?php endif ?>                                
+                                <?php endif ?>
                                 <?php if(isset($bio->views)):?>
                                     <small class="text-navy"><?php echo $bio->views .' '.e('Views') ?></small> -
                                 <?php endif ?>
@@ -62,8 +62,8 @@
                     </div>
                 <?php endforeach ?>
             </div>
-        <?php else: ?>            
-            <div class="card flex-fill">         
+        <?php else: ?>
+            <div class="card flex-fill">
                 <div class="card-body text-center">
                     <p><?php ee('No content found. You can create some.') ?></p>
                     <?php if(user()->teamPermission('bio.create')): ?>
@@ -80,7 +80,7 @@
                 <h5 class="card-title mb-3"><?php ee('Bio Pages') ?></h5>
                 <div class="progress">
                     <div class="progress-bar" role="progressbar" style="width: <?php echo $total == 0 ? 100 : round($count*100/$total) ?>%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"><?php echo $count ?> / <?php echo $total == 0 ? e('Unlimited') : $total ?></div>
-                </div>            
+                </div>
             </div>
         </div>
         <div class="card">
@@ -134,7 +134,7 @@
   </div>
 </div>
 <div class="modal fade" id="channelModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">    
+  <div class="modal-dialog">
     <div class="modal-content">
       <form action="<?php echo route('channel.addto', ['bio', null]) ?>" data-trigger="server-form">
         <?php echo csrf() ?>
@@ -144,8 +144,8 @@
         </div>
         <div class="modal-body">
             <label for="channels" class="form-label d-block mb-2"><?php ee('Channels') ?></label>
-            <div class="form-group rounded input-select">
-                <select name="channels[]" id="channels" class="form-control" multiple data-toggle="select">
+            <div class="mb-3 rounded input-select">
+                <select name="channels[]" id="channels" class="form-select" multiple data-toggle="select">
                     <?php foreach(\Core\DB::channels()->where('userid', user()->rID())->findArray() as $channel): ?>
                         <option value="<?php echo $channel['id'] ?>"><?php echo $channel['name'] ?></option>
                     <?php endforeach ?>
@@ -156,7 +156,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php ee('Cancel') ?></button>
             <button type="submit" class="btn btn-success" class="btn btn-success" data-bs-dismiss="modal" data-trigger="addtocampaign"><?php ee('Add') ?></button>
-        </div>          
+        </div>
       </form>
     </div>
   </div>

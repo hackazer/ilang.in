@@ -8,7 +8,7 @@
                     <?php echo csrf() ?>
                     <div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="name"><?php ee("Name") ?></label>
 								<input type="text" class="form-control" name="name" id="name"  placeholder="e.g. Poll" value="" data-required="true">
 							</div>	
@@ -16,7 +16,7 @@
 					</div>
 					<div class="row">
 						<div class="col-md-12">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="subject"><?php ee("Question") ?></label>
 								<input type="text" class="form-control" name="question" id="question" value="" placeholder="<?php ee('e.g. What is your favorite color?') ?>" data-required="true">
 							</div>
@@ -26,10 +26,10 @@
                     <h4><?php ee("Options") ?> <small>(max 10)</small></h4>
 					<p><?php ee("You can add up to 10 options for each poll. To add an extra option click Add Option above. To ignore a field, leave it empty.") ?></p>
 					<div class="poll-options">
-						<div class="form-group mb-2">
+						<div class="mb-2">
 							<input type="text" class="form-control" name="answer[]" placeholder="#1" data-id="1">
 						</div>	
-						<div class="form-group mb-2">
+						<div class="mb-2">
 							<input type="text" class="form-control" name="answer[]" placeholder="#2" data-id="2">
 						</div>
 					</div>
@@ -43,13 +43,13 @@
 				<div class="card-body collapse" id="textlabels">				
 					<div class="row">
 						<div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="votetext"><?php ee("Vote Button Placeholder") ?></label>
 								<input type="text" class="form-control" name="votetext" id="votetext" value="<?php ee('Vote') ?>">
 							</div>							
 						</div>	
                         <div class="col-md-6">
-							<div class="form-group mb-3">
+							<div class="mb-3">
 								<label class="form-label" for="thankyou"><?php ee("Thank You Message") ?> <small><?php ee("leave empty to disable") ?></small></label>
 								<input type="text" class="form-control" name="thankyou" id="thankyou" placeholder="<?php ee('Thanks...') ?>">
 							</div>							
@@ -64,31 +64,31 @@
 				<div class="card-body collapse" id="custom">			
 					<div class="row">						
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="bg"><?php ee("Overlay Background Color") ?></label> <br>
 								<input type="text" name="bg" id="bg">
 							</div>			
 						</div>	
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="color"><?php ee("Overlay Text Color") ?></label><br>
 								<input type="text" name="color" id="color">
 							</div>	
 						</div>
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="btnbg"><?php ee("Button Background Color") ?></label><br>
 								<input type="text" name="btnbg" id="btnbg">
 							</div>		
 						</div>
 						<div class="col-md-4">
-							<div class="form-group mb-5">
+							<div class="mb-5">
 								<label class="form-label" for="btncolor"><?php ee("Button Text Color") ?></label><br>
 								<input type="text" name="btncolor" id="btncolor">
 							</div>					
 						</div>
 					</div>				
-					<div class="form-group mb-3">
+					<div class="mb-3">
 						<label class="form-label d-block" for="position"><?php ee("Overlay Position") ?></label>
 						<select name="position" id="position" class="form-control" data-toggle="select">                        
 							<option value="bl"><?php ee("Bottom Left") ?></option>

@@ -5,8 +5,9 @@
     "license": "proprietary",
     "require": {
         "abraham/twitteroauth": "^8.2",
+        "bacon/bacon-qr-code": "^3.1",
+        "chillerlan/php-qrcode": "^6.0",
         "defuse/php-encryption": "^2.2",
-        "endroid/qr-code": "^6.0",
         "jaybizzle/crawler-detect": "^1.2",
         "maxmind-db/reader": "^1.10",
         "monolog/monolog": "^3.10",

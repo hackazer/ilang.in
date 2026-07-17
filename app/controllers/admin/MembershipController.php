@@ -124,6 +124,10 @@ class Membership {
 
         $payment->save();
 
+        if($action === 'paid'){
+            \Helpers\Payments\Bank::consumeCouponOnConfirmation($payment);
+        }
+
         return Helper::redirect()->back()->with('sucess', e('Payment status has been saved.'));
     }
     /**

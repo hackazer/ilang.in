@@ -75,15 +75,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="name" class="form-control">
                 </div> 
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Description") ?></label>			
                     <input type="text" value="" name="description" class="form-control">
                 </div>   
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
                     <input type="color" value="" name="color" class="form-control" data-trigger="colorpicker">
                 </div> 
@@ -117,15 +117,15 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="newname" id="newname" class="form-control">
                 </div> 
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Description") ?></label>			
                     <input type="text" value="" name="newdescription" id="newdescription" class="form-control">
                 </div>   
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label d-block"><?php ee("Badge Color") ?></label>			
                     <input type="color" value="" name="newcolor" id="newcolor" class="form-control" data-trigger="colorpicker">
                 </div>

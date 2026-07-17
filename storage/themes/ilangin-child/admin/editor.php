@@ -16,7 +16,7 @@
     </div>
     <form method="post" action="<?php echo route('admin.themes.editor.update', ['file' => $file['name']]) ?>" enctype="multipart/form-data" data-trigger="codeeditor">
         <?php echo csrf() ?>   
-        <div class="form-group mb-4">
+        <div class="mb-4">
             <div id="code-editor"><?php echo $file['content'] ?></div>
             <textarea class="d-none" id="code" name="code"></textarea>
         </div>

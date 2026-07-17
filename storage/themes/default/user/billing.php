@@ -19,16 +19,16 @@
                     </thead>
                     <tbody>
                         <?php foreach($subscriptions as $subscription): ?>
-                            <tr>                                
+                            <tr>
                                 <td><?php echo $subscription->uniqueid ?></td>
                                 <td><?php echo \Helpers\App::currency(config("currency"), $subscription->amount) ?></td>
                                 <td><?php echo date("d F, Y",strtotime($subscription->date)) ?></td>
                                 <td><?php echo date("d F, Y",strtotime($subscription->expiry)) ?></td>
-                                <td><?php echo ($subscription->status == "Completed" ? e("Active") : $subscription->status) ?></td>                               
+                                <td><?php echo ($subscription->status == "Completed" ? e("Active") : $subscription->status) ?></td>
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table>   
+                </table>
             </div>
         </div>
         <?php endif ?>
@@ -49,7 +49,7 @@
                     </thead>
                     <tbody>
                         <?php foreach($payments as $payment): ?>
-                            <tr>                                
+                            <tr>
                                 <td><?php echo ($payment->status == "Refunded" ? "<span class='badge bg-danger'>".e("Refunded")."</span> ":"").$payment->tid ?></td>
                                 <td><?php echo ($payment->status == "Refunded" ? "-" :"").($payment->trial_days ? e('Free Trial') : \Helpers\App::currency(config("currency"), $payment->amount)) ?></td>
                                 <td><?php echo date("d F, Y",strtotime($payment->date)) ?></td>
@@ -58,7 +58,7 @@
                             </tr>
                         <?php endforeach ?>
                     </tbody>
-                </table>   
+                </table>
             </div>
         </div>
     </div>
@@ -68,38 +68,38 @@
                 <p><?php echo $user->pro() && $user->expiration ? e('Expiration').': '.\Core\Helper::dtime($user->expiration, 'd-m-Y') : '' ?>
                 <hr>
                 <h5 class="mb-3"><?php ee('Current Plan') ?>: <?php echo $plan['name'] ?></h5>
-                <ul class="list-unstyled mb-4 text-left text-sm">
-                    <li class="mb-1"><?php echo $plan["permission"]->alias->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger"></span>' ?>  <?php echo e("Custom Aliases") ?></li>        		
-                    <li class="mb-1"><span data-feather="check-circle" class="mr-1 text-success"></span> <?php echo $plan["urls"] == "0" ? e("Unlimited") : $plan["urls"] ?> <?php echo e("URLs allowed") ?></li>
-                    <li class="mb-1"><span data-feather="check-circle" class="mr-1 text-success"></span> <?php echo $plan["clicks"] == "0" ? e("Unlimited") : $plan["clicks"] ?> <?php echo e("Clicks per month") ?></li>											
-                    <li class="mb-1 <?php echo $plan["permission"]->geo->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->geo->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?> <?php echo e("Geotargeting"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->device->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->device->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?> <?php echo e("Device Targeting"); ?></li>     
-                    <li class="mb-1 <?php echo isset($plan["permission"]->language) && $plan["permission"]->language->enabled ? '' : 'text-muted' ?>"><?php echo isset($plan["permission"]->language) && $plan["permission"]->language->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?> <?php echo e("Language Targeting"); ?></li>  
-                    <li class="mb-1 <?php echo $plan["permission"]->bio->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->bio->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->bio->count == "0" ? e("Unlimited") : $plan["permission"]->bio->count)." ".e("Bio Profiles"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->qr->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->qr->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->qr->count == "0" ? e("Unlimited") : $plan["permission"]->qr->count)." ".e("QR Codes"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->splash->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->splash->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->splash->count == "0" ? e("Unlimited") : $plan["permission"]->splash->count)." ".e("Custom Splash"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->overlay->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->overlay->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->overlay->count == "0" ? e("Unlimited") : $plan["permission"]->overlay->count)." ".e("CTA Overlay"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->pixels->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->pixels->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->pixels->count == "0" ? e("Unlimited") : $plan["permission"]->pixels->count)." ".e("Event Tracking"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->team->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->team->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->team->count == "0" ? e("Unlimited") : $plan["permission"]->team->count)." ".e("Team Members"); ?></li>
-                    <li class="mb-1 <?php echo $plan["permission"]->domain->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->domain->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->domain->count == "0" ? e("Unlimited") : $plan["permission"]->domain->count)." ".e("Branded Domains"); ?></li>
-                    <li class="mb-1 <?php echo isset($plan["permission"]->channels) && $plan["permission"]->channels->enabled ? '' : 'text-muted' ?>"><?php echo isset($plan["permission"]->channels) && $plan["permission"]->channels->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo (!isset($plan["permission"]->channels) || $plan["permission"]->channels->count == "0" ? e("Unlimited") : $plan["permission"]->channels->count)." ".e("Channels"); ?></li>
+                <ul class="list-unstyled mb-4 text-start text-sm">
+                    <li class="mb-1"><?php echo $plan["permission"]->alias->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger"></span>' ?>  <?php echo e("Custom Aliases") ?></li>
+                    <li class="mb-1"><span data-feather="check-circle" class="me-1 text-success"></span> <?php echo $plan["urls"] == "0" ? e("Unlimited") : $plan["urls"] ?> <?php echo e("URLs allowed") ?></li>
+                    <li class="mb-1"><span data-feather="check-circle" class="me-1 text-success"></span> <?php echo $plan["clicks"] == "0" ? e("Unlimited") : $plan["clicks"] ?> <?php echo e("Clicks per month") ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->geo->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->geo->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?> <?php echo e("Geotargeting"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->device->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->device->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?> <?php echo e("Device Targeting"); ?></li>
+                    <li class="mb-1 <?php echo isset($plan["permission"]->language) && $plan["permission"]->language->enabled ? '' : 'text-muted' ?>"><?php echo isset($plan["permission"]->language) && $plan["permission"]->language->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?> <?php echo e("Language Targeting"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->bio->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->bio->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->bio->count == "0" ? e("Unlimited") : $plan["permission"]->bio->count)." ".e("Bio Profiles"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->qr->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->qr->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->qr->count == "0" ? e("Unlimited") : $plan["permission"]->qr->count)." ".e("QR Codes"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->splash->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->splash->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->splash->count == "0" ? e("Unlimited") : $plan["permission"]->splash->count)." ".e("Custom Splash"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->overlay->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->overlay->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->overlay->count == "0" ? e("Unlimited") : $plan["permission"]->overlay->count)." ".e("CTA Overlay"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->pixels->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->pixels->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->pixels->count == "0" ? e("Unlimited") : $plan["permission"]->pixels->count)." ".e("Event Tracking"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->team->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->team->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->team->count == "0" ? e("Unlimited") : $plan["permission"]->team->count)." ".e("Team Members"); ?></li>
+                    <li class="mb-1 <?php echo $plan["permission"]->domain->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->domain->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->domain->count == "0" ? e("Unlimited") : $plan["permission"]->domain->count)." ".e("Branded Domains"); ?></li>
+                    <li class="mb-1 <?php echo isset($plan["permission"]->channels) && $plan["permission"]->channels->enabled ? '' : 'text-muted' ?>"><?php echo isset($plan["permission"]->channels) && $plan["permission"]->channels->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo (!isset($plan["permission"]->channels) || $plan["permission"]->channels->count == "0" ? e("Unlimited") : $plan["permission"]->channels->count)." ".e("Channels"); ?></li>
                     <?php if($features = plug('feature')): ?>
                         <?php foreach($features as $feature): ?>
                             <?php if($feature['count']): ?>
-                                <li class="mb-1 <?php echo $plan["permission"]->{$feature['slug']}->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->{$feature['slug']}->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo ($plan["permission"]->{$feature['slug']}->count == "0" ? e("Unlimited") : $plan["permission"]->{$feature['slug']}->count)." ".$feature['name']; ?></li>                                
+                                <li class="mb-1 <?php echo $plan["permission"]->{$feature['slug']}->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->{$feature['slug']}->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo ($plan["permission"]->{$feature['slug']}->count == "0" ? e("Unlimited") : $plan["permission"]->{$feature['slug']}->count)." ".$feature['name']; ?></li>
                             <?php else: ?>
-                                <li class="mb-1"><?php echo $plan["permission"]->{$feature['slug']}->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span> ' : '<span data-feather="x-circle" class="text-danger mr-1"></span> ' ?>  <?php echo $feature['name'] ?></li>
+                                <li class="mb-1"><?php echo $plan["permission"]->{$feature['slug']}->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span> ' : '<span data-feather="x-circle" class="text-danger me-1"></span> ' ?>  <?php echo $feature['name'] ?></li>
                             <?php endif ?>
                         <?php endforeach ?>
                     <?php endif ?>
-                    <li class="mb-1 <?php echo $plan["permission"]->bundle->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->bundle->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo e("Campaigns & Link Rotator") ?></li>        
-                    <li class="mb-1"><?php echo $plan["permission"]->export->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span> ' : '<span data-feather="x-circle" class="text-danger mr-1"></span> ' ?>  <?php echo e("Export Data") ?></li>        
-                    <li class="mb-1"><?php echo $plan["permission"]->api->enabled ? '<span data-feather="check-circle" class="mr-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger mr-1"></span>' ?>  <?php echo e("Developer API"); ?></li>											              
-                    <li class="mb-1"><?php echo $plan["free"]  ? '<span data-feather="x-circle" class="text-danger mr-1"></span>' : '<span data-feather="check-circle" class="mr-1 text-success"></span>' ?> <?php echo e("URL Customization") ?></li>                
-                    <li class="mb-1"><?php echo $plan["free"]  ? '<span data-feather="x-circle" class="mr-1 text-danger"></span>' : '<span data-feather="check-circle" class="text-success"></span>' ?> <?php echo e("Advertisement-Free") ?></li> 
+                    <li class="mb-1 <?php echo $plan["permission"]->bundle->enabled ? '' : 'text-muted' ?>"><?php echo $plan["permission"]->bundle->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo e("Campaigns & Link Rotator") ?></li>
+                    <li class="mb-1"><?php echo $plan["permission"]->export->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span> ' : '<span data-feather="x-circle" class="text-danger me-1"></span> ' ?>  <?php echo e("Export Data") ?></li>
+                    <li class="mb-1"><?php echo $plan["permission"]->api->enabled ? '<span data-feather="check-circle" class="me-1 text-success"></span>' : '<span data-feather="x-circle" class="text-danger me-1"></span>' ?>  <?php echo e("Developer API"); ?></li>
+                    <li class="mb-1"><?php echo $plan["free"]  ? '<span data-feather="x-circle" class="text-danger me-1"></span>' : '<span data-feather="check-circle" class="me-1 text-success"></span>' ?> <?php echo e("URL Customization") ?></li>
+                    <li class="mb-1"><?php echo $plan["free"]  ? '<span data-feather="x-circle" class="me-1 text-danger"></span>' : '<span data-feather="check-circle" class="text-success"></span>' ?> <?php echo e("Advertisement-Free") ?></li>
                     <?php echo $plan["permission"]->custom  ? '<li class="mb-1"><span data-feather="check-circle" class="text-success"></span> '.$plan["permission"]->custom.'</li>' : '' ?>
                 </ul>
-                <a href="<?php echo route('pricing') ?>" class="btn btn-primary mb-3"><?php ee('Change plan') ?></a>    
+                <a href="<?php echo route('pricing') ?>" class="btn btn-primary mb-3"><?php ee('Change plan') ?></a>
             </div>
         </div>
         <?php if($user->pro && \Core\DB::subscription()->where('userid', user()->id)->where('status', 'Active')->first()): ?>
@@ -113,7 +113,7 @@
             </div>
         </div>
         <?php endif ?>
-    </div> 
+    </div>
 </div>
 <?php if($user->pro): ?>
 <div class="modal fade" id="cancelModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
@@ -128,12 +128,12 @@
             <div class="modal-body">
                 <p><?php ee('We respect your decision and we are sorry to see you go. If you want to share anything with us, please use the box below and we will do our best to improve our service.') ?></p>
 
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Password") ?></label>			
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Password") ?></label>
                     <input type="password" name="password" class="form-control p-2">
-                </div>				
-                <div class="form-group mb-3">
-                    <label class="form-label"><?php ee("Reason for cancellation") ?></label>			
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><?php ee("Reason for cancellation") ?></label>
                     <textarea name="reason" class="form-control"></textarea>
                 </div>
             </div>

@@ -119,11 +119,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Campaign Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="name" class="form-control">
                 </div>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Rotator Slug") ?> (<?php ee("optional") ?>)</label>			
                     <input type="text" value="" name="slug" class="form-control">
                     <p class="form-text"><?php ee("If you want to set a custom alias for the rotator link, you can fill this field.") ?></p>
@@ -158,11 +158,11 @@
             </div>
             <div class="modal-body">
                 <?php echo csrf() ?>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Campaign Name") ?> (<?php ee("required") ?>)</label>			
                     <input type="text" value="" name="newname" id="newname" class="form-control">
                 </div>
-                <div class="form-group mb-3">
+                <div class="mb-3">
                     <label class="form-label"><?php ee("Rotator Slug") ?> (<?php ee("optional") ?>)</label>			
                     <input type="text" value="" name="newslug" id="newslug" class="form-control">
                     <p class="form-text"><?php ee("If you want to set a custom alias for the rotator link, you can fill this field.") ?></p>
