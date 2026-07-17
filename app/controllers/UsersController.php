@@ -21,7 +21,9 @@ use Core\View;
 use Core\Helper;
 use Core\Auth;
 use Core\DB;
+use Helpers\AuthThrottle;
 use Helpers\FacebookOAuth;
+use Helpers\PasswordPolicy;
 use Models\User;
 use Models\Plans;
 
@@ -33,11 +35,13 @@ class Users {
      */
     private $regenerateToken = false;
 
-    /**
-     * Maximum Login Attempts
-     * @param int
-     */
-    private $maxLoginAttempts = 10;
+    private const THROTTLE_MESSAGE = 'Too many authentication attempts. Please try again in one hour.';
+
+    private AuthThrottle $authThrottle;
+
+    public function __construct(?AuthThrottle $authThrottle = null){
+        $this->authThrottle = $authThrottle ?? new AuthThrottle();
+    }
 
     /**
      * Login Page
@@ -67,14 +71,17 @@ class Users {
      * @return void
      */
     public function loginAuth(Request $request){
-
-        if($request->cookie('__bl')){
-            return back()->with('danger', e('You have been blocked for 1 hour due to many unsuccessful login attempts.'));
-        }
         
         if(is_null($request->email)) return Helper::redirect()->back()->with('danger', e('Please enter a valid email or username.'));
         
         if(is_null($request->password)) return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.'));
+
+        $identity = is_scalar($request->email) ? (string) $request->email : '';
+        $ip = $request->ip();
+
+        if($this->authThrottle->isBlocked(AuthThrottle::LOGIN_SCOPE, $identity, $ip)){
+            return Helper::redirect()->back()->with('danger', e(self::THROTTLE_MESSAGE));
+        }
 
         \Core\Plugin::dispatch('login.verify', $request);
 
@@ -84,18 +91,16 @@ class Users {
             $user = User::where("username", $request->email)->first();
         }
 
-        if(!$user) return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.'));
+        if(!$user){
+            $this->authThrottle->recordFailure(AuthThrottle::LOGIN_SCOPE, $identity, $ip);
+            return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.'));
+        }
 
         Helper::set("hashCost", 8);
         
-        $loginCount = $request->session('login_count');
-
-        if($loginCount === false){
-            $request->session('login_count', 0);
-            $loginCount = 0;
-        }
-        
         if(Helper::validatePass($request->password, $user->password)){
+
+            $this->authThrottle->clear(AuthThrottle::LOGIN_SCOPE, $identity, $ip);
 
             \Core\Plugin::dispatch('login.verified', [$request, $user]);
 
@@ -156,12 +161,7 @@ class Users {
             return Helper::redirect()->to(route('dashboard'));
         }
 
-        $loginCount++;
-        $request->session('login_count', $loginCount);
-
-        if($loginCount >= $this->maxLoginAttempts){
-            $request->cookie('__bl', md5(rand(10000, 101010)), 60);
-        }
+        $this->authThrottle->recordFailure(AuthThrottle::LOGIN_SCOPE, $identity, $ip);
 
         return Helper::redirect()->back()->with('danger', e('Wrong email and password combination.')); 
     }
@@ -200,15 +200,32 @@ class Users {
             return Helper::redirect()->to(route('login'))->with("danger", e("Invalid token. Please try again."));
         }
 
-        $request->secret = str_replace(' ', '', $request->secret);
+        $identity = isset($user->id) ? (string) $user->id : (string) $user->email;
+        $ip = $request->ip();
 
-        if(strlen($request->secret) != 6) return back()->with("danger", e("Invalid token. Please try again."));
+        if($this->authThrottle->isBlocked(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip)){
+            return Helper::redirect()->back()->with('danger', e(self::THROTTLE_MESSAGE));
+        }
+
+        $request->secret = is_scalar($request->secret)
+            ? str_replace(' ', '', (string) $request->secret)
+            : '';
+
+        if(strlen($request->secret) != 6){
+            $this->authThrottle->recordFailure(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip);
+            return Helper::redirect()->back()->with("danger", e("Invalid token. Please try again."));
+        }
 
         $gAuth = new \Helpers\GoogleAuthenticator();
 
-        if(!$gAuth->checkCode($user->secret2fa, $request->secret)) return back()->with("danger", e("Invalid token. Please try again."));
-				
-        session_regenerate_id();    
+        if(!$gAuth->checkCode($user->secret2fa, $request->secret)){
+            $this->authThrottle->recordFailure(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip);
+            return Helper::redirect()->back()->with("danger", e("Invalid token. Please try again."));
+        }
+
+        $this->authThrottle->clear(AuthThrottle::TWO_FACTOR_SCOPE, $identity, $ip);
+
+        session_regenerate_id();
 
         if($this->regenerateToken){            
             $newAuthKey = Helper::Encode($user->email.$user->id.uniqid().rand(0, 99999));
@@ -280,9 +297,9 @@ class Users {
 
         if(in_array($user->username, ['admin','moderator','owner','founder'])) return Helper::redirect()->back()->with('danger', e("This username cannot be used or already exists. Please choose another username"));
         
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(PasswordPolicy::message()));
 
-        if(strlen($request->password) > 64) return Helper::redirect()->back()->with('danger', e('Your password is too long. Passwords must be between 8 to 64 characters.'));
+        if(strlen($request->password) > 64) return Helper::redirect()->back()->with('danger', e('Your password is too long. Passwords must be between 12 to 64 characters.'));
 
         if($request->password != $request->cpassword) return Helper::redirect()->back()->with('danger', e("Passwords don't match."));
 
@@ -422,7 +439,7 @@ class Users {
             return Helper::redirect()->to(route('forgot'))->with("danger", e("Token has expired, please request another link."));
         }
 
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(PasswordPolicy::message()));
 
         if($request->password != $request->cpassword) return Helper::redirect()->back()->with('danger', e("Passwords don't match."));
 
@@ -508,7 +525,7 @@ class Users {
 
         if(in_array($user->username, ['admin','moderator','owner','founder'])) return Helper::redirect()->back()->with('danger', e("This username cannot be used or already exists. Please choose another username"));
         
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(PasswordPolicy::message()));
 
         if($request->password != $request->cpassword) return Helper::redirect()->back()->with('danger', e("Passwords don't match."));
 

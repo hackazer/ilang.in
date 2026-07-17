@@ -224,7 +224,7 @@ class Users {
 
         $user->username = Helper::clean($request->username);
         
-        if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+        if(!\Helpers\PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(\Helpers\PasswordPolicy::message()));
 
         Helper::set("hashCost", 8);
 
@@ -300,7 +300,7 @@ class Users {
 
         if($request->password){
 
-            if(strlen($request->password) < 5) return Helper::redirect()->back()->with('danger', e('Password must be at least 5 characters.'));
+            if(!\Helpers\PasswordPolicy::allows($request->password)) return Helper::redirect()->back()->with('danger', e(\Helpers\PasswordPolicy::message()));
             $user->password = Helper::Encode($request->password);
         }
 

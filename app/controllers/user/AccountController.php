@@ -348,7 +348,7 @@ class Account {
 
         if($request->password){        
 
-            if(strlen($request->password) < 5) $errors .= e("Password must contain at least 5 characters.").'</br>';
+            if(!\Helpers\PasswordPolicy::allows($request->password)) $errors .= e(\Helpers\PasswordPolicy::message()).'</br>';
 
             if(!$request->cpassword || $request->password != $request->cpassword) $errors .= e("Passwords don't match.").'</br>';
         

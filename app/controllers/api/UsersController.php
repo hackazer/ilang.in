@@ -158,7 +158,7 @@ class Users {
 
             $data->password = clean($data->password);
             
-            if(empty($data->password) || strlen($data->password) < 5) return Response::factory(['error' => 1, 'message' => 'Password must be at least 5 characters.'])->json();
+            if(!\Helpers\PasswordPolicy::allows($data->password)) return Response::factory(['error' => 1, 'message' => \Helpers\PasswordPolicy::message()])->json();
             
             Helper::set("hashCost", 8);
             $user->password = Helper::Encode($data->password);
