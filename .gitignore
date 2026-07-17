@@ -9,6 +9,7 @@
 /node_modules/
 /.vscode
 config.php
+.env
 workspace.code-workspace
 
 # Local analysis and brainstorming artifacts
