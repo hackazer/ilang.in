@@ -209,7 +209,6 @@
 
                                             $response = curl_exec($curl);
 
-                                            curl_close($curl);
                                             echo $response;') ?></code></pre>                
                                     </div>                                 
                                 </div>

@@ -1,9 +1,10 @@
 # Security, Performance, and PHP Compatibility Audit
 
 **Audit date:** 2026-07-16  
+**Verification refresh:** 2026-07-18
 **Repository:** `hackazer/ilang.in`  
-**Reviewed branch:** `dev` worktree  
-**Release baseline:** `main` at `f9d7bbf`  
+**Reviewed branch:** merged `main`
+**Release baseline:** `main` at the merged modernization commit
 **Scope:** first-party PHP under `app/` and `core/`, routes, payment integrations, upload and restore paths, Composer metadata, tests, tracked runtime files, and request-path database/cache behavior.
 
 ## Executive assessment
@@ -28,38 +29,38 @@ The dependency locks contain no known advisories or abandoned Composer packages.
 | Open | Confirmed in the reviewed worktree and no verified merged remediation exists. |
 | In progress | Development work exists or is being prepared, but it is not merged and therefore is not accepted as a fix. |
 | Verify after merge | The development code appears to address the finding, but the release branch and production behavior remain unverified. |
-| Resolved on dev | The fix is committed on `dev` and has focused automated regression coverage. |
+| Resolved on main | The fix is committed on `dev` and has focused automated regression coverage. |
 
 ## Prioritized findings
 
 | ID | Severity | Area | Status |
 | --- | --- | --- | --- |
-| SEC-01 | Critical | PayPal Basic IPN can grant entitlement without complete merchant and payment validation | Resolved on dev |
-| SEC-02 | Critical | Stripe webhook authentication fails open and events are not idempotent | Resolved on dev |
-| SEC-03 | High | User-configurable outbound webhooks permit blind SSRF | Resolved on dev |
-| SEC-04 | High | State-changing admin actions use GET and a predictable unkeyed nonce | Resolved on dev |
-| SEC-05 | High | Backup restore uses unrestricted PHP deserialization | Resolved on dev |
-| SEC-06 | Medium | Session and persistent cookie defaults are incomplete | Resolved on dev |
-| SEC-07 | Medium | Client IP headers are trusted without a proxy allowlist | Resolved on dev |
-| SEC-08 | Medium | Upload MIME validation trusts the client-provided content type | Resolved on dev |
-| SEC-09 | Medium | Report and banned-link matching uses ambiguous leading-wildcard lookup | Resolved on dev |
-| SEC-10 | Medium | Payment webhook routes accept GET as well as POST | Resolved on dev |
-| SEC-11 | Medium | Legacy link passwords retain unsalted MD5 compatibility | Resolved on dev |
-| SEC-12 | Low | Runtime and user-generated files can be accidentally committed | Resolved on dev |
-| SEC-13 | Critical | Bio rich-text blocks permit stored active-content injection | Resolved on dev |
-| SEC-14 | Critical | Team and splash mutations are not consistently tenant-scoped | Resolved on dev |
-| SEC-15 | High | RSS blocks bypass outbound URL controls | Resolved on dev |
-| SEC-16 | High | Language ZIP packages are extracted without a package allowlist | Resolved on dev |
-| PERF-01 | High | Monthly click-limit cache is stale for up to 24 hours | Resolved on dev |
-| PERF-02 | Medium | User statistics read tenant-specific keys but write global admin keys | Resolved on dev |
+| SEC-01 | Critical | PayPal Basic IPN can grant entitlement without complete merchant and payment validation | Resolved on main |
+| SEC-02 | Critical | Stripe webhook authentication fails open and events are not idempotent | Resolved on main |
+| SEC-03 | High | User-configurable outbound webhooks permit blind SSRF | Resolved on main |
+| SEC-04 | High | State-changing admin actions use GET and a predictable unkeyed nonce | Resolved on main |
+| SEC-05 | High | Backup restore uses unrestricted PHP deserialization | Resolved on main |
+| SEC-06 | Medium | Session and persistent cookie defaults are incomplete | Resolved on main |
+| SEC-07 | Medium | Client IP headers are trusted without a proxy allowlist | Resolved on main |
+| SEC-08 | Medium | Upload MIME validation trusts the client-provided content type | Resolved on main |
+| SEC-09 | Medium | Report and banned-link matching uses ambiguous leading-wildcard lookup | Resolved on main |
+| SEC-10 | Medium | Payment webhook routes accept GET as well as POST | Resolved on main |
+| SEC-11 | Medium | Legacy link passwords retain unsalted MD5 compatibility | Resolved on main |
+| SEC-12 | Low | Runtime and user-generated files can be accidentally committed | Resolved on main |
+| SEC-13 | Critical | Bio rich-text blocks permit stored active-content injection | Resolved on main |
+| SEC-14 | Critical | Team and splash mutations are not consistently tenant-scoped | Resolved on main |
+| SEC-15 | High | RSS blocks bypass outbound URL controls | Resolved on main |
+| SEC-16 | High | Language ZIP packages are extracted without a package allowlist | Resolved on main |
+| PERF-01 | High | Monthly click-limit cache is stale for up to 24 hours | Resolved on main |
+| PERF-02 | Medium | User statistics read tenant-specific keys but write global admin keys | Resolved on main |
 | PERF-03 | Medium | Dashboard, user-list, profile, and pricing paths contain N+1 queries | Resolved for audited paths |
-| PERF-04 | Medium | Public shortening throttle is reset by discarding the session cookie | Resolved on dev |
-| PERF-05 | High | Click counters lose updates and monthly predicates bypass indexes | Resolved on dev |
-| PERF-06 | Medium | API geolocation blocks redirects and repeats work per click | Resolved on dev |
-| COMP-01 | High | PHP 8.5 nullable string-function deprecations are present on `main` | Resolved on dev |
-| COMP-02 | High | PHP 8.5 deprecated cURL close calls are present on `main` | Resolved on dev |
-| COMP-03 | High | Composer retains an abandoned PayPal SDK | Resolved on dev |
-| COMP-04 | Medium | PHP runtime policy and compatibility coverage are not yet release-proven | Resolved on dev |
+| PERF-04 | Medium | Public shortening throttle is reset by discarding the session cookie | Resolved on main |
+| PERF-05 | High | Click counters lose updates and monthly predicates bypass indexes | Resolved on main |
+| PERF-06 | Medium | API geolocation blocks redirects and repeats work per click | Resolved on main |
+| COMP-01 | High | PHP 8.5 nullable string-function deprecations are present on `main` | Resolved on main |
+| COMP-02 | High | PHP 8.5 deprecated cURL close calls are present on `main` | Resolved on main |
+| COMP-03 | High | Composer retains an abandoned PayPal SDK | Resolved on main |
+| COMP-04 | Medium | PHP runtime policy and compatibility coverage are not yet release-proven | Resolved on main |
 
 ## Security findings
 

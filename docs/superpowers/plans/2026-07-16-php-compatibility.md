@@ -8,7 +8,7 @@
 
 **Tech Stack:** PHP 8.3 with PHPUnit 12.5, PHP 8.5 with PHPUnit 13, Composer 2, GitHub Actions
 
-**Status:** Complete. PHP 8.3 and PHP 8.5 each pass 547 tests and 8,054 assertions, and first-party lint passes under both runtimes.
+**Status:** Complete. PHP 8.3 and PHP 8.5 each pass 550 tests and 8,072 assertions, and first-party lint passes under both runtimes. The repository-wide PHP 8.5 deprecation guard also covers tracked theme and plugin PHP sources.
 
 ---
 

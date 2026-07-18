@@ -27,7 +27,6 @@ function pus_shortcode_shorten_url($atts, $content){
     ]);
 
     $response = curl_exec($ch);
-    curl_close($ch);
 
     if($object = json_decode($response)){
         if(isset($object->shorturl)){
