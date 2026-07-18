@@ -91,4 +91,4 @@ No live CKEditor asset is assumed. CKEditor lifecycle classification is URL-driv
 - CKEditor 4 lifecycle: <https://ckeditor.com/ckeditor-4/>
 - Moment project status: <https://momentjs.com/docs/#/-project-status/>
 
-The generated Markdown report includes the exact official metadata URL for every resolved package. Refresh that report after the browser and Composer manifests are committed, then use it as the release table.
+The generated Markdown report includes the exact official metadata URL for every resolved package. The browser and Composer manifests are now committed, `npm outdated --json` returns no outdated root browser packages, and Composer reports only PHPUnit 13.2.4 as newer than the PHP 8.3-compatible PHPUnit 12.5.31 line. The release gate rechecks this policy on every release.

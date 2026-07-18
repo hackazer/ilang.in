@@ -84,7 +84,6 @@
                 ]);
 
                 $response = curl_exec($ch);
-                curl_close($ch);
 
                 $object = json_decode($response);
 
