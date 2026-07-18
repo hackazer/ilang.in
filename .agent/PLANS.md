@@ -55,7 +55,7 @@ No branch is merged until all of the following are fresh and successful:
 - PHP 8.3 passes PHPUnit 12.5.31 and PHP 8.5 passes PHPUnit 13.2.4. Both runs pass 550 tests and 8,072 assertions.
 - `sh scripts/verify-release.sh` passes on PHP 8.5.7, and the equivalent PHP 8.3 lint, Composer, audit, platform, and full-test checks pass.
 - The PHP 8.3 minimum intentionally keeps the supported PHPUnit 12.5 line. PHPUnit 13 requires PHP 8.4+, so PHP 8.5 CI runs the newer test runner.
-- CodeGraph is indexed and current at 712 files, 7,178 nodes, and 52,958 edges.
+- CodeGraph is indexed and current at 713 files, 7,184 nodes, and 52,970 edges.
 - `npm outdated --json` returns no outdated root browser packages. Composer reports only PHPUnit 13.2.4 as newer, which is incompatible with the PHP 8.3 floor.
 - The repository-wide PHP 8.5 deprecation guard removes `curl_close()` from tracked theme and plugin PHP sources and verifies the lint script scans all tracked PHP files.
 
